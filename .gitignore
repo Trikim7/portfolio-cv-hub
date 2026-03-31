@@ -1,2 +1,24 @@
 # macOS
 .DS_Store
+
+# Python virtual environments
+venv/
+.venv/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Secrets - only commit .env.example (no real passwords)
+.env
+
+# Build / Cache
+dist/
+build/
+.next/
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+.vscode/
