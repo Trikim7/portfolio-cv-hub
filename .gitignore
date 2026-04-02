@@ -1,5 +1,6 @@
 # macOS
 .DS_Store
+.cursorrules
 
 # Python virtual environments
 venv/
