@@ -13,7 +13,7 @@ Hệ thống quản lý Portfolio và CV dành cho ứng viên (Candidate) và g
 
 ---
 
-## 🚀 1. Hướng dẫn cài đặt Backend (FastAPI)
+## 1. Hướng dẫn cài đặt Backend (FastAPI)
 
 Backend cung cấp các API xử lý dữ liệu, xác thực người dùng và lưu trữ hồ sơ. Mình sử dụng **SQLite** mặc định cho development.
 
@@ -54,7 +54,7 @@ Bạn có thể xem API Documentation (Swagger UI) tại: **http://localhost:800
 
 ---
 
-## 🖥 2. Hướng dẫn cài đặt Frontend (Next.js)
+## 2. Hướng dẫn cài đặt Frontend (Next.js)
 
 Frontend cung cấp giao diện hiển thị cho Ứng viên (quản lý CV/kỹ năng/dự án) và nhà tuyển dụng.
 
@@ -81,7 +81,7 @@ Giao diện web sẽ được khởi chạy tại: **http://localhost:3000**
 
 ---
 
-## 🔑 3. Cách sử dụng (Luồng cơ bản)
+## 3. Cách sử dụng (Luồng cơ bản)
 
 1. Đảm bảo cả hai server (Backend ở Port `8000` và Frontend ở Port `3000`) đang hoạt động.
 2. Truy cập Frontend: `http://localhost:3000`
@@ -98,7 +98,7 @@ Giao diện web sẽ được khởi chạy tại: **http://localhost:3000**
 
 ---
 
-## 🏗 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```text
 portfolio-cv-hub/
