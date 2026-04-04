@@ -19,6 +19,9 @@ class ApiClient {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
+        console.log('✓ Token attached:', token.substring(0, 20) + '...')
+      } else {
+        console.warn('⚠️ No token found in localStorage')
       }
       return config
     })
@@ -153,6 +156,78 @@ class ApiClient {
 
   async deleteCV(cvId: number): Promise<{ message: string }> {
     const response = await this.client.delete(`/api/candidate/cvs/${cvId}`)
+    return response.data
+  }
+
+  // Recruiter endpoints
+  async registerRecruiter(userdata: any, companydata: any): Promise<TokenResponse> {
+    const response = await this.client.post('/api/auth/register-recruiter', {
+      email: userdata.email,
+      password: userdata.password,
+      company_name: companydata.company_name,
+      website: companydata.website,
+      location: companydata.location,
+      description: companydata.description,
+      company_email: companydata.email,
+      phone: companydata.phone,
+    })
+    return response.data
+  }
+
+  async loginRecruiter(email: string, password: string): Promise<TokenResponse> {
+    const response = await this.client.post('/api/auth/login', {
+      email,
+      password,
+    })
+    return response.data
+  }
+
+  async getCompanyProfile() {
+    const response = await this.client.get('/api/recruiter/company/profile')
+    return response.data
+  }
+
+  async updateCompanyProfile(data: any) {
+    const response = await this.client.put('/api/recruiter/company/profile', data)
+    return response.data
+  }
+
+  async searchCandidates(
+    keyword?: string,
+    skill?: string,
+    experienceLevel?: string,
+    location?: string
+  ) {
+    const params = new URLSearchParams()
+    if (keyword) params.append('keyword', keyword)
+    if (skill) params.append('skill', skill)
+    if (experienceLevel) params.append('experience_level', experienceLevel)
+    if (location) params.append('location', location)
+    const response = await this.client.get(`/api/recruiter/candidates/search?${params}`)
+    return response.data
+  }
+
+  async sendJobInvitation(candidateId: number, jobTitle: string, message?: string) {
+    const response = await this.client.post('/api/recruiter/invitations/send', {
+      candidate_id: candidateId,
+      job_title: jobTitle,
+      message,
+    })
+    return response.data
+  }
+
+  async getJobInvitations() {
+    const response = await this.client.get('/api/recruiter/invitations')
+    return response.data
+  }
+
+  async updateJobInvitation(invitationId: number, status: string) {
+    const response = await this.client.put(`/api/recruiter/invitations/${invitationId}?status=${status}`)
+    return response.data
+  }
+
+  async deleteJobInvitation(invitationId: number) {
+    const response = await this.client.delete(`/api/recruiter/invitations/${invitationId}`)
     return response.data
   }
 }

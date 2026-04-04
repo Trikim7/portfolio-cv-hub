@@ -1,24 +1,30 @@
 # macOS
 .DS_Store
-.cursorrules
 
-# Python virtual environments
-venv/
+# Secrets and env files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
 .venv/
+venv/
+.pytest_cache/
 
 # Node.js
 node_modules/
-package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Secrets - only commit .env.example (no real passwords)
-.env
-
-# Build / Cache
+# Build outputs
 dist/
 build/
 .next/
-__pycache__/
-*.pyc
+coverage/
 
 # IDE
 .idea/
