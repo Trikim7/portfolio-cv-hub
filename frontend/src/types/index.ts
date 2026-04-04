@@ -70,3 +70,42 @@ export interface CandidateProfile {
   created_at: string
   updated_at: string
 }
+
+// Recruiter types
+export interface Company {
+  id: number
+  company_name: string
+  company_slug: string
+  industry?: string
+  website?: string
+  description?: string
+  logo_url?: string
+  location?: string
+  email?: string
+  phone?: string
+  status: 'pending' | 'approved' | 'rejected' | 'suspended'
+  created_at: string
+  updated_at: string
+}
+
+export interface JobInvitation {
+  id: number
+  company_id: number
+  candidate_id: number
+  job_title: string
+  message?: string
+  status: 'pending' | 'interested' | 'rejected' | 'withdrawn'
+  created_at: string
+  updated_at: string
+}
+
+export interface CandidateSearchResult {
+  id: number
+  user_id: number
+  full_name?: string
+  title?: string
+  bio?: string
+  profile_slug: string
+  avatar_url?: string
+  skills: string[]
+}
