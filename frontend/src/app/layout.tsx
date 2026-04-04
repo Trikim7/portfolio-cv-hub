@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
+import { AuthProvider } from '@/hooks/AuthContext'
 
 export const metadata: Metadata = {
   title: 'PORTFOLIO CV HUB',
@@ -15,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className="bg-gray-50">
-        <Navbar />
-        <main>{children}</main>
+        <AuthProvider>
+          <Navbar />
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   )

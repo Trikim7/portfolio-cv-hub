@@ -29,19 +29,13 @@ function DashboardContent() {
     <>
       {/* Top greeting bar */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-lg">👋</span>
             <span className="font-semibold text-lg">
               Hi, chào {profile.full_name || 'Ứng viên'}!
             </span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors text-sm backdrop-blur-sm border border-white/30"
-          >
-            🚪 Đăng xuất
-          </button>
         </div>
       </div>
 

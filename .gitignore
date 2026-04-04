@@ -1,6 +1,5 @@
 # macOS
 .DS_Store
-.cursorrules
 
 # Secrets and env files
 .env

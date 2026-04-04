@@ -29,6 +29,9 @@ class User(Base):
     candidate_profile = relationship(
         "CandidateProfile", back_populates="user", uselist=False
     )
+    company_profile = relationship(
+        "Company", back_populates="user", uselist=False
+    )
 
     class Config:
         from_attributes = True
