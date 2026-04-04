@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { apiClient } from '@/services/api'
 import { Toast, useToast } from '@/components/Toast'
+import { useAuth } from '@/hooks/AuthContext'
 
 export default function RecruiterLoginPage() {
   const router = useRouter()
+  const { checkAuth } = useAuth()
   const { toast, showToast, closeToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -25,8 +27,11 @@ export default function RecruiterLoginPage() {
       const response = await apiClient.login(email, password)
       localStorage.setItem('access_token', response.access_token)
       localStorage.setItem('token_type', response.token_type)
+      localStorage.setItem('role', response.user.role)
+      checkAuth()
+      window.dispatchEvent(new Event('login'))
       showToast('✓ Đăng nhập thành công!', 'success')
-      setTimeout(() => router.push('/recruiter/dashboard'), 1000)
+      setTimeout(() => router.push('/recruiter/dashboard'), 300)
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Đăng nhập thất bại', 'error')
     } finally {

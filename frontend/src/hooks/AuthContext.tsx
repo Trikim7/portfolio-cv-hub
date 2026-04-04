@@ -20,10 +20,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('access_token')
       const userRole = localStorage.getItem('role')
-      const loggedIn = !!token
-      setIsLoggedIn(loggedIn)
-      setRole(userRole)
-      console.log('✓ Auth checked:', { isLoggedIn: loggedIn, role: userRole })
+      // Keep role in sync with token: stale "role" without a token caused
+      // recruiter pages to call APIs with no Authorization header (401).
+      if (!token) {
+        if (userRole) {
+          localStorage.removeItem('role')
+        }
+        setIsLoggedIn(false)
+        setRole(null)
+        console.log('✓ Auth checked:', { isLoggedIn: false, role: null })
+      } else {
+        setIsLoggedIn(true)
+        setRole(userRole)
+        console.log('✓ Auth checked:', { isLoggedIn: true, role: userRole })
+      }
     }
     setLoading(false)
   }, [])
