@@ -29,6 +29,7 @@ class CandidateProfile(Base):
     bio = Column(Text, nullable=True)  # Short description
     profile_slug = Column(String(255), unique=True, nullable=True, index=True)  # URL slug
     is_public = Column(Boolean, default=False)  # Public portfolio visibility
+    views = Column(Integer, default=0)  # Number of profile views
     avatar_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

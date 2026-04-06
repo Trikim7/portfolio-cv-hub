@@ -38,7 +38,14 @@ export default function RecruiterDashboardPage() {
 
       try {
         console.log('✓ User is recruiter, fetching company profile...')
-        await fetchCompanyProfile()
+        const companyData = await fetchCompanyProfile()
+        
+        if (companyData && companyData.status === 'pending') {
+          console.log('⏳ Company is pending approval, redirecting')
+          router.push('/recruiter/waiting-approval')
+          return
+        }
+
         console.log('✓ Auth check passed')
         setIsAuthorized(true)
       } catch (error) {

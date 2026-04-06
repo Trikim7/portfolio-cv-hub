@@ -1,0 +1,262 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { apiClient } from '@/services/api'
+import { AdminCompany } from '@/types'
+
+export default function AdminCompaniesPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [companies, setCompanies] = useState<AdminCompany[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<number | null>(null)
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '')
+  const [search, setSearch] = useState('')
+
+  const PAGE_SIZE = 15
+
+  const fetchCompanies = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await apiClient.getAdminCompanies({
+        page,
+        page_size: PAGE_SIZE,
+        status: statusFilter || undefined,
+        search: search || undefined,
+      })
+      setCompanies(data.companies)
+      setTotal(data.total)
+    } catch (err: any) {
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        router.push('/login')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [page, statusFilter, search, router])
+
+  useEffect(() => {
+    const role = localStorage.getItem('role')
+    if (role !== 'admin') {
+      router.push('/login')
+      return
+    }
+    fetchCompanies()
+  }, [fetchCompanies, router])
+
+  const handleStatusChange = async (companyId: number, newStatus: string) => {
+    setActionLoading(companyId)
+    try {
+      await apiClient.updateCompanyStatus(companyId, newStatus)
+      await fetchCompanies()
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Thao tác thất bại')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const totalPages = Math.ceil(total / PAGE_SIZE)
+
+  const getStatusBadge = (status: string) => {
+    const config: Record<string, { bg: string; label: string }> = {
+      pending: { bg: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30', label: '⏳ Chờ duyệt' },
+      approved: { bg: 'bg-green-600/20 text-green-400 border-green-600/30', label: '✅ Đã duyệt' },
+      rejected: { bg: 'bg-red-600/20 text-red-400 border-red-600/30', label: '❌ Từ chối' },
+      suspended: { bg: 'bg-gray-600/20 text-gray-400 border-gray-600/30', label: '🚫 Tạm khóa' },
+    }
+    const c = config[status] || config.pending
+    return (
+      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${c.bg}`}>
+        {c.label}
+      </span>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">🏢 Quản lý Doanh nghiệp</h1>
+            <p className="text-gray-400">Tổng cộng {total} doanh nghiệp</p>
+          </div>
+          <button
+            onClick={() => router.push('/admin/dashboard')}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-sm"
+          >
+            ← Về Dashboard
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Tìm kiếm</label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                placeholder="Tìm theo tên công ty..."
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Trạng thái</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Tất cả</option>
+                <option value="pending">Chờ duyệt</option>
+                <option value="approved">Đã duyệt</option>
+                <option value="rejected">Từ chối</option>
+                <option value="suspended">Tạm khóa</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => { setStatusFilter(''); setSearch(''); setPage(1) }}
+                className="w-full px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition"
+              >
+                🔄 Xóa bộ lọc
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Company Cards */}
+        {loading ? (
+          <div className="p-12 text-center text-gray-400">
+            <div className="animate-spin text-3xl mb-3">⚙️</div>
+            Đang tải...
+          </div>
+        ) : companies.length === 0 ? (
+          <div className="bg-gray-800 rounded-xl p-12 text-center text-gray-400 border border-gray-700">
+            Không tìm thấy doanh nghiệp nào
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {companies.map((company) => (
+              <div
+                key={company.id}
+                className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  {/* Company Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold">{company.company_name}</h3>
+                      {getStatusBadge(company.status)}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-400">
+                      {company.location && (
+                        <p>📍 {company.location}</p>
+                      )}
+                      {company.website && (
+                        <p>🌐 {company.website}</p>
+                      )}
+                      {company.email && (
+                        <p>📧 {company.email}</p>
+                      )}
+                      {company.phone && (
+                        <p>📞 {company.phone}</p>
+                      )}
+                      <p>📅 Đăng ký: {new Date(company.created_at).toLocaleDateString('vi-VN')}</p>
+                    </div>
+                    {company.description && (
+                      <p className="mt-2 text-sm text-gray-500 line-clamp-2">{company.description}</p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2 md:flex-col md:min-w-[140px]">
+                    {company.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(company.id, 'approved')}
+                          disabled={actionLoading === company.id}
+                          className="flex-1 md:w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+                        >
+                          {actionLoading === company.id ? '...' : '✅ Phê duyệt'}
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(company.id, 'rejected')}
+                          disabled={actionLoading === company.id}
+                          className="flex-1 md:w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+                        >
+                          {actionLoading === company.id ? '...' : '❌ Từ chối'}
+                        </button>
+                      </>
+                    )}
+                    {company.status === 'approved' && (
+                      <button
+                        onClick={() => handleStatusChange(company.id, 'suspended')}
+                        disabled={actionLoading === company.id}
+                        className="flex-1 md:w-full px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+                      >
+                        {actionLoading === company.id ? '...' : '🚫 Tạm khóa'}
+                      </button>
+                    )}
+                    {company.status === 'rejected' && (
+                      <button
+                        onClick={() => handleStatusChange(company.id, 'approved')}
+                        disabled={actionLoading === company.id}
+                        className="flex-1 md:w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+                      >
+                        {actionLoading === company.id ? '...' : '✅ Phê duyệt lại'}
+                      </button>
+                    )}
+                    {company.status === 'suspended' && (
+                      <button
+                        onClick={() => handleStatusChange(company.id, 'approved')}
+                        disabled={actionLoading === company.id}
+                        className="flex-1 md:w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+                      >
+                        {actionLoading === company.id ? '...' : '🔓 Mở khóa'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 bg-gray-800 rounded-xl px-4 py-3 border border-gray-700">
+            <p className="text-sm text-gray-400">
+              Trang {page} / {totalPages} ({total} kết quả)
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm disabled:opacity-50 transition"
+              >
+                ← Trước
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm disabled:opacity-50 transition"
+              >
+                Sau →
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

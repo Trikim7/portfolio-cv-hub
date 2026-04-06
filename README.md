@@ -46,7 +46,7 @@ pip install -r requirements.txt
 
 Database SQLite sẽ được tự động tạo ở lần chạy đầu tiên.
 ```bash
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 Server backend sẽ chạy tại: **http://localhost:8000**  

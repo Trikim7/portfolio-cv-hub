@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/AuthContext'
 export default function RecruiterSearchPage() {
   const router = useRouter()
   const { role, loading: authLoading } = useAuth()
-  const { company, fetchCompanyProfile, loading: recruiterLoading } = useRecruiter()
+  const { fetchCompanyProfile, loading: recruiterLoading } = useRecruiter()
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
@@ -38,7 +38,14 @@ export default function RecruiterSearchPage() {
 
       try {
         console.log('✓ User is recruiter, fetching company profile...')
-        await fetchCompanyProfile()
+        const companyData = await fetchCompanyProfile()
+        
+        if (companyData && companyData.status === 'pending') {
+          console.log('⏳ Company is pending approval, redirecting')
+          router.push('/recruiter/waiting-approval')
+          return
+        }
+
         setIsAuthorized(true)
       } catch (error) {
         // Not authenticated, redirect to login

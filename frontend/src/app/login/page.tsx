@@ -4,20 +4,21 @@ import { useState } from 'react'
 import Link from 'next/link'
 import LoginForm from '@/components/auth/LoginForm'
 import RecruiterLoginForm from '@/components/auth/RecruiterLoginForm'
+import AdminLoginForm from '@/components/auth/AdminLoginForm'
 
 export default function LoginPage() {
-  const [role, setRole] = useState<'candidate' | 'recruiter' | null>(null)
+  const [role, setRole] = useState<'candidate' | 'recruiter' | 'admin' | null>(null)
 
   if (role === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white p-12 rounded-lg shadow-xl max-w-2xl w-full text-center space-y-8">
+        <div className="bg-white p-12 rounded-lg shadow-xl max-w-3xl w-full text-center space-y-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">🔐 Đăng nhập</h1>
             <p className="text-gray-600 text-lg">Bạn là ai?</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Candidate Option */}
             <button
               onClick={() => setRole('candidate')}
@@ -27,8 +28,8 @@ export default function LoginPage() {
               <h2 className="text-2xl font-bold text-blue-600 mb-2 group-hover:text-blue-700">
                 Ứng viên
               </h2>
-              <p className="text-gray-600">
-                Đăng nhập để quản lý hồ sơ, portfolio và xem lời mời tuyển dụng
+              <p className="text-gray-600 text-sm">
+                Quản lý hồ sơ, portfolio và xem lời mời tuyển dụng
               </p>
             </button>
 
@@ -41,8 +42,22 @@ export default function LoginPage() {
               <h2 className="text-2xl font-bold text-green-600 mb-2 group-hover:text-green-700">
                 Doanh nghiệp
               </h2>
-              <p className="text-gray-600">
-                Đăng nhập để tìm kiếm ứng viên và gửi lời mời tuyển dụng
+              <p className="text-gray-600 text-sm">
+                Tìm kiếm ứng viên và gửi lời mời tuyển dụng
+              </p>
+            </button>
+
+            {/* Admin Option */}
+            <button
+              onClick={() => setRole('admin')}
+              className="p-8 border-2 border-purple-300 rounded-lg hover:bg-purple-50 transition group"
+            >
+              <div className="text-5xl mb-4">🛡️</div>
+              <h2 className="text-2xl font-bold text-purple-600 mb-2 group-hover:text-purple-700">
+                Quản trị viên
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Quản lý người dùng, duyệt doanh nghiệp và thống kê hệ thống
               </p>
             </button>
           </div>
@@ -70,7 +85,9 @@ export default function LoginPage() {
           ← Quay lại chọn vai trò
         </button>
 
-        {role === 'candidate' ? <LoginForm /> : <RecruiterLoginForm />}
+        {role === 'candidate' && <LoginForm />}
+        {role === 'recruiter' && <RecruiterLoginForm />}
+        {role === 'admin' && <AdminLoginForm />}
       </div>
     </div>
   )

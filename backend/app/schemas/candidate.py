@@ -135,6 +135,8 @@ class CandidateProfileResponse(CandidateProfileBase):
     user_id: int
     profile_slug: Optional[str]
     avatar_url: Optional[str]
+    contact_email: Optional[str] = None
+    views: int = 0
     skills: List[SkillResponse] = []
     experiences: List[ExperienceResponse] = []
     projects: List[ProjectResponse] = []

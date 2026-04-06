@@ -96,9 +96,12 @@ async def register_recruiter(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+from fastapi import Request
+
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(authorization: str = None, db: Session = Depends(get_db)):
+async def get_current_user(request: Request, db: Session = Depends(get_db)):
     """Get current user info"""
+    authorization = request.headers.get("Authorization")
     print(f"DEBUG: /me endpoint - Authorization: {authorization}")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
@@ -114,8 +117,9 @@ async def get_current_user(authorization: str = None, db: Session = Depends(get_
 
 
 @router.post("/test-role-check")
-async def test_role_check(authorization: str = None, db: Session = Depends(get_db)):
+async def test_role_check(request: Request, db: Session = Depends(get_db)):
     """Test endpoint to check user role and permission"""
+    authorization = request.headers.get("Authorization")
     print(f"DEBUG: /test-role-check - Authorization: {authorization}")
     if not authorization or not authorization.startswith("Bearer "):
         return {"status": "no_token", "detail": "No authorization header"}

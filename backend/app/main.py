@@ -1,11 +1,48 @@
 """FastAPI application factory"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, candidate, recruiter
+from app.api import auth, candidate, recruiter, admin
 from app.db.database import Base, engine
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+
+
+# ─── Auto-seed default admin account ──────────────────────────
+def _seed_admin():
+    """Create admin account on first launch if it doesn't exist yet."""
+    from app.db.database import SessionLocal
+    from app.models.user import User, UserRole
+    from app.core.security import get_password_hash
+
+    ADMIN_EMAIL = "admin@portfoliocvhub.com"
+    ADMIN_PASSWORD = "admin123"
+
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.email == ADMIN_EMAIL).first()
+        if not existing:
+            admin_user = User(
+                email=ADMIN_EMAIL,
+                hashed_password=get_password_hash(ADMIN_PASSWORD),
+                role=UserRole.ADMIN,
+                is_active=True,
+            )
+            db.add(admin_user)
+            db.commit()
+            print(f"✅ Default admin created: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
+        else:
+            # Ensure role is admin
+            if existing.role != UserRole.ADMIN:
+                existing.role = UserRole.ADMIN
+                db.commit()
+            print(f"✅ Admin account ready: {ADMIN_EMAIL}")
+    finally:
+        db.close()
+
+
+_seed_admin()
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -27,6 +64,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(candidate.router)
 app.include_router(recruiter.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")
