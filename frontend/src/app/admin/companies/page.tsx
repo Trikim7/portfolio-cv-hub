@@ -66,10 +66,10 @@ export default function AdminCompaniesPage() {
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { bg: string; label: string }> = {
-      pending: { bg: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30', label: '⏳ Chờ duyệt' },
-      approved: { bg: 'bg-green-600/20 text-green-400 border-green-600/30', label: '✅ Đã duyệt' },
-      rejected: { bg: 'bg-red-600/20 text-red-400 border-red-600/30', label: '❌ Từ chối' },
-      suspended: { bg: 'bg-gray-600/20 text-gray-400 border-gray-600/30', label: '🚫 Tạm khóa' },
+      pending: { bg: 'bg-yellow-50 text-yellow-800 border-yellow-200', label: '⏳ Chờ duyệt' },
+      approved: { bg: 'bg-green-50 text-green-800 border-green-200', label: '✅ Đã duyệt' },
+      rejected: { bg: 'bg-red-50 text-red-800 border-red-200', label: '❌ Từ chối' },
+      suspended: { bg: 'bg-gray-100 text-gray-800 border-gray-300', label: '🚫 Tạm khóa' },
     }
     const c = config[status] || config.pending
     return (
@@ -80,41 +80,41 @@ export default function AdminCompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">🏢 Quản lý Doanh nghiệp</h1>
-            <p className="text-gray-400">Tổng cộng {total} doanh nghiệp</p>
+            <h1 className="text-3xl font-extrabold mb-2 text-gray-900">🏢 Quản lý Doanh nghiệp</h1>
+            <p className="text-gray-500 font-medium">Tổng cộng {total} doanh nghiệp</p>
           </div>
           <button
             onClick={() => router.push('/admin/dashboard')}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-sm"
+            className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 shadow-sm rounded-lg transition text-sm font-medium text-gray-700"
           >
             ← Về Dashboard
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+        <div className="bg-white shadow-sm rounded-xl p-4 mb-6 border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Tìm kiếm</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Tìm kiếm</label>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1) }}
                 placeholder="Tìm theo tên công ty..."
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Trạng thái</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Trạng thái</label>
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
               >
                 <option value="">Tất cả</option>
                 <option value="pending">Chờ duyệt</option>
@@ -126,7 +126,7 @@ export default function AdminCompaniesPage() {
             <div className="flex items-end">
               <button
                 onClick={() => { setStatusFilter(''); setSearch(''); setPage(1) }}
-                className="w-full px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition"
+                className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium transition"
               >
                 🔄 Xóa bộ lọc
               </button>
@@ -136,12 +136,12 @@ export default function AdminCompaniesPage() {
 
         {/* Company Cards */}
         {loading ? (
-          <div className="p-12 text-center text-gray-400">
+          <div className="p-12 text-center text-gray-500">
             <div className="animate-spin text-3xl mb-3">⚙️</div>
             Đang tải...
           </div>
         ) : companies.length === 0 ? (
-          <div className="bg-gray-800 rounded-xl p-12 text-center text-gray-400 border border-gray-700">
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-500 font-medium border border-gray-200">
             Không tìm thấy doanh nghiệp nào
           </div>
         ) : (
@@ -149,16 +149,16 @@ export default function AdminCompaniesPage() {
             {companies.map((company) => (
               <div
                 key={company.id}
-                className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition"
+                className="bg-white rounded-xl p-6 border border-gray-200 hover:border-gray-300 shadow-sm transition"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Company Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold">{company.company_name}</h3>
+                      <h3 className="text-xl font-bold text-gray-900">{company.company_name}</h3>
                       {getStatusBadge(company.status)}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-400">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 font-medium">
                       {company.location && (
                         <p>📍 {company.location}</p>
                       )}
@@ -234,22 +234,22 @@ export default function AdminCompaniesPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 bg-gray-800 rounded-xl px-4 py-3 border border-gray-700">
-            <p className="text-sm text-gray-400">
-              Trang {page} / {totalPages} ({total} kết quả)
+          <div className="flex items-center justify-between mt-6 bg-white shadow-sm rounded-xl px-4 py-3 border border-gray-200">
+            <p className="text-sm font-medium text-gray-600">
+              Trang {page} / {totalPages} <span className="text-gray-400">({total} kết quả)</span>
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm disabled:opacity-50 transition"
+                className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50 transition"
               >
                 ← Trước
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm disabled:opacity-50 transition"
+                className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50 transition"
               >
                 Sau →
               </button>

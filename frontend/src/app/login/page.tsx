@@ -14,7 +14,9 @@ export default function LoginPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white p-12 rounded-lg shadow-xl max-w-3xl w-full text-center space-y-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">🔐 Đăng nhập</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              🔐 Đăng nhập
+            </h1>
             <p className="text-gray-600 text-lg">Bạn là ai?</p>
           </div>
 
@@ -57,7 +59,7 @@ export default function LoginPage() {
                 Quản trị viên
               </h2>
               <p className="text-gray-600 text-sm">
-                Quản lý người dùng, duyệt doanh nghiệp và thống kê hệ thống
+                Quản lý hệ thống và duyệt doanh nghiệp
               </p>
             </button>
           </div>

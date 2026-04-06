@@ -68,9 +68,9 @@ export default function AdminUsersPage() {
 
   const getRoleBadge = (role: string) => {
     const badges: Record<string, string> = {
-      admin: 'bg-purple-600 text-white',
-      candidate: 'bg-blue-600 text-white',
-      recruiter: 'bg-green-600 text-white',
+      admin: 'bg-purple-100 text-purple-800 border border-purple-200',
+      candidate: 'bg-blue-100 text-blue-800 border border-blue-200',
+      recruiter: 'bg-green-100 text-green-800 border border-green-200',
     }
     const labels: Record<string, string> = {
       admin: 'Admin',
@@ -85,41 +85,41 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">👥 Quản lý người dùng</h1>
-            <p className="text-gray-400">Tổng cộng {total} người dùng</p>
+            <h1 className="text-3xl font-extrabold mb-2 text-gray-900">👥 Quản lý người dùng</h1>
+            <p className="text-gray-500 font-medium">Tổng cộng {total} người dùng</p>
           </div>
           <button
             onClick={() => router.push('/admin/dashboard')}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-sm"
+            className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 shadow-sm rounded-lg transition text-sm font-medium text-gray-700"
           >
             ← Về Dashboard
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+        <div className="bg-white shadow-sm rounded-xl p-4 mb-6 border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Tìm kiếm</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Tìm kiếm</label>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1) }}
                 placeholder="Tìm theo email..."
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Vai trò</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Vai trò</label>
               <select
                 value={roleFilter}
                 onChange={(e) => { setRoleFilter(e.target.value); setPage(1) }}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
               >
                 <option value="">Tất cả</option>
                 <option value="candidate">Ứng viên</option>
@@ -128,11 +128,11 @@ export default function AdminUsersPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Trạng thái</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Trạng thái</label>
               <select
                 value={activeFilter}
                 onChange={(e) => { setActiveFilter(e.target.value); setPage(1) }}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
               >
                 <option value="">Tất cả</option>
                 <option value="true">Hoạt động</option>
@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
             <div className="flex items-end">
               <button
                 onClick={() => { setRoleFilter(''); setActiveFilter(''); setSearch(''); setPage(1) }}
-                className="w-full px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition"
+                className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium transition"
               >
                 🔄 Xóa bộ lọc
               </button>
@@ -151,49 +151,49 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-gray-400">
+            <div className="p-12 text-center text-gray-500">
               <div className="animate-spin text-3xl mb-3">⚙️</div>
               Đang tải...
             </div>
           ) : users.length === 0 ? (
-            <div className="p-12 text-center text-gray-400">
+            <div className="p-12 text-center text-gray-500 font-medium">
               Không tìm thấy người dùng nào
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700 bg-gray-750">
-                    <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wider">ID</th>
-                    <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wider">Vai trò</th>
-                    <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wider">Trạng thái</th>
-                    <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wider">Ngày tạo</th>
-                    <th className="px-4 py-3 text-center text-xs text-gray-400 uppercase tracking-wider">Hành động</th>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-gray-600 uppercase">ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-gray-600 uppercase">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-gray-600 uppercase">Vai trò</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-gray-600 uppercase">Trạng thái</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-gray-600 uppercase">Ngày tạo</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold tracking-wider text-gray-600 uppercase">Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition">
-                      <td className="px-4 py-3 text-sm text-gray-300">#{user.id}</td>
-                      <td className="px-4 py-3 text-sm font-medium">{user.email}</td>
+                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                      <td className="px-4 py-3 text-sm text-gray-500 font-medium">#{user.id}</td>
+                      <td className="px-4 py-3 text-sm font-bold text-gray-900">{user.email}</td>
                       <td className="px-4 py-3">{getRoleBadge(user.role)}</td>
                       <td className="px-4 py-3">
                         {user.is_active ? (
-                          <span className="inline-flex items-center gap-1 text-green-400 text-sm">
-                            <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                          <span className="inline-flex items-center gap-1 text-green-700 font-medium text-sm bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                             Hoạt động
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-red-400 text-sm">
-                            <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                          <span className="inline-flex items-center gap-1 text-red-700 font-medium text-sm bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                             Đã khóa
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-400">
+                      <td className="px-4 py-3 text-sm text-gray-500">
                         {new Date(user.created_at).toLocaleDateString('vi-VN')}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -224,22 +224,22 @@ export default function AdminUsersPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700">
-              <p className="text-sm text-gray-400">
-                Trang {page} / {totalPages} ({total} kết quả)
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <p className="text-sm font-medium text-gray-600">
+                Trang {page} / {totalPages} <span className="text-gray-400">({total} kết quả)</span>
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm disabled:opacity-50 transition"
+                  className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50 transition"
                 >
                   ← Trước
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm disabled:opacity-50 transition"
+                  className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50 transition"
                 >
                   Sau →
                 </button>

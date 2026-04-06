@@ -18,9 +18,10 @@ export default function Navbar() {
   }
 
   const renderNavLinks = (mobile = false) => {
+    const hoverColor = role === 'admin' ? 'hover:text-purple-600' : 'hover:text-blue-600';
     const linkClass = mobile
-      ? 'block text-gray-700 hover:text-blue-600 font-medium py-2'
-      : 'text-gray-700 hover:text-blue-600 font-medium'
+      ? `block text-gray-700 ${hoverColor} font-medium py-2 transition-colors`
+      : `text-gray-700 ${hoverColor} font-medium transition-colors`;
 
     if (!isLoggedIn) {
       return (
@@ -87,18 +88,18 @@ export default function Navbar() {
   }
 
   return (
-    <nav className={`${role === 'admin' ? 'bg-gray-900' : 'bg-white'} shadow-md sticky top-0 z-50`}>
+    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href="/" className={`text-2xl font-bold ${role === 'admin' ? 'text-purple-400' : 'text-blue-600'}`}>
+          <Link href={role === 'admin' ? '/admin/dashboard' : '/'} className="text-2xl font-extrabold text-blue-600">
             {role === 'admin' ? '🛡️ Admin Panel' : 'Portfolio CV Hub'}
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-6 items-center">
             {!loading && (
-              <div className={`flex gap-6 items-center ${role === 'admin' ? '[&_a]:text-gray-300 [&_a:hover]:text-purple-400' : ''}`}>
+              <div className={`flex gap-6 items-center ${role === 'admin' ? '[&_a]:text-gray-700 [&_a:hover]:text-purple-600' : ''}`}>
                 {renderNavLinks(false)}
               </div>
             )}
@@ -107,7 +108,7 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`md:hidden text-2xl ${role === 'admin' ? 'text-white' : ''}`}
+            className="md:hidden text-2xl text-gray-800"
           >
             ☰
           </button>
