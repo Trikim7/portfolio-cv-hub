@@ -151,6 +151,8 @@ class AdminRepository:
         total_recruiters = (
             db.query(func.count(User.id))
             .filter(User.role == UserRole.RECRUITER)
+            .join(Company, Company.user_id == User.id)
+            .filter(Company.status == CompanyStatus.APPROVED)
             .scalar()
         )
         total_companies = db.query(func.count(Company.id)).scalar()

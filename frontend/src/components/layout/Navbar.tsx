@@ -2,13 +2,19 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/AuthContext'
 
 export default function Navbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const { isLoggedIn, role, loading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Admin navbar only shows on /admin/* pages
+  const isAdminPage = pathname.startsWith('/admin')
+  const effectiveRole = (role === 'admin' && !isAdminPage) ? null : role
+  const effectiveLoggedIn = (role === 'admin' && !isAdminPage) ? false : isLoggedIn
 
   const handleLogout = async () => {
     localStorage.removeItem('access_token')
@@ -18,21 +24,23 @@ export default function Navbar() {
   }
 
   const renderNavLinks = (mobile = false) => {
-    const hoverColor = role === 'admin' ? 'hover:text-purple-600' : 'hover:text-blue-600';
+    const hoverColor = effectiveRole === 'admin' ? 'hover:text-purple-600' : 'hover:text-blue-600';
     const linkClass = mobile
       ? `block text-gray-700 ${hoverColor} font-medium py-2 transition-colors`
       : `text-gray-700 ${hoverColor} font-medium transition-colors`;
 
-    if (!isLoggedIn) {
+    if (!effectiveLoggedIn) {
+      const showHome = pathname === '/login' || pathname === '/register'
       return (
         <>
+          {showHome && <Link href="/" className={linkClass}>🏠 Trang chủ</Link>}
           <Link href="/register" className={linkClass}>📝 Đăng ký</Link>
           <Link href="/login" className={linkClass}>🔐 Đăng nhập</Link>
         </>
       )
     }
 
-    if (role === 'admin') {
+    if (effectiveRole === 'admin') {
       return (
         <>
           <Link href="/admin/dashboard" className={linkClass}>📊 Dashboard</Link>
@@ -51,7 +59,7 @@ export default function Navbar() {
       )
     }
 
-    if (role === 'recruiter') {
+    if (effectiveRole === 'recruiter') {
       return (
         <>
           <Link href="/recruiter/dashboard" className={linkClass}>📊 Dashboard</Link>
@@ -92,14 +100,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href={role === 'admin' ? '/admin/dashboard' : '/'} className="text-2xl font-extrabold text-blue-600">
-            {role === 'admin' ? '🛡️ Admin Panel' : 'Portfolio CV Hub'}
+          <Link href={effectiveRole === 'admin' ? '/admin/dashboard' : '/'} className="text-2xl font-extrabold text-blue-600">
+            {effectiveRole === 'admin' ? '🛡️ Admin Panel' : 'Portfolio CV Hub'}
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-6 items-center">
             {!loading && (
-              <div className={`flex gap-6 items-center ${role === 'admin' ? '[&_a]:text-gray-700 [&_a:hover]:text-purple-600' : ''}`}>
+              <div className={`flex gap-6 items-center ${effectiveRole === 'admin' ? '[&_a]:text-gray-700 [&_a:hover]:text-purple-600' : ''}`}>
                 {renderNavLinks(false)}
               </div>
             )}

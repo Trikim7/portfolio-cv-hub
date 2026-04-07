@@ -163,7 +163,7 @@ export default function AdminCompaniesPage() {
                         <p>📍 {company.location}</p>
                       )}
                       {company.website && (
-                        <p>🌐 {company.website}</p>
+                        <p>🌐 <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline transition-colors">{company.website}</a></p>
                       )}
                       {company.email && (
                         <p>📧 {company.email}</p>

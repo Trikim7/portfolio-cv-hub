@@ -1,42 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    const role = localStorage.getItem('role')
-    
-    if (token) {
-      setIsLoggedIn(true)
-      // Redirect based on role
-      if (role === 'recruiter') {
-        router.push('/recruiter/dashboard')
-      } else {
-        router.push('/dashboard')
-      }
-    }
-    setIsLoading(false)
-  }, [router])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
-        <p className="text-gray-600">Đang tải...</p>
-      </div>
-    )
-  }
-
-  if (isLoggedIn) {
-    return null // Will redirect via useEffect
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
       <div className="max-w-2xl mx-auto px-4 text-center space-y-8">
