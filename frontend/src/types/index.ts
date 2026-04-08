@@ -129,6 +129,7 @@ export interface AdminUser {
   email: string
   role: 'candidate' | 'recruiter' | 'admin'
   is_active: boolean
+  company_status?: 'pending' | 'approved' | 'rejected' | 'suspended' | null
   created_at: string
   updated_at?: string
 }

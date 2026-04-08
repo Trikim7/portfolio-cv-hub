@@ -11,10 +11,13 @@ export default function Navbar() {
   const { isLoggedIn, role, loading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // Admin navbar only shows on /admin/* pages
   const isAdminPage = pathname.startsWith('/admin')
-  const effectiveRole = (role === 'admin' && !isAdminPage) ? null : role
-  const effectiveLoggedIn = (role === 'admin' && !isAdminPage) ? false : isLoggedIn
+
+  // Admin area uses its own sidebar layout — hide the global Navbar entirely
+  if (isAdminPage) return null
+
+  const effectiveRole = role === 'admin' ? null : role
+  const effectiveLoggedIn = role === 'admin' ? false : isLoggedIn
 
   const handleLogout = async () => {
     localStorage.removeItem('access_token')
@@ -36,25 +39,6 @@ export default function Navbar() {
           {showHome && <Link href="/" className={linkClass}>🏠 Trang chủ</Link>}
           <Link href="/register" className={linkClass}>📝 Đăng ký</Link>
           <Link href="/login" className={linkClass}>🔐 Đăng nhập</Link>
-        </>
-      )
-    }
-
-    if (effectiveRole === 'admin') {
-      return (
-        <>
-          <Link href="/admin/dashboard" className={linkClass}>📊 Dashboard</Link>
-          <Link href="/admin/users" className={linkClass}>👥 Người dùng</Link>
-          <Link href="/admin/companies" className={linkClass}>🏢 Doanh nghiệp</Link>
-          <button
-            onClick={handleLogout}
-            className={mobile
-              ? 'w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition'
-              : 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition'
-            }
-          >
-            🚪 Đăng xuất
-          </button>
         </>
       )
     }
@@ -100,14 +84,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href={effectiveRole === 'admin' ? '/admin/dashboard' : '/'} className="text-2xl font-extrabold text-blue-600">
-            {effectiveRole === 'admin' ? '🛡️ Admin Panel' : 'Portfolio CV Hub'}
+          <Link href="/" className="text-2xl font-extrabold text-blue-600">
+            Portfolio CV Hub
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-6 items-center">
             {!loading && (
-              <div className={`flex gap-6 items-center ${effectiveRole === 'admin' ? '[&_a]:text-gray-700 [&_a:hover]:text-purple-600' : ''}`}>
+              <div className="flex gap-6 items-center">
                 {renderNavLinks(false)}
               </div>
             )}

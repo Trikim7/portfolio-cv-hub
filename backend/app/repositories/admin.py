@@ -1,5 +1,5 @@
 """Admin data access layer"""
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional
 from app.models.user import User, UserRole
@@ -21,7 +21,7 @@ class AdminRepository:
         search: Optional[str] = None,
     ) -> List[User]:
         """Get paginated list of users with optional filters"""
-        query = db.query(User)
+        query = db.query(User).options(joinedload(User.company_profile))
 
         if role:
             try:

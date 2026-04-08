@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: cvhub-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/portfolio_cv_hub.db:/app/portfolio_cv_hub.db
+      - ./backend/uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: cvhub-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy

@@ -25,6 +25,7 @@ class AdminUserResponse(BaseModel):
     email: str
     role: UserRole
     is_active: bool
+    company_status: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

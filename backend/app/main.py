@@ -1,11 +1,14 @@
 """FastAPI application factory"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from alembic.config import Config
+from alembic import command
 from app.api import auth, candidate, recruiter, admin
 from app.db.database import Base, engine
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Run Alembic migrations on startup (creates/updates tables automatically)
+_alembic_cfg = Config("alembic.ini")
+command.upgrade(_alembic_cfg, "head")
 
 
 # ─── Auto-seed default admin account ──────────────────────────

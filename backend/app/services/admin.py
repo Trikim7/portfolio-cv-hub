@@ -35,10 +35,27 @@ class AdminService:
     ):
         AdminService._require_admin(current_user)
         skip = (page - 1) * page_size
-        users = AdminRepository.get_all_users(
+        users_raw = AdminRepository.get_all_users(
             db, skip=skip, limit=page_size, role=role, is_active=is_active, search=search
         )
         total = AdminRepository.count_users(db, role=role, is_active=is_active, search=search)
+
+        users = []
+        for u in users_raw:
+            users.append({
+                "id": u.id,
+                "email": u.email,
+                "role": u.role,
+                "is_active": u.is_active,
+                "company_status": (
+                    u.company_profile.status.value
+                    if u.role == UserRole.RECRUITER and u.company_profile
+                    else None
+                ),
+                "created_at": u.created_at,
+                "updated_at": u.updated_at,
+            })
+
         return {
             "users": users,
             "total": total,
