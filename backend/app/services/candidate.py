@@ -59,8 +59,18 @@ class CandidateService:
 
     @staticmethod
     def get_public_profile(db: Session, profile_slug: str) -> Optional[CandidateProfile]:
-        """Get public profile by slug"""
-        return CandidateProfileRepository.get_profile_by_slug(db, profile_slug)
+        """Get public profile by slug with user email and increment views"""
+        profile = CandidateProfileRepository.get_profile_by_slug(db, profile_slug)
+        if profile:
+            # Increment views
+            profile.views = (profile.views or 0) + 1
+            db.commit()
+            db.refresh(profile)
+            
+            if profile.user:
+                # Manually attach email for response schema
+                profile.contact_email = profile.user.email
+        return profile
 
     # Skill methods
     @staticmethod

@@ -42,13 +42,17 @@ class AuthService:
         user = UserRepository.get_user_by_email(db, user_data.email)
         
         if not user:
-            raise ValueError(f"User with email {user_data.email} not found")
+            raise ValueError("Email không tồn tại trong hệ thống. Vui lòng kiểm tra lại.")
 
         if not verify_password(user_data.password, user.hashed_password):
-            raise ValueError("Invalid password")
+            raise ValueError("Mật khẩu không chính xác.")
 
         if not user.is_active:
-            raise ValueError("User account is inactive")
+            if user.role == UserRole.RECRUITER and user.company_profile:
+                from app.models.recruiter import CompanyStatus
+                if user.company_profile.status == CompanyStatus.REJECTED:
+                    raise ValueError("Yêu cầu đăng ký doanh nghiệp của bạn đã bị từ chối. Vui lòng liên hệ Admin (admin@portfoliocvhub.com) để biết thêm chi tiết.")
+            raise ValueError("Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ Admin (admin@portfoliocvhub.com) để được hỗ trợ.")
 
         # Create access token
         access_token = create_access_token(

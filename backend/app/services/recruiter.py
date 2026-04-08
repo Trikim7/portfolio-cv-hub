@@ -33,7 +33,7 @@ class RecruiterService:
             location=company_data.location,
             email=company_data.email,
             phone=company_data.phone,
-            status=CompanyStatus.APPROVED,
+            status=CompanyStatus.PENDING,
         )
 
     @staticmethod

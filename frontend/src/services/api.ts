@@ -230,6 +230,59 @@ class ApiClient {
     const response = await this.client.delete(`/api/recruiter/invitations/${invitationId}`)
     return response.data
   }
+
+  // ─── Admin endpoints ───────────────────────────────────────────
+  async getAdminStats() {
+    const response = await this.client.get('/api/admin/stats')
+    return response.data
+  }
+
+  async getAdminUsers(params?: {
+    page?: number
+    page_size?: number
+    role?: string
+    is_active?: boolean
+    search?: string
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', String(params.page))
+    if (params?.page_size) queryParams.append('page_size', String(params.page_size))
+    if (params?.role) queryParams.append('role', params.role)
+    if (params?.is_active !== undefined) queryParams.append('is_active', String(params.is_active))
+    if (params?.search) queryParams.append('search', params.search)
+    const response = await this.client.get(`/api/admin/users?${queryParams}`)
+    return response.data
+  }
+
+  async toggleUserActive(userId: number, isActive: boolean) {
+    const response = await this.client.put(`/api/admin/users/${userId}/toggle-active`, {
+      is_active: isActive,
+    })
+    return response.data
+  }
+
+  async getAdminCompanies(params?: {
+    page?: number
+    page_size?: number
+    status?: string
+    search?: string
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', String(params.page))
+    if (params?.page_size) queryParams.append('page_size', String(params.page_size))
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.search) queryParams.append('search', params.search)
+    const response = await this.client.get(`/api/admin/companies?${queryParams}`)
+    return response.data
+  }
+
+  async updateCompanyStatus(companyId: number, status: string) {
+    const response = await this.client.put(`/api/admin/companies/${companyId}/status`, {
+      status,
+    })
+    return response.data
+  }
 }
 
 export const apiClient = new ApiClient()
+

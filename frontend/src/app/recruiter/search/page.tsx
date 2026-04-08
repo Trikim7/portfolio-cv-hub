@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/AuthContext'
 export default function RecruiterSearchPage() {
   const router = useRouter()
   const { role, loading: authLoading } = useAuth()
-  const { company, fetchCompanyProfile, loading: recruiterLoading } = useRecruiter()
+  const { fetchCompanyProfile, loading: recruiterLoading } = useRecruiter()
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
@@ -22,30 +22,37 @@ export default function RecruiterSearchPage() {
 
       // Check if user is logged in as a recruiter
       if (!role) {
-        console.log('⚠️ No role found, redirecting to recruiter login')
-        router.push('/recruiter/login')
+        console.log('⚠️ No role found, redirecting to home')
+        router.push('/')
         return
       }
 
       if (role !== 'recruiter') {
-        console.log(`⚠️ User is ${role}, not recruiter. Redirecting to recruiter login`)
-        // Clear the candidate token and redirect to recruiter login
+        console.log(`⚠️ User is ${role}, not recruiter. Redirecting to home`)
+        // Clear the candidate token and redirect
         localStorage.removeItem('access_token')
         localStorage.removeItem('role')
-        router.push('/recruiter/login')
+        router.push('/')
         return
       }
 
       try {
         console.log('✓ User is recruiter, fetching company profile...')
-        await fetchCompanyProfile()
+        const companyData = await fetchCompanyProfile()
+        
+        if (companyData && companyData.status === 'pending') {
+          console.log('⏳ Company is pending approval, redirecting')
+          router.push('/recruiter/waiting-approval')
+          return
+        }
+
         setIsAuthorized(true)
       } catch (error) {
-        // Not authenticated, redirect to login
+        // Not authenticated, redirect to home
         console.error('✗ Auth check failed:', error)
         localStorage.removeItem('access_token')
         localStorage.removeItem('role')
-        router.push('/recruiter/login')
+        router.push('/')
       }
     }
 

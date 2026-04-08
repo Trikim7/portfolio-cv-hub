@@ -49,12 +49,20 @@ export const useAuth = () => {
       localStorage.setItem('access_token', response.access_token)
       // Extract role from token and save to localStorage
       const decoded = decodeToken(response.access_token)
-      localStorage.setItem('role', decoded.role || 'candidate')
-      console.log('✓ Role saved to localStorage:', decoded.role || 'candidate')
+      const userRole = decoded.role || 'candidate'
+      localStorage.setItem('role', userRole)
+      console.log('✓ Role saved to localStorage:', userRole)
       setUser(response.user)
       // Dispatch custom event to notify navbar of login
       window.dispatchEvent(new Event('login'))
-      router.push('/dashboard')
+      // Redirect based on role
+      if (userRole === 'admin') {
+        router.push('/admin/dashboard')
+      } else if (userRole === 'recruiter') {
+        router.push('/recruiter/dashboard')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed')
     } finally {

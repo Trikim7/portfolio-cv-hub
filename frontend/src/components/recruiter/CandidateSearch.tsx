@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { apiClient } from '@/services/api'
 import { useToast } from '@/components/Toast'
 import { CandidateSearchResult } from '@/types'
@@ -16,6 +16,32 @@ export default function CandidateSearch() {
   const [selectedCandidates, setSelectedCandidates] = useState<CandidateSearchResult[]>([])
   const [showComparison, setShowComparison] = useState(false)
   const { showToast } = useToast()
+
+  useEffect(() => {
+    if (!keyword && !skill && !experienceLevel && !location) {
+      setResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const data = await apiClient.searchCandidates(
+          keyword,
+          skill,
+          experienceLevel,
+          location
+        )
+        setResults(data)
+      } catch (err: any) {
+        console.error('Lỗi tìm kiếm:', err)
+      } finally {
+        setLoading(false)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [keyword, skill, experienceLevel, location])
 
   const handleSearch = async () => {
     if (!keyword && !skill && !experienceLevel && !location) {

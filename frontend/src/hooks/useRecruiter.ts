@@ -15,8 +15,10 @@ export const useRecruiter = () => {
     try {
       const data = await apiClient.getCompanyProfile()
       setCompany(data)
+      return data
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch company')
+      return null
     } finally {
       setLoading(false)
     }

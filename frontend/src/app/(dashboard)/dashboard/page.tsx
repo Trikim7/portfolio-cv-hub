@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { ProfileProvider, useProfileContext } from '@/hooks/ProfileContext'
 import ProfileForm from '@/components/dashboard/ProfileForm'
 import SkillsManager from '@/components/dashboard/SkillsManager'
@@ -10,12 +9,6 @@ import CVManager from '@/components/dashboard/CVManager'
 
 function DashboardContent() {
   const { profile } = useProfileContext()
-  const router = useRouter()
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    router.push('/login')
-  }
 
   if (!profile) {
     return (
