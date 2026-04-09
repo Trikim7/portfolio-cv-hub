@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
-import { TokenResponse, CandidateProfile, Skill, Experience, Project, CV } from '@/types'
+import { TokenResponse, CandidateProfile, Skill, Experience, Project, CV, CandidateAnalytics } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -68,6 +68,11 @@ class ApiClient {
 
   async getPublicProfile(slug: string): Promise<CandidateProfile> {
     const response = await this.client.get(`/api/candidate/public/${slug}`)
+    return response.data
+  }
+
+  async getCandidateAnalytics(): Promise<CandidateAnalytics> {
+    const response = await this.client.get('/api/candidate/analytics/stats')
     return response.data
   }
 
