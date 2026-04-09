@@ -70,7 +70,7 @@ export default function PublicPortfolioPage() {
   // Find primary CV or first available CV
   const primaryCv = profile.cvs.find(cv => cv.is_primary) || profile.cvs[0]
   
-  const contactEmail = profile.contact_email || 'hungtest@gmail.com'
+  const contactEmail = profile.contact_email?.trim() || ''
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -114,7 +114,7 @@ export default function PublicPortfolioPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span>✉️</span>
-                <span>{contactEmail}</span>
+                <span>{contactEmail || 'Không công khai email'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span>👁️</span>
@@ -124,12 +124,22 @@ export default function PublicPortfolioPage() {
 
             {/* Actions */}
             <div className="flex flex-wrap justify-center md:justify-start gap-4">
-              <a 
-                href={`mailto:${contactEmail}`}
-                className="px-8 py-2.5 bg-white text-blue-700 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-50 flex items-center gap-2 transition-all active:scale-95"
-              >
-                <span>✉️</span> Liên hệ ngay
-              </a>
+              {contactEmail ? (
+                <a 
+                  href={`mailto:${contactEmail}`}
+                  className="px-8 py-2.5 bg-white text-blue-700 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-50 flex items-center gap-2 transition-all active:scale-95"
+                >
+                  <span>✉️</span> Liên hệ ngay
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="px-8 py-2.5 bg-white/40 text-white/90 font-semibold rounded-lg border border-white/40 flex items-center gap-2 cursor-not-allowed"
+                >
+                  <span>✉️</span> Chưa công khai email
+                </button>
+              )}
               
               {primaryCv ? (
                 <a 
