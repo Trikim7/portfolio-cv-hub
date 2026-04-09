@@ -290,3 +290,23 @@ class CandidateService:
             raise ValueError(f"CV not found or unauthorized")
 
         return CVRepository.delete_cv(db, cv_id)
+
+    # Analytics methods
+    @staticmethod
+    def get_candidate_analytics(db: Session, user_id: int) -> dict:
+        """Get analytics stats for candidate (total views + total invitations)"""
+        from app.models.recruiter import JobInvitation
+
+        profile = CandidateProfileRepository.get_profile_by_user_id(db, user_id)
+        if not profile:
+            raise ValueError(f"Profile not found for user {user_id}")
+
+        # Get total invitations count
+        total_invitations = db.query(JobInvitation).filter(
+            JobInvitation.candidate_id == profile.id
+        ).count()
+
+        return {
+            "total_views": profile.views or 0,
+            "total_invitations": total_invitations
+        }

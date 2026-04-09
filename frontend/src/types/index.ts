@@ -73,6 +73,11 @@ export interface CandidateProfile {
   updated_at: string
 }
 
+export interface CandidateAnalytics {
+  total_views: number
+  total_invitations: number
+}
+
 // Recruiter types
 export interface Company {
   id: number

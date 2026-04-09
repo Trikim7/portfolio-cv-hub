@@ -6,6 +6,7 @@ import SkillsManager from '@/components/dashboard/SkillsManager'
 import ExperiencesManager from '@/components/dashboard/ExperiencesManager'
 import ProjectsManager from '@/components/dashboard/ProjectsManager'
 import CVManager from '@/components/dashboard/CVManager'
+import CandidateStatsCard from '@/components/dashboard/CandidateStatsCard'
 
 function DashboardContent() {
   const { profile } = useProfileContext()
@@ -38,6 +39,7 @@ function DashboardContent() {
           <p className="text-gray-600">Quản lý hồ sơ và portfolio của bạn</p>
         </div>
 
+        <CandidateStatsCard />
         <ProfileForm />
         <SkillsManager />
         <ExperiencesManager />

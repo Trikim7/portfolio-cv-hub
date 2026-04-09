@@ -78,12 +78,26 @@ async def toggle_public_profile(
 
 @router.get("/public/{profile_slug}", response_model=CandidateProfileResponse)
 async def get_public_profile(profile_slug: str, db: Session = Depends(get_db)):
-    """Get public profile by slug"""
+    """Get public profile by slug (increments view count automatically)"""
     try:
         profile = CandidateService.get_public_profile(db, profile_slug)
         if not profile:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
         return profile
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/analytics/stats")
+async def get_candidate_analytics(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    """Get analytics stats for candidate (total views + total invitations)"""
+    try:
+        stats = CandidateService.get_candidate_analytics(db, user_id)
+        return stats
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
