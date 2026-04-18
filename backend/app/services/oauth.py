@@ -1,6 +1,6 @@
 """OAuth2 social-login service (Phase 2 — Member 1).
 
-Supports Google, GitHub and Facebook via the standard Authorization-Code flow
+Supports Google and GitHub via the standard Authorization-Code flow
 (no external OAuth SDK dependency; uses `httpx` for token + userinfo calls).
 
 Responsibilities:
@@ -25,7 +25,7 @@ from app.models.user import SocialAccount, User, UserRole, UserStatus
 from app.repositories.user import UserRepository
 
 
-SUPPORTED_PROVIDERS = ("google", "github", "facebook")
+SUPPORTED_PROVIDERS = ("google", "github")
 
 
 @dataclass
@@ -67,19 +67,6 @@ def _provider_config(name: str) -> ProviderConfig:
             scope="read:user user:email",
             extra_auth_params={},
         )
-    if name == "facebook":
-        # Meta expects comma-separated scopes (not space-separated like Google/GitHub).
-        # See: https://developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow
-        return ProviderConfig(
-            name="facebook",
-            client_id=settings.facebook_client_id,
-            client_secret=settings.facebook_client_secret,
-            auth_url="https://www.facebook.com/v19.0/dialog/oauth",
-            token_url="https://graph.facebook.com/v19.0/oauth/access_token",
-            userinfo_url="https://graph.facebook.com/me?fields=id,name,email",
-            scope="email,public_profile",
-            extra_auth_params={},
-        )
     raise ValueError(f"Unsupported provider: {name}")
 
 
@@ -119,7 +106,7 @@ class OAuthService:
             **cfg.extra_auth_params,
         }
         # Google requires response_type=code already in extra_auth_params;
-        # others default to it but we pass explicitly for GitHub/Facebook too.
+        # others default to it but we pass explicitly for GitHub too.
         params.setdefault("response_type", "code")
         return f"{cfg.auth_url}?{urlencode(params)}", state
 
@@ -202,12 +189,6 @@ class OAuthService:
                 "provider_account_id": str(data.get("id") or ""),
                 "email": data.get("email"),
                 "full_name": data.get("name") or data.get("login"),
-            }
-        if provider == "facebook":
-            return {
-                "provider_account_id": str(data.get("id") or ""),
-                "email": data.get("email"),
-                "full_name": data.get("name"),
             }
         return {"provider_account_id": "", "email": None, "full_name": None}
 

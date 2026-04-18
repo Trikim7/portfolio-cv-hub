@@ -26,6 +26,14 @@ Hệ thống quản lý Portfolio và CV trực tuyến — kết nối **Ứng 
 
 ## Cách 1: Chạy bằng Docker (nhanh nhất)
 
+**Bước 1: Thiết lập biến môi trường (.env)**
+Trước tiên, bạn cần copy file cấu hình mẫu ở thư mục gốc của dự án:
+
+```bash
+cp .env.example .env
+```
+
+**Bước 2: Chạy hệ thống**
 Chỉ cần 1 lệnh, Docker sẽ tự build và chạy cả Backend lẫn Frontend:
 
 ```bash
@@ -43,12 +51,6 @@ Dừng hệ thống:
 docker-compose down
 ```
 
-Xóa sạch dữ liệu (reset DB):
-
-```bash
-docker-compose down
-rm backend/portfolio_cv_hub.db
-```
 
 ---
 
@@ -56,8 +58,11 @@ rm backend/portfolio_cv_hub.db
 
 ### Backend (FastAPI)
 
+Đầu tiên, cấu hình biến môi trường riêng cho backend chạy local:
+
 ```bash
 cd backend
+cp .env.example .env
 ```
 
 Tạo môi trường ảo:

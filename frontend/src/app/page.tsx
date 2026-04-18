@@ -15,7 +15,7 @@ export default function HomePage() {
             <h1 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
               Portfolio CV Hub
             </h1>
-           
+
           </div>
         </div>
       </section>
@@ -92,7 +92,7 @@ export default function HomePage() {
                 Đăng ký doanh nghiệp
               </Link>
               <Link
-                href="/recruiter/login"
+                href="/login"
                 className="border border-purple-600 text-purple-700 hover:bg-white px-5 py-2.5 rounded-xl font-semibold transition"
               >
                 Đăng nhập
@@ -105,7 +105,7 @@ export default function HomePage() {
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>© {new Date().getFullYear()} Portfolio CV Hub</span>
-          <Link href="/admin/login" className="hover:text-gray-800">
+          <Link href="/login" className="hover:text-gray-800">
             Quản trị viên
           </Link>
         </div>

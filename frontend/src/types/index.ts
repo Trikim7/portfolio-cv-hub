@@ -131,7 +131,7 @@ export interface CandidateSearchResult {
 }
 
 // ─── Social auth (Phase 2) ───────────────────────────────────
-export type OAuthProvider = 'google' | 'github' | 'facebook'
+export type OAuthProvider = 'google' | 'github'
 
 export interface SocialAccount {
   id?: number

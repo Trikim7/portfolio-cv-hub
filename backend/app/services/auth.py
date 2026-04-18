@@ -43,7 +43,7 @@ class AuthService:
 
         if not user.password_hash:
             raise ValueError(
-                "Tài khoản này đăng ký qua mạng xã hội. Vui lòng đăng nhập bằng Google/GitHub/Facebook."
+                "Tài khoản này đăng ký qua mạng xã hội. Vui lòng đăng nhập bằng Google/GitHub."
             )
 
         if not verify_password(user_data.password, user.password_hash):

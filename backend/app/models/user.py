@@ -64,7 +64,7 @@ class SocialAccount(Base):
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    provider = Column(String(50), nullable=False, index=True)  # google | github | facebook
+    provider = Column(String(50), nullable=False, index=True)  # google | github
     provider_account_id = Column(String(255), nullable=False, index=True)
     access_token = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

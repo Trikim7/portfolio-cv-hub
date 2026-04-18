@@ -4,26 +4,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiClient } from '@/services/api'
 import { OAuthProvider, SocialAccount } from '@/types'
 
-const ALL_PROVIDERS: OAuthProvider[] = ['google', 'github', 'facebook']
+const ALL_PROVIDERS: OAuthProvider[] = ['google', 'github']
 
-const PROVIDER_META: Record<
-  OAuthProvider,
-  { label: string; icon: string; className: string }
-> = {
+const PROVIDER_META = {
   google: {
     label: 'Google',
-    icon: 'G',
-    className: 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
+    icon: (
+      <img
+        src="https://www.svgrepo.com/show/475656/google-color.svg"
+        alt="Google"
+        className="w-5 h-5"
+      />
+    ),
+    className: 'bg-white border border-gray-300 hover:bg-gray-50',
   },
   github: {
     label: 'GitHub',
-    icon: 'GH',
-    className: 'bg-gray-900 text-white hover:bg-gray-800',
-  },
-  facebook: {
-    label: 'Facebook',
-    icon: 'f',
-    className: 'bg-blue-600 text-white hover:bg-blue-700',
+    icon: (
+      <img
+        src="https://www.svgrepo.com/show/512317/github-142.svg"
+        alt="GitHub"
+        className="w-5 h-5"
+      />
+    ),
+    className: 'bg-white border border-gray-300 hover:bg-gray-50',
   },
 }
 
