@@ -2,10 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CandidateProfile } from '@/types'
+import { CandidateProfile, I18nText } from '@/types'
 import { apiClient } from '@/services/api'
 import { useAuth } from '@/hooks/AuthContext'
 import Link from 'next/link'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 export default function CandidatePortfolioPreviewPage() {
   const router = useRouter()
@@ -91,9 +97,9 @@ export default function CandidatePortfolioPreviewPage() {
           <span className="text-gray-300">Đây là cách nhà tuyển dụng nhìn thấy hồ sơ của bạn</span>
         </div>
         <div className="flex gap-3">
-          {profile.profile_slug && profile.is_public && (
+          {profile.public_slug && profile.is_public && (
             <a 
-              href={`/portfolio/${profile.profile_slug}`} 
+              href={`/portfolio/${profile.public_slug}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm transition flex items-center gap-2"
@@ -135,7 +141,7 @@ export default function CandidatePortfolioPreviewPage() {
               {profile.full_name || 'Cập nhật tên ở Hồ sơ'}
             </h1>
             <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
-              {profile.title || 'Cập nhật vị trí ứng tuyển'}
+              {profile.headline || 'Cập nhật vị trí ứng tuyển'}
             </p>
 
             {/* Meta Tags */}
@@ -191,9 +197,9 @@ export default function CandidatePortfolioPreviewPage() {
           {/* Section: Giới thiệu */}
           <div className="p-8 md:p-10 border-b border-gray-100">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-6">Giới thiệu</h2>
-            {profile.bio ? (
+            {i18nToText(profile.bio) ? (
               <div className="prose prose-blue max-w-none text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
-                {profile.bio}
+                {i18nToText(profile.bio)}
               </div>
             ) : (
               <p className="text-gray-400 italic">Ứng viên chưa cập nhật phần giới thiệu.</p>
@@ -245,7 +251,7 @@ export default function CandidatePortfolioPreviewPage() {
                       {' - '} 
                       {exp.is_current ? 'Hiện tại' : new Date(exp.end_date!).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' })}
                     </div>
-                    {exp.description && <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{exp.description}</p>}
+                    {i18nToText(exp.description) && <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{i18nToText(exp.description)}</p>}
                   </div>
                 ))}
               </div>
@@ -259,36 +265,43 @@ export default function CandidatePortfolioPreviewPage() {
                 <span>🚀</span> Dự án tiêu biểu
               </h2>
               <div className="space-y-6">
-                {profile.projects.map(proj => (
-                  <div key={proj.id} className="group p-5 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">{proj.title}</h3>
-                    {proj.description && <p className="text-gray-600 text-sm mb-4 line-clamp-3">{proj.description}</p>}
-                    
-                    <div className="flex flex-col gap-3 mt-auto">
-                      {proj.technologies && (
-                        <div className="flex flex-wrap gap-2">
-                          {proj.technologies.split(',').map(tech => tech.trim()).map((tech, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">
-                              {tech}
-                            </span>
-                          ))}
-                        </div>
+                {profile.projects.map(proj => {
+                  const description = i18nToText(proj.description)
+                  const projectUrl = proj.project_url || proj.github_url
+                  return (
+                    <div key={proj.id} className="group p-5 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">{proj.project_name}</h3>
+                      {proj.role && (
+                        <p className="text-sm text-blue-600 mb-2 font-medium">{proj.role}</p>
                       )}
-                      
-                      {proj.url && (
-                        <a 
-                          href={proj.url.startsWith('http') ? proj.url : `https://${proj.url}`}
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 w-fit"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                          Xem dự án
-                        </a>
-                      )}
+                      {description && <p className="text-gray-600 text-sm mb-4 line-clamp-3">{description}</p>}
+
+                      <div className="flex flex-col gap-3 mt-auto">
+                        {proj.technologies && (
+                          <div className="flex flex-wrap gap-2">
+                            {proj.technologies.split(',').map(tech => tech.trim()).map((tech, idx) => (
+                              <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {projectUrl && (
+                          <a
+                            href={projectUrl.startsWith('http') ? projectUrl : `https://${projectUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 w-fit"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            Xem dự án
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}

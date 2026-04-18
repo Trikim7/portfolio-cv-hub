@@ -1,9 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { CandidateSearchResult } from '@/types'
+import { CandidateSearchResult, I18nText } from '@/types'
 import { apiClient } from '@/services/api'
 import { Toast, useToast } from '@/components/Toast'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 interface ComparisonTableProps {
   candidates: CandidateSearchResult[]
@@ -36,7 +42,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
     setInvitationState({
       candidateId: candidate.id,
       candidateName: candidate.full_name || 'Ứng viên',
-      jobTitle: candidate.title || '',
+      jobTitle: candidate.headline || '',
       message: '',
       loading: false,
     })
@@ -101,7 +107,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   {candidates.map((candidate) => (
                     <th key={candidate.id} className="p-4 font-semibold text-center min-w-[200px] border-l border-gray-300">
                       <div className="font-bold text-blue-700">{candidate.full_name}</div>
-                      <div className="text-sm text-gray-600">{candidate.title}</div>
+                      <div className="text-sm text-gray-600">{candidate.headline}</div>
                     </th>
                   ))}
                 </tr>
@@ -122,7 +128,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   <td className="p-4 font-semibold text-gray-700 bg-gray-50">💼 Vị trí</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 text-center border-l border-gray-300 text-sm">
-                      {candidate.title || '-'}
+                      {candidate.headline || '-'}
                     </td>
                   ))}
                 </tr>
@@ -132,7 +138,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   <td className="p-4 font-semibold text-gray-700 bg-gray-50">📝 Giới thiệu</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 border-l border-gray-300 text-sm text-gray-700 max-w-xs">
-                      <p className="line-clamp-3">{candidate.bio || '-'}</p>
+                      <p className="line-clamp-3">{i18nToText(candidate.bio) || '-'}</p>
                     </td>
                   ))}
                 </tr>

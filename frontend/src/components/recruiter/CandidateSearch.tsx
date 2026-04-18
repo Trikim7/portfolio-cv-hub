@@ -3,8 +3,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import { apiClient } from '@/services/api'
 import { useToast } from '@/components/Toast'
-import { CandidateSearchResult } from '@/types'
+import { CandidateSearchResult, I18nText } from '@/types'
 import ComparisonTable from './ComparisonTable'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 export default function CandidateSearch() {
   const [keyword, setKeyword] = useState('')
@@ -198,7 +204,7 @@ export default function CandidateSearch() {
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <h4 className="font-bold text-lg">{candidate.full_name || 'Ứng viên'}</h4>
-                    <p className="text-sm text-gray-600">{candidate.title || 'Chưa cập nhật'}</p>
+                    <p className="text-sm text-gray-600">{candidate.headline || 'Chưa cập nhật'}</p>
                   </div>
                   <button
                     onClick={() => toggleSelect(candidate)}
@@ -211,7 +217,7 @@ export default function CandidateSearch() {
                     {selectedCandidates.some(c => c.id === candidate.id) ? '✓ Đã chọn' : 'Chọn'}
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">{candidate.bio}</p>
+                <p className="text-sm text-gray-500 mt-2">{i18nToText(candidate.bio)}</p>
                 
                 {candidate.skills.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">

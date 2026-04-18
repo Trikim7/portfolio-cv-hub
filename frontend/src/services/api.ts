@@ -1,5 +1,18 @@
 import axios, { AxiosInstance } from 'axios'
-import { TokenResponse, CandidateProfile, Skill, Experience, Project, CV, CandidateAnalytics } from '@/types'
+import {
+  TokenResponse,
+  CandidateProfile,
+  Skill,
+  Experience,
+  Project,
+  CV,
+  CandidateAnalytics,
+  CandidateScore,
+  RankingResponse,
+  ScoringCriteria,
+  SocialAccount,
+  OAuthProvider,
+} from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -285,6 +298,58 @@ class ApiClient {
     const response = await this.client.put(`/api/admin/companies/${companyId}/status`, {
       status,
     })
+    return response.data
+  }
+
+  // ─── Scoring & Ranking (Phase 2) ───────────────────────────
+  async scoreCandidate(params: {
+    candidate_id: number
+    job_id?: number
+    criteria?: ScoringCriteria
+  }): Promise<CandidateScore> {
+    const response = await this.client.post('/api/v1/candidates/score', params)
+    return response.data
+  }
+
+  async compareCandidates(params: {
+    candidate_ids: number[]
+    job_id?: number
+    criteria?: ScoringCriteria
+  }): Promise<RankingResponse> {
+    const response = await this.client.post('/api/v1/candidates/compare', params)
+    return response.data
+  }
+
+  async rankCandidates(params: {
+    job_id?: number
+    criteria?: ScoringCriteria
+    candidate_ids?: number[]
+    limit?: number
+  }): Promise<RankingResponse> {
+    const response = await this.client.post('/api/v1/candidates/rank', {
+      limit: 50,
+      ...params,
+    })
+    return response.data
+  }
+
+  // ─── OAuth / Social Auth (Phase 2) ─────────────────────────
+  getOAuthLoginUrl(provider: OAuthProvider): string {
+    return `${API_URL}/api/auth/oauth/${provider}/login`
+  }
+
+  async startOAuthLink(provider: OAuthProvider): Promise<{ url: string }> {
+    const response = await this.client.get(`/api/auth/oauth/${provider}/link-start`)
+    return response.data
+  }
+
+  async listSocialAccounts(): Promise<SocialAccount[]> {
+    const response = await this.client.get('/api/auth/oauth/accounts')
+    return response.data
+  }
+
+  async unlinkSocialAccount(provider: OAuthProvider): Promise<{ status: string; provider: string }> {
+    const response = await this.client.delete(`/api/auth/oauth/${provider}`)
     return response.data
   }
 }

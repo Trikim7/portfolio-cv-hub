@@ -2,8 +2,14 @@
 
 import { useState } from 'react'
 import { useProfileContext } from '@/hooks/ProfileContext'
-import { Experience } from '@/types'
+import { Experience, I18nText } from '@/types'
 import { Toast, useToast } from '@/components/Toast'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 export default function ExperiencesManager() {
   const { profile, addExperience, updateExperience, deleteExperience } = useProfileContext()
@@ -25,7 +31,7 @@ export default function ExperiencesManager() {
   const formatPayload = (data: typeof formData) => ({
     job_title: data.job_title,
     company_name: data.company_name,
-    description: data.description || undefined,
+    description: data.description ? { vi: data.description } : undefined,
     start_date: data.start_date ? `${data.start_date}T00:00:00` : data.start_date,
     end_date: data.end_date ? `${data.end_date}T00:00:00` : undefined,
     is_current: data.is_current,
@@ -61,7 +67,7 @@ export default function ExperiencesManager() {
     setFormData({
       job_title: exp.job_title,
       company_name: exp.company_name,
-      description: exp.description || '',
+      description: i18nToText(exp.description),
       start_date: exp.start_date.split('T')[0],
       end_date: exp.end_date?.split('T')[0] || '',
       is_current: exp.is_current,
@@ -256,9 +262,9 @@ export default function ExperiencesManager() {
                   )}
                 </div>
 
-                {exp.description && (
+                {i18nToText(exp.description) && (
                   <p className="text-gray-700 mb-3 bg-white p-2 rounded border-l-4 border-green-500">
-                    {exp.description}
+                    {i18nToText(exp.description)}
                   </p>
                 )}
 

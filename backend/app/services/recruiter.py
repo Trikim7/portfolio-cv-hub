@@ -62,16 +62,18 @@ class SearchService:
     ) -> List:
         """Search public candidates with filters"""
         from app.models.candidate import CandidateProfile, Skill, Experience
+        from sqlalchemy import cast, String as SAString
         from datetime import datetime
-        
-        query = db.query(CandidateProfile).filter(CandidateProfile.is_public == True)
+
+        query = db.query(CandidateProfile).filter(CandidateProfile.is_public == True)  # noqa: E712
 
         if keyword:
             keyword_filter = f"%{keyword}%"
+            # bio is JSONB, cast to text for LIKE.
             query = query.filter(
-                (CandidateProfile.full_name.ilike(keyword_filter)) |
-                (CandidateProfile.title.ilike(keyword_filter)) |
-                (CandidateProfile.bio.ilike(keyword_filter))
+                (CandidateProfile.full_name.ilike(keyword_filter))
+                | (CandidateProfile.headline.ilike(keyword_filter))
+                | (cast(CandidateProfile.bio, SAString).ilike(keyword_filter))
             )
 
         if skill:
@@ -139,9 +141,9 @@ class SearchService:
             id=profile.id,
             user_id=profile.user_id,
             full_name=profile.full_name,
-            title=profile.title,
+            headline=profile.headline,
             bio=profile.bio,
-            profile_slug=profile.profile_slug,
+            public_slug=profile.public_slug,
             avatar_url=profile.avatar_url,
             skills=skills,
         )

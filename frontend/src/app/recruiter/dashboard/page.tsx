@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useRecruiter } from '@/hooks/useRecruiter'
 import { useAuth } from '@/hooks/AuthContext'
 import CompanyProfile from '@/components/recruiter/CompanyProfile'
+import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
 
 export default function RecruiterDashboardPage() {
   const router = useRouter()
@@ -99,13 +100,23 @@ export default function RecruiterDashboardPage() {
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap gap-3">
           <a
             href="/recruiter/search"
             className="inline-block px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
           >
             🔍 Tìm kiếm ứng viên
           </a>
+          <a
+            href="/recruiter/ranking"
+            className="inline-block px-8 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"
+          >
+            📊 AI Ranking
+          </a>
+        </div>
+
+        <div className="mt-8">
+          <SocialAccountsManager />
         </div>
       </div>
     </div>

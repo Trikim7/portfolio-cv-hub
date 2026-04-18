@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import LoginForm from '@/components/auth/LoginForm'
 import RecruiterLoginForm from '@/components/auth/RecruiterLoginForm'
@@ -8,6 +8,19 @@ import AdminLoginForm from '@/components/auth/AdminLoginForm'
 
 export default function LoginPage() {
   const [role, setRole] = useState<'candidate' | 'recruiter' | 'admin' | null>(null)
+  const [oauthError, setOauthError] = useState<{ error: string; provider: string } | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (!err) return
+    setOauthError({ error: err, provider: params.get('provider') || '' })
+    const url = new URL(window.location.href)
+    url.searchParams.delete('error')
+    url.searchParams.delete('provider')
+    window.history.replaceState(null, '', url.pathname + url.search)
+  }, [])
 
   if (role === null) {
     return (
@@ -19,6 +32,15 @@ export default function LoginPage() {
             </h1>
             <p className="text-gray-600 text-lg">Bạn là ai?</p>
           </div>
+
+          {oauthError && (
+            <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm text-left">
+              <strong className="block mb-1">
+                Đăng nhập {oauthError.provider || 'bằng mạng xã hội'} thất bại
+              </strong>
+              <span className="break-words">{oauthError.error}</span>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-3 gap-6">
             {/* Candidate Option */}

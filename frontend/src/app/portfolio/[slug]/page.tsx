@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { CandidateProfile } from '@/types'
+import { CandidateProfile, I18nText } from '@/types'
 import { apiClient } from '@/services/api'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 export default function PublicPortfolioPage() {
   const params = useParams()
@@ -103,7 +109,7 @@ export default function PublicPortfolioPage() {
               {profile.full_name || 'Hồ sơ Ứng viên'}
             </h1>
             <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
-              {profile.title || 'Chuyên viên'}
+              {profile.headline || 'Chuyên viên'}
             </p>
 
             {/* Meta Tags */}
@@ -165,9 +171,9 @@ export default function PublicPortfolioPage() {
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
               Giới thiệu bản thân
             </h2>
-            {profile.bio ? (
+            {i18nToText(profile.bio) ? (
               <div className="prose prose-blue max-w-none text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
-                {profile.bio}
+                {i18nToText(profile.bio)}
               </div>
             ) : (
               <p className="text-gray-400 italic">Ứng viên đang cập nhật phần giới thiệu.</p>
@@ -225,7 +231,7 @@ export default function PublicPortfolioPage() {
                         {exp.is_current ? 'Hiện tại' : new Date(exp.end_date!).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' })}
                       </span>
                     </div>
-                    {exp.description && <p className="text-gray-600 leading-relaxed text-sm">{exp.description}</p>}
+                    {i18nToText(exp.description) && <p className="text-gray-600 leading-relaxed text-sm">{i18nToText(exp.description)}</p>}
                   </div>
                 ))}
               </div>
@@ -241,36 +247,43 @@ export default function PublicPortfolioPage() {
             </h2>
             {profile.projects && profile.projects.length > 0 ? (
               <div className="space-y-6">
-                {profile.projects.map(proj => (
-                  <div key={proj.id} className="group p-6 rounded-2xl border border-gray-100 bg-gray-50/30 hover:bg-white hover:border-blue-200 hover:shadow-lg transition-all duration-300">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors uppercase">{proj.title}</h3>
-                    {proj.description && <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{proj.description}</p>}
-                    
-                    <div className="flex flex-col gap-4 mt-auto">
-                      {proj.technologies && (
-                        <div className="flex flex-wrap gap-2 text-[10px]">
-                          {proj.technologies.split(',').map(tech => tech.trim()).map((tech, idx) => (
-                            <span key={idx} className="px-2.5 py-1 bg-white text-blue-600 border border-blue-100 rounded-md font-bold uppercase">
-                              {tech}
-                            </span>
-                          ))}
-                        </div>
+                {profile.projects.map(proj => {
+                  const description = i18nToText(proj.description)
+                  const projectUrl = proj.project_url || proj.github_url
+                  return (
+                    <div key={proj.id} className="group p-6 rounded-2xl border border-gray-100 bg-gray-50/30 hover:bg-white hover:border-blue-200 hover:shadow-lg transition-all duration-300">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors uppercase">{proj.project_name}</h3>
+                      {proj.role && (
+                        <p className="text-sm text-blue-600 mb-2 font-medium">{proj.role}</p>
                       )}
-                      
-                      {proj.url && (
-                        <a 
-                          href={proj.url.startsWith('http') ? proj.url : `https://${proj.url}`}
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1.5 w-fit border-b-2 border-transparent hover:border-blue-600 transition-all pb-0.5"
-                        >
-                          XEM CHI TIẾT DỰ ÁN
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                        </a>
-                      )}
+                      {description && <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{description}</p>}
+
+                      <div className="flex flex-col gap-4 mt-auto">
+                        {proj.technologies && (
+                          <div className="flex flex-wrap gap-2 text-[10px]">
+                            {proj.technologies.split(',').map(tech => tech.trim()).map((tech, idx) => (
+                              <span key={idx} className="px-2.5 py-1 bg-white text-blue-600 border border-blue-100 rounded-md font-bold uppercase">
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {projectUrl && (
+                          <a
+                            href={projectUrl.startsWith('http') ? projectUrl : `https://${projectUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1.5 w-fit border-b-2 border-transparent hover:border-blue-600 transition-all pb-0.5"
+                          >
+                            XEM CHI TIẾT DỰ ÁN
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="text-gray-400 italic">Chưa có dự án nào được công khai.</p>

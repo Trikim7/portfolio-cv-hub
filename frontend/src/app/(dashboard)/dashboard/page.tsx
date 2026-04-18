@@ -7,6 +7,7 @@ import ExperiencesManager from '@/components/dashboard/ExperiencesManager'
 import ProjectsManager from '@/components/dashboard/ProjectsManager'
 import CVManager from '@/components/dashboard/CVManager'
 import CandidateStatsCard from '@/components/dashboard/CandidateStatsCard'
+import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
 
 function DashboardContent() {
   const { profile } = useProfileContext()
@@ -45,6 +46,7 @@ function DashboardContent() {
         <ExperiencesManager />
         <ProjectsManager />
         <CVManager />
+        <SocialAccountsManager />
       </div>
     </>
   )
