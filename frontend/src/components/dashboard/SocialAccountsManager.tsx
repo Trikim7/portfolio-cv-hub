@@ -17,7 +17,7 @@ const PROVIDER_META: Record<
   },
   github: {
     label: 'GitHub',
-    icon: '⌨',
+    icon: 'GH',
     className: 'bg-gray-900 text-white hover:bg-gray-800',
   },
   facebook: {
@@ -92,11 +92,11 @@ export default function SocialAccountsManager() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Tài khoản liên kết</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-lg font-bold text-gray-900">Tài khoản liên kết</h2>
+          <p className="text-sm text-gray-500">
             Quản lý các phương thức đăng nhập qua mạng xã hội.
           </p>
         </div>

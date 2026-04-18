@@ -6,6 +6,7 @@ import Link from 'next/link'
 import CandidateRanking from '@/components/recruiter/CandidateRanking'
 import { useRecruiter } from '@/hooks/useRecruiter'
 import { useAuth } from '@/hooks/AuthContext'
+import { PageShell } from '@/components/layout/DashboardShell'
 
 export default function RecruiterRankingPage() {
   const router = useRouter()
@@ -40,9 +41,9 @@ export default function RecruiterRankingPage() {
 
   if (authLoading || recruiterLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">⏳</div>
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-3" />
           <p className="text-gray-600">Đang kiểm tra thông tin...</p>
         </div>
       </div>
@@ -52,33 +53,22 @@ export default function RecruiterRankingPage() {
   if (!ready) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">AI Ranking</h1>
-            <p className="text-gray-600 mt-1">
-              Chấm điểm 6 trục radar và xếp hạng ứng viên phù hợp với yêu cầu tuyển dụng.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href="/recruiter/search"
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
-            >
-              ← Tìm kiếm thường
-            </Link>
-            <Link
-              href="/recruiter/dashboard"
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
-            >
-              Dashboard
-            </Link>
-          </div>
-        </div>
-
-        <CandidateRanking />
-      </div>
-    </div>
+    <PageShell
+      accent="purple"
+      title="AI Ranking"
+      subtitle="Xếp hạng ứng viên theo JD"
+      backHref="/recruiter/dashboard"
+      backLabel="Về Dashboard"
+      headerAction={
+        <Link
+          href="/recruiter/search"
+          className="bg-white/10 hover:bg-white/20 backdrop-blur ring-1 ring-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition"
+        >
+          Tìm kiếm thường
+        </Link>
+      }
+    >
+      <CandidateRanking />
+    </PageShell>
   )
 }

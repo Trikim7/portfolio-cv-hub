@@ -30,7 +30,7 @@ export default function RecruiterLoginPage() {
       localStorage.setItem('role', response.user.role)
       checkAuth()
       window.dispatchEvent(new Event('login'))
-      showToast('✓ Đăng nhập thành công!', 'success')
+      showToast('Đăng nhập thành công!', 'success')
       setTimeout(() => router.push('/recruiter/dashboard'), 300)
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Đăng nhập thất bại', 'error')
@@ -40,62 +40,76 @@ export default function RecruiterLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h1 className="text-3xl font-bold text-center mb-2">🏢 Doanh nghiệp</h1>
-        <p className="text-center text-gray-600 mb-6">Đăng nhập tài khoản recruiter</p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">📧 Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="company@example.com"
-            />
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
+          <div className="flex items-center justify-between mb-8">
+            <Link href="/" className="text-white/90 hover:text-white font-bold text-lg tracking-tight">
+              Portfolio CV Hub
+            </Link>
+            <Link
+              href="/recruiter/register"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium transition ring-1 ring-white/20"
+            >
+              Đăng ký
+            </Link>
           </div>
+          <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Doanh nghiệp</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold">Đăng nhập</h1>
+        </div>
+      </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">🔒 Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
+      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="company@example.com"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 transition"
-          >
-            {loading ? '⏳ Đang xử lý...' : '✓ Đăng nhập'}
-          </button>
-        </form>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="••••••••"
+              />
+            </div>
 
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-center text-gray-600 text-sm">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 disabled:bg-gray-400 transition"
+            >
+              {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+            </button>
+          </form>
+
+          <p className="text-center text-gray-600 text-sm mt-6 pt-6 border-t border-gray-100">
             Chưa có tài khoản?{' '}
-            <Link href="/recruiter/register" className="text-blue-600 font-semibold hover:underline">
+            <Link href="/recruiter/register" className="text-purple-700 font-semibold hover:underline">
               Đăng ký ngay
             </Link>
           </p>
-        </div>
 
-        {/* Demo Note */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-          <p className="font-semibold text-blue-700 mb-2">💡 Demo:</p>
-          <p className="text-gray-700">
-            Đăng ký recruiter → Chờ admin duyệt → Đăng nhập để xem dashboard
-          </p>
+          <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-xl text-sm">
+            <p className="font-semibold text-purple-800 mb-1">Quy trình:</p>
+            <p className="text-gray-700">
+              Đăng ký doanh nghiệp → Chờ admin duyệt → Đăng nhập để dùng dashboard.
+            </p>
+          </div>
         </div>
-
-        {toast && <Toast {...toast} onClose={closeToast} />}
       </div>
+
+      {toast && <Toast {...toast} onClose={closeToast} />}
     </div>
   )
 }

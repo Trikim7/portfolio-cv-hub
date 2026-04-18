@@ -82,38 +82,36 @@ export default function OAuthCallbackPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white p-10 rounded-xl shadow-xl max-w-md w-full text-center space-y-6">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full text-center space-y-5">
         {status === 'processing' && (
           <>
-            <div className="animate-spin text-5xl">⏳</div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Đang xử lý đăng nhập
-            </h1>
-            <p className="text-gray-600">{message}</p>
+            <div className="animate-spin w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full mx-auto" />
+            <h1 className="text-xl font-bold text-gray-900">Đang xử lý đăng nhập</h1>
+            <p className="text-gray-600 text-sm">{message}</p>
           </>
         )}
 
         {status === 'success' && (
           <>
-            <div className="text-5xl">✅</div>
-            <h1 className="text-2xl font-bold text-green-700">
-              Đăng nhập thành công
-            </h1>
-            <p className="text-gray-600">{message}</p>
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto text-2xl font-bold">
+              ✓
+            </div>
+            <h1 className="text-xl font-bold text-emerald-700">Thành công</h1>
+            <p className="text-gray-600 text-sm">{message}</p>
           </>
         )}
 
         {status === 'error' && (
           <>
-            <div className="text-5xl">❌</div>
-            <h1 className="text-2xl font-bold text-red-700">
-              Đăng nhập thất bại
-            </h1>
-            <p className="text-gray-600 break-words">{message}</p>
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto text-2xl font-bold">
+              ×
+            </div>
+            <h1 className="text-xl font-bold text-rose-700">Đăng nhập thất bại</h1>
+            <p className="text-gray-600 text-sm break-words">{message}</p>
             <Link
               href="/login"
-              className="inline-block mt-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+              className="inline-block mt-2 px-5 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
             >
               Quay lại trang đăng nhập
             </Link>

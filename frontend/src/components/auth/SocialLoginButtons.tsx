@@ -23,7 +23,7 @@ const PROVIDER_META: Record<
   },
   github: {
     label: 'GitHub',
-    icon: '⌨',
+    icon: 'GH',
     className: 'bg-gray-900 text-white hover:bg-gray-800',
   },
   facebook: {

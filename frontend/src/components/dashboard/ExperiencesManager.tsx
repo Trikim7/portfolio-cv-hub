@@ -56,9 +56,9 @@ export default function ExperiencesManager() {
         is_current: false,
       })
       setShowForm(false)
-      showToast(`✓ Đã thêm kinh nghiệm tại ${companyName}`, 'success')
+      showToast(`Đã thêm kinh nghiệm tại ${companyName}`, 'success')
     } catch {
-      showToast('❌ Thêm kinh nghiệm thất bại, vui lòng thử lại', 'error')
+      showToast('Thêm kinh nghiệm thất bại, vui lòng thử lại', 'error')
     }
   }
 
@@ -89,29 +89,29 @@ export default function ExperiencesManager() {
         end_date: '',
         is_current: false,
       })
-      showToast('✓ Đã cập nhật kinh nghiệm', 'success')
+      showToast('Đã cập nhật kinh nghiệm', 'success')
     } catch {
-      showToast('❌ Cập nhật kinh nghiệm thất bại', 'error')
+      showToast('Cập nhật kinh nghiệm thất bại', 'error')
     }
   }
 
   const handleDeleteExperience = async (expId: number) => {
     if (confirm('Xóa kinh nghiệm này?')) {
       await deleteExperience(expId)
-      showToast('✓ Đã xóa kinh nghiệm', 'success')
+      showToast('Đã xóa kinh nghiệm', 'success')
     }
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Kinh nghiệm làm việc</h2>
+        <h2 className="text-lg font-bold text-gray-900">Kinh nghiệm làm việc</h2>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition"
           >
-            + Thêm kinh nghiệm
+            Thêm kinh nghiệm
           </button>
         )}
       </div>
@@ -194,7 +194,7 @@ export default function ExperiencesManager() {
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
             >
-              {editingId ? '✓ Cập nhật' : '✓ Thêm'}
+              {editingId ? 'Cập nhật' : 'Thêm'}
             </button>
             <button
               type="button"
@@ -210,16 +210,16 @@ export default function ExperiencesManager() {
                   is_current: false,
                 })
               }}
-              className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
             >
-              ✕ Hủy
+              Hủy
             </button>
           </div>
 
           {/* Existing experiences quick reference */}
           {experiences.length > 0 && (
             <div className="mt-2 pt-3 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 mb-2">📌 Kinh nghiệm đã thêm:</p>
+              <p className="text-xs font-semibold text-gray-500 mb-2">Kinh nghiệm đã thêm:</p>
               <div className="flex flex-wrap gap-1.5">
                 {experiences.map((exp) => (
                   <span
@@ -234,7 +234,7 @@ export default function ExperiencesManager() {
                     {exp.job_title} @ {exp.company_name}
                     {formData.company_name.trim().toLowerCase() === exp.company_name.toLowerCase() &&
                       formData.job_title.trim().toLowerCase() === exp.job_title.toLowerCase() && (
-                        <span className="text-red-600 font-bold">⚠ trùng</span>
+                        <span className="text-red-600 font-bold">trùng</span>
                       )}
                   </span>
                 ))}
@@ -249,42 +249,49 @@ export default function ExperiencesManager() {
           <p className="text-gray-500 italic">Chưa có kinh nghiệm. Thêm kinh nghiệm đầu tiên!</p>
         ) : (
           <>
-            <p className="text-sm text-gray-600 mb-3">📋 Tổng {experiences.length} kinh nghiệm</p>
+            <p className="text-sm text-gray-600 mb-3">Tổng {experiences.length} kinh nghiệm</p>
             {experiences.map((exp) => (
-              <div key={exp.id} className="p-4 border border-green-200 bg-green-50 rounded-lg hover:shadow-md transition">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-900">{exp.job_title}</h3>
-                    <p className="text-sm font-semibold text-gray-600">🏢 {exp.company_name}</p>
+              <div
+                key={exp.id}
+                className="p-4 border border-gray-200 bg-gray-50 rounded-xl hover:shadow-sm transition"
+              >
+                <div className="flex justify-between items-start mb-3 gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900">{exp.job_title}</h3>
+                    <p className="text-sm text-gray-600">{exp.company_name}</p>
                   </div>
                   {exp.is_current && (
-                    <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">✓ Hiện tại</span>
+                    <span className="shrink-0 bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs font-semibold">
+                      Hiện tại
+                    </span>
                   )}
                 </div>
 
                 {i18nToText(exp.description) && (
-                  <p className="text-gray-700 mb-3 bg-white p-2 rounded border-l-4 border-green-500">
+                  <p className="text-gray-700 text-sm mb-3 bg-white p-3 rounded-lg border border-gray-100">
                     {i18nToText(exp.description)}
                   </p>
                 )}
 
-                <p className="text-sm text-gray-600 mb-3">
-                  📅 {new Date(exp.start_date).toLocaleDateString('vi-VN')}
-                  {exp.end_date && !exp.is_current ? ` - ${new Date(exp.end_date).toLocaleDateString('vi-VN')}` : ' - Hiện tại'}
+                <p className="text-xs text-gray-500 mb-3">
+                  {new Date(exp.start_date).toLocaleDateString('vi-VN')}
+                  {exp.end_date && !exp.is_current
+                    ? ` — ${new Date(exp.end_date).toLocaleDateString('vi-VN')}`
+                    : ' — Hiện tại'}
                 </p>
 
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEditExperience(exp)}
-                    className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm font-semibold"
+                    className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-semibold"
                   >
-                    ✎ Sửa
+                    Sửa
                   </button>
                   <button
                     onClick={() => handleDeleteExperience(exp.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-semibold"
+                    className="px-3 py-1.5 bg-red-50 border border-red-200 text-red-700 rounded-lg hover:bg-red-100 text-sm font-semibold"
                   >
-                    ✕ Xóa
+                    Xóa
                   </button>
                 </div>
               </div>
