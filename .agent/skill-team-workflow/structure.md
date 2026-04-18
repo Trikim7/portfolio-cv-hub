@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Cấu trúc thư mục chuẩn
 
 ## Cấu trúc đề xuất

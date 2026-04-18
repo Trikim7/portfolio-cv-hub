@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Bảo mật và giới hạn khi dùng AI
 
 ## Không gửi lên AI

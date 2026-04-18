@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Ranh giới backend/frontend
 
 ## Backend (FastAPI)
@@ -13,9 +17,14 @@
 - Form nhập liệu, dashboard, so sánh ứng viên.
 - Gọi REST API và xử lý trạng thái UI.
 
-## Database cốt lõi
+## Database cốt lõi (Môi trường PostgreSQL)
 
-`users`, `candidate_profiles`, `skills`, `experiences`, `projects`, `companies`, `invitations`, `profile_views`, `comparisons`, `templates`, `system_settings`.
+`users`, `social_accounts` (OAuth), `candidate_profiles` (Hỗ trợ JSONB Đa ngôn ngữ), `skills`, `experiences`, `projects`, `cvs`, `companies`, `job_requirements` (Tiêu chí tuyển dụng/Radar, gồm `required_role` và `customer_facing`), `invitations`, `profile_views`, `comparisons`, `comparison_candidates`, `templates`, `system_settings`.
+
+### Lưu ý riêng cho `job_requirements`
+
+- `required_role`: gợi ý vai trò (VD: Backend/Frontend) để match theo title và kinh nghiệm.
+- `customer_facing`: đánh dấu công việc có yêu cầu giao tiếp với khách hàng, dùng trong logic đánh giá phù hợp.
 
 ## Quy tắc
 
