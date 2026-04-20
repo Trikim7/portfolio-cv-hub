@@ -1,21 +1,15 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { ProfileProvider, useProfileContext } from '@/hooks/ProfileContext'
 import ProfileForm from '@/components/dashboard/ProfileForm'
 import SkillsManager from '@/components/dashboard/SkillsManager'
 import ExperiencesManager from '@/components/dashboard/ExperiencesManager'
 import ProjectsManager from '@/components/dashboard/ProjectsManager'
 import CVManager from '@/components/dashboard/CVManager'
+import CandidateStatsCard from '@/components/dashboard/CandidateStatsCard'
 
 function DashboardContent() {
   const { profile } = useProfileContext()
-  const router = useRouter()
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    router.push('/login')
-  }
 
   if (!profile) {
     return (
@@ -29,19 +23,13 @@ function DashboardContent() {
     <>
       {/* Top greeting bar */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-lg">👋</span>
             <span className="font-semibold text-lg">
               Hi, chào {profile.full_name || 'Ứng viên'}!
             </span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors text-sm backdrop-blur-sm border border-white/30"
-          >
-            🚪 Đăng xuất
-          </button>
         </div>
       </div>
 
@@ -51,6 +39,7 @@ function DashboardContent() {
           <p className="text-gray-600">Quản lý hồ sơ và portfolio của bạn</p>
         </div>
 
+        <CandidateStatsCard />
         <ProfileForm />
         <SkillsManager />
         <ExperiencesManager />

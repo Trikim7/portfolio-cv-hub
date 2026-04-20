@@ -59,8 +59,18 @@ class CandidateService:
 
     @staticmethod
     def get_public_profile(db: Session, profile_slug: str) -> Optional[CandidateProfile]:
-        """Get public profile by slug"""
-        return CandidateProfileRepository.get_profile_by_slug(db, profile_slug)
+        """Get public profile by slug with user email and increment views"""
+        profile = CandidateProfileRepository.get_profile_by_slug(db, profile_slug)
+        if profile:
+            # Increment views
+            profile.views = (profile.views or 0) + 1
+            db.commit()
+            db.refresh(profile)
+            
+            if profile.user:
+                # Manually attach email for response schema
+                profile.contact_email = profile.user.email
+        return profile
 
     # Skill methods
     @staticmethod
@@ -280,3 +290,23 @@ class CandidateService:
             raise ValueError(f"CV not found or unauthorized")
 
         return CVRepository.delete_cv(db, cv_id)
+
+    # Analytics methods
+    @staticmethod
+    def get_candidate_analytics(db: Session, user_id: int) -> dict:
+        """Get analytics stats for candidate (total views + total invitations)"""
+        from app.models.recruiter import JobInvitation
+
+        profile = CandidateProfileRepository.get_profile_by_user_id(db, user_id)
+        if not profile:
+            raise ValueError(f"Profile not found for user {user_id}")
+
+        # Get total invitations count
+        total_invitations = db.query(JobInvitation).filter(
+            JobInvitation.candidate_id == profile.id
+        ).count()
+
+        return {
+            "total_views": profile.views or 0,
+            "total_invitations": total_invitations
+        }

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
-import { TokenResponse, CandidateProfile, Skill, Experience, Project, CV } from '@/types'
+import { TokenResponse, CandidateProfile, Skill, Experience, Project, CV, CandidateAnalytics } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -19,6 +19,9 @@ class ApiClient {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
+        console.log('✓ Token attached:', token.substring(0, 20) + '...')
+      } else {
+        console.warn('⚠️ No token found in localStorage')
       }
       return config
     })
@@ -65,6 +68,11 @@ class ApiClient {
 
   async getPublicProfile(slug: string): Promise<CandidateProfile> {
     const response = await this.client.get(`/api/candidate/public/${slug}`)
+    return response.data
+  }
+
+  async getCandidateAnalytics(): Promise<CandidateAnalytics> {
+    const response = await this.client.get('/api/candidate/analytics/stats')
     return response.data
   }
 
@@ -155,6 +163,131 @@ class ApiClient {
     const response = await this.client.delete(`/api/candidate/cvs/${cvId}`)
     return response.data
   }
+
+  // Recruiter endpoints
+  async registerRecruiter(userdata: any, companydata: any): Promise<TokenResponse> {
+    const response = await this.client.post('/api/auth/register-recruiter', {
+      email: userdata.email,
+      password: userdata.password,
+      company_name: companydata.company_name,
+      website: companydata.website,
+      location: companydata.location,
+      description: companydata.description,
+      company_email: companydata.email,
+      phone: companydata.phone,
+    })
+    return response.data
+  }
+
+  async loginRecruiter(email: string, password: string): Promise<TokenResponse> {
+    const response = await this.client.post('/api/auth/login', {
+      email,
+      password,
+    })
+    return response.data
+  }
+
+  async getCompanyProfile() {
+    const response = await this.client.get('/api/recruiter/company/profile')
+    return response.data
+  }
+
+  async updateCompanyProfile(data: any) {
+    const response = await this.client.put('/api/recruiter/company/profile', data)
+    return response.data
+  }
+
+  async searchCandidates(
+    keyword?: string,
+    skill?: string,
+    experienceLevel?: string,
+    location?: string
+  ) {
+    const params = new URLSearchParams()
+    if (keyword) params.append('keyword', keyword)
+    if (skill) params.append('skill', skill)
+    if (experienceLevel) params.append('experience_level', experienceLevel)
+    if (location) params.append('location', location)
+    const response = await this.client.get(`/api/recruiter/candidates/search?${params}`)
+    return response.data
+  }
+
+  async sendJobInvitation(candidateId: number, jobTitle: string, message?: string) {
+    const response = await this.client.post('/api/recruiter/invitations/send', {
+      candidate_id: candidateId,
+      job_title: jobTitle,
+      message,
+    })
+    return response.data
+  }
+
+  async getJobInvitations() {
+    const response = await this.client.get('/api/recruiter/invitations')
+    return response.data
+  }
+
+  async updateJobInvitation(invitationId: number, status: string) {
+    const response = await this.client.put(`/api/recruiter/invitations/${invitationId}?status=${status}`)
+    return response.data
+  }
+
+  async deleteJobInvitation(invitationId: number) {
+    const response = await this.client.delete(`/api/recruiter/invitations/${invitationId}`)
+    return response.data
+  }
+
+  // ─── Admin endpoints ───────────────────────────────────────────
+  async getAdminStats() {
+    const response = await this.client.get('/api/admin/stats')
+    return response.data
+  }
+
+  async getAdminUsers(params?: {
+    page?: number
+    page_size?: number
+    role?: string
+    is_active?: boolean
+    search?: string
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', String(params.page))
+    if (params?.page_size) queryParams.append('page_size', String(params.page_size))
+    if (params?.role) queryParams.append('role', params.role)
+    if (params?.is_active !== undefined) queryParams.append('is_active', String(params.is_active))
+    if (params?.search) queryParams.append('search', params.search)
+    const response = await this.client.get(`/api/admin/users?${queryParams}`)
+    return response.data
+  }
+
+  async toggleUserActive(userId: number, isActive: boolean) {
+    const response = await this.client.put(`/api/admin/users/${userId}/toggle-active`, {
+      is_active: isActive,
+    })
+    return response.data
+  }
+
+  async getAdminCompanies(params?: {
+    page?: number
+    page_size?: number
+    status?: string
+    search?: string
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', String(params.page))
+    if (params?.page_size) queryParams.append('page_size', String(params.page_size))
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.search) queryParams.append('search', params.search)
+    const response = await this.client.get(`/api/admin/companies?${queryParams}`)
+    return response.data
+  }
+
+  async updateCompanyStatus(companyId: number, status: string) {
+    const response = await this.client.put(`/api/admin/companies/${companyId}/status`, {
+      status,
+    })
+    return response.data
+  }
 }
 
 export const apiClient = new ApiClient()
+

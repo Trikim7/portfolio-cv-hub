@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useEffect, ReactNode } from 'react'
 import { useProfile } from './useProfile'
 
 type ProfileContextType = ReturnType<typeof useProfile>

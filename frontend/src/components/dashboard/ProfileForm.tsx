@@ -6,10 +6,11 @@ import { CandidateProfile } from '@/types'
 import { Toast, useToast } from '@/components/Toast'
 
 export default function ProfileForm() {
-  const { profile, updateProfile, loading } = useProfileContext()
+  const { profile, updateProfile, togglePublicProfile, loading } = useProfileContext()
   const [fullName, setFullName] = useState('')
   const [title, setTitle] = useState('')
   const [bio, setBio] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const { toast, showToast, closeToast } = useToast()
 
   // Track last saved values for the preview
@@ -20,6 +21,7 @@ export default function ProfileForm() {
       setFullName(profile.full_name || '')
       setTitle(profile.title || '')
       setBio(profile.bio || '')
+      setIsPublic(profile.is_public || false)
       // Initialize saved data from profile
       if (profile.full_name || profile.title || profile.bio) {
         setSavedData({
@@ -51,6 +53,22 @@ export default function ProfileForm() {
       showToast('✓ Đã cập nhật thông tin cá nhân', 'success')
     } catch (err) {
       showToast('❌ Cập nhật thất bại, vui lòng thử lại', 'error')
+    }
+  }
+
+  const handleTogglePublic = async () => {
+    try {
+      const newState = !isPublic
+      await togglePublicProfile(newState)
+      setIsPublic(newState)
+      showToast(
+        newState
+          ? '✓ Hồ sơ đã được công khai! Doanh nghiệp có thể tìm thấy bạn'
+          : '✓ Hồ sơ đã được ẩn kín',
+        'success'
+      )
+    } catch (err: any) {
+      showToast('❌ Không thể thay đổi chế độ công khai', 'error')
     }
   }
 
@@ -90,6 +108,31 @@ export default function ProfileForm() {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Viết một chút về bản thân..."
           />
+        </div>
+
+        {/* Public Profile Toggle */}
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">🌐 Công khai hồ sơ</label>
+            <p className="text-xs text-gray-600">
+              {isPublic
+                ? '✓ Hồ sơ của bạn có thể được doanh nghiệp tìm kiếm'
+                : '✗ Hồ sơ của bạn không công khai, chỉ ai có link mới xem'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleTogglePublic}
+            className={`relative inline-flex h-8 w-14 items-center rounded-full transition ${
+              isPublic ? 'bg-green-500' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${
+                isPublic ? 'translate-x-7' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
 
         <button
