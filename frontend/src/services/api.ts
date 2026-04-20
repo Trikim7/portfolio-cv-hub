@@ -10,6 +10,8 @@ import {
   CandidateScore,
   RankingResponse,
   ScoringCriteria,
+  ComparisonHistoryResponse,
+  ComparisonDetailResponse,
   SocialAccount,
   OAuthProvider,
 } from '@/types'
@@ -32,9 +34,6 @@ class ApiClient {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
-        console.log('✓ Token attached:', token.substring(0, 20) + '...')
-      } else {
-        console.warn('⚠️ No token found in localStorage')
       }
       return config
     })
@@ -178,7 +177,17 @@ class ApiClient {
   }
 
   // Recruiter endpoints
-  async registerRecruiter(userdata: any, companydata: any): Promise<TokenResponse> {
+  async registerRecruiter(
+    userdata: { email: string; password: string; role?: string },
+    companydata: {
+      company_name: string
+      website?: string
+      location?: string
+      description?: string
+      email?: string
+      phone?: string
+    }
+  ): Promise<TokenResponse> {
     const response = await this.client.post('/api/auth/register-recruiter', {
       email: userdata.email,
       password: userdata.password,
@@ -330,6 +339,20 @@ class ApiClient {
       limit: 50,
       ...params,
     })
+    return response.data
+  }
+
+  async getComparisonHistory(params?: { limit?: number; offset?: number }): Promise<ComparisonHistoryResponse> {
+    const queryParams = new URLSearchParams()
+    if (params?.limit !== undefined) queryParams.append('limit', String(params.limit))
+    if (params?.offset !== undefined) queryParams.append('offset', String(params.offset))
+    const suffix = queryParams.toString() ? `?${queryParams.toString()}` : ''
+    const response = await this.client.get(`/api/v1/candidates/compare/history${suffix}`)
+    return response.data
+  }
+
+  async getComparisonDetail(comparisonId: number): Promise<ComparisonDetailResponse> {
+    const response = await this.client.get(`/api/v1/candidates/compare/history/${comparisonId}`)
     return response.data
   }
 

@@ -175,6 +175,28 @@ export interface RankingResponse {
   } | null
 }
 
+export interface ComparisonHistoryItem {
+  comparison_id: number
+  company_id: number
+  created_at: string
+  criteria_title?: string | null
+  job_requirement_id?: number | null
+  candidate_count: number
+}
+
+export interface ComparisonHistoryResponse {
+  total: number
+  items: ComparisonHistoryItem[]
+}
+
+export interface ComparisonDetailResponse {
+  comparison_id: number
+  company_id: number
+  created_at: string
+  criteria_json: Record<string, any>
+  participant_candidate_ids: number[]
+}
+
 export interface ScoringCriteria {
   title?: string
   required_skills: Array<string | { name: string; level?: string }>

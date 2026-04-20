@@ -97,48 +97,48 @@ export default function DashboardShell({
     <div className="min-h-screen bg-slate-50">
       {/* Hero header */}
       <div className={`bg-gradient-to-r ${styles.hero} text-white`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4 sm:pb-5">
           {/* Mini top bar: brand + logout */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-3 sm:mb-3.5">
             <Link
               href="/"
-              className="text-white/90 hover:text-white font-bold text-lg tracking-tight"
+              className="text-white/90 hover:text-white font-bold text-base sm:text-lg tracking-tight"
             >
               Portfolio CV Hub
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium transition ring-1 ring-white/20"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
             >
               Đăng xuất
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="shrink-0">
                 {userAvatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={userAvatarUrl}
                     alt={userName || 'avatar'}
-                    className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg"
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-white/40 shadow-md"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-xl font-bold shadow-lg ring-2 ring-white/30">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-base sm:text-lg font-bold shadow-md ring-2 ring-white/30">
                     {initials || 'U'}
                   </div>
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-white/80 text-xs font-medium uppercase tracking-wider">
+                <p className="text-white/80 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
                   {subtitle || 'Xin chào'}
                 </p>
-                <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight truncate">
+                <h1 className="text-xl sm:text-2xl font-extrabold leading-snug truncate">
                   {title}
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   {badge && (
                     <span className="inline-flex items-center gap-1.5 bg-white text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
                       <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`} />
@@ -158,7 +158,7 @@ export default function DashboardShell({
       </div>
 
       {/* Mobile nav toggle */}
-      <div className="lg:hidden max-w-7xl mx-auto px-4 -mt-4 relative z-10">
+      <div className="lg:hidden max-w-7xl mx-auto px-4 -mt-3 relative z-10">
         <button
           type="button"
           onClick={() => setMobileNavOpen((v) => !v)}
@@ -301,31 +301,31 @@ export function PageShell({
   return (
     <div className="min-h-screen bg-slate-50">
       <div className={`bg-gradient-to-r ${styles.hero} text-white`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
-          <div className="flex items-center justify-between mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4 sm:pb-5">
+          <div className="flex items-center justify-between mb-3 sm:mb-3.5">
             <Link
               href="/"
-              className="text-white/90 hover:text-white font-bold text-lg tracking-tight"
+              className="text-white/90 hover:text-white font-bold text-base sm:text-lg tracking-tight"
             >
               Portfolio CV Hub
             </Link>
             {backHref && (
               <Link
                 href={backHref}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium transition ring-1 ring-white/20"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
               >
                 {backLabel}
               </Link>
             )}
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="min-w-0">
               {subtitle && (
-                <p className="text-white/80 text-xs font-medium uppercase tracking-wider">
+                <p className="text-white/80 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
                   {subtitle}
                 </p>
               )}
-              <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">{title}</h1>
+              <h1 className="text-xl sm:text-2xl font-extrabold leading-snug">{title}</h1>
             </div>
             {headerAction && <div className="shrink-0">{headerAction}</div>}
           </div>

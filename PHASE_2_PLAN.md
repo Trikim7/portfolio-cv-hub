@@ -384,10 +384,10 @@ Response:
 
 ---
 
-### 5. Xác thực Xã hội (Google, GitHub, Facebook)
+### 5. Xác thực Xã hội (Google, GitHub)
 
 **Mô tả:**
-- Xây dựng đăng nhập OAuth2 với Google, GitHub và Facebook
+- Xây dựng đăng nhập OAuth2 với Google, GitHub
 - Chuyển hướng người dùng đến nhà cung cấp OAuth, xử lý gọi lại
 - Tạo tài khoản tự động khi đăng nhập lần đầu
 - Liên kết tài khoản xã hội với hồ sơ hiện có
@@ -400,7 +400,6 @@ Response:
 Các nhà cung cấp:
 - Google OAuth: https://developers.google.com/identity/protocols/oauth2
 - GitHub OAuth: https://docs.github.com/en/developers/apps/building-oauth-apps
-- Facebook OAuth: https://developers.facebook.com/docs/facebook-login
 
 Quy trình:
 1. Người dùng nhấp vào "Đăng nhập bằng [Nhà cung cấp]"
@@ -479,7 +478,7 @@ Quy trình:
    - Frontend: Bảng hiển thị xếp hạng ứng viên, bộ lọc ứng viên theo điểm số.
 
 2. **Xác thực Xã hội (Social Auth):**
-   - Backend: Cấu hình OAuth2 (Google, GitHub, Facebook), xử lý Token.
+   - Backend: Cấu hình OAuth2 (Google, GitHub), xử lý Token.
    - Frontend: Giao diện đăng nhập xã hội, liên kết tài khoản và quản lý phiên đăng nhập.
 
 ---

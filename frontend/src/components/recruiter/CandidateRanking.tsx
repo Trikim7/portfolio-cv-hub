@@ -1,9 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { apiClient } from '@/services/api'
 import {
   CandidateScore,
+  ComparisonDetailResponse,
+  ComparisonHistoryItem,
   RankingResponse,
   ScoringCriteria,
 } from '@/types'
@@ -48,14 +50,42 @@ function axisColor(value: number): string {
   return 'text-red-500'
 }
 
+function extractErrorMessage(err: unknown, fallback: string): string {
+  const maybeAxios = err as { response?: { data?: { detail?: string } }; message?: string }
+  return maybeAxios?.response?.data?.detail || maybeAxios?.message || fallback
+}
+
 export default function CandidateRanking() {
   const [criteria, setCriteria] = useState<ScoringCriteria>(defaultCriteria)
   const [skillsInput, setSkillsInput] = useState('')
   const [techInput, setTechInput] = useState('')
   const [minScore, setMinScore] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [detailError, setDetailError] = useState<string | null>(null)
   const [result, setResult] = useState<RankingResponse | null>(null)
+  const [history, setHistory] = useState<ComparisonHistoryItem[]>([])
+  const [selectedHistory, setSelectedHistory] = useState<ComparisonDetailResponse | null>(null)
+  const [selectedHistoryLoading, setSelectedHistoryLoading] = useState(false)
+
+  const loadHistory = async () => {
+    setHistoryLoading(true)
+    setHistoryError(null)
+    try {
+      const response = await apiClient.getComparisonHistory({ limit: 12, offset: 0 })
+      setHistory(response.items || [])
+    } catch (err: unknown) {
+      setHistoryError(extractErrorMessage(err, 'Không thể tải lịch sử so sánh'))
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadHistory()
+  }, [])
 
   const filteredCandidates: CandidateScore[] = useMemo(() => {
     if (!result) return []
@@ -84,8 +114,8 @@ export default function CandidateRanking() {
         limit: 50,
       })
       setResult(response)
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || 'Không thể tải ranking')
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Không thể tải ranking'))
     } finally {
       setLoading(false)
     }
@@ -99,6 +129,19 @@ export default function CandidateRanking() {
         [axis]: value,
       },
     }))
+  }
+
+  const viewHistoryDetail = async (comparisonId: number) => {
+    setSelectedHistoryLoading(true)
+    setDetailError(null)
+    try {
+      const detail = await apiClient.getComparisonDetail(comparisonId)
+      setSelectedHistory(detail)
+    } catch (err: unknown) {
+      setDetailError(extractErrorMessage(err, 'Không thể tải chi tiết phiên so sánh'))
+    } finally {
+      setSelectedHistoryLoading(false)
+    }
   }
 
   return (
@@ -324,6 +367,87 @@ export default function CandidateRanking() {
           )}
         </div>
       )}
+
+      <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900">Lịch sử so sánh</h3>
+          <button
+            type="button"
+            onClick={loadHistory}
+            disabled={historyLoading}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-60 transition"
+          >
+            {historyLoading ? 'Đang tải...' : 'Tải lại'}
+          </button>
+        </div>
+
+        {historyError && (
+          <p className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">{historyError}</p>
+        )}
+        {detailError && (
+          <p className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">{detailError}</p>
+        )}
+        {selectedHistoryLoading && !selectedHistory && (
+          <p className="mb-3 text-sm text-gray-500">Đang tải chi tiết phiên so sánh...</p>
+        )}
+
+        {historyLoading && history.length === 0 ? (
+          <p className="text-sm text-gray-500">Đang tải lịch sử...</p>
+        ) : history.length === 0 ? (
+          <p className="text-sm text-gray-500">Chưa có phiên so sánh nào được lưu.</p>
+        ) : (
+          <div className="space-y-2">
+            {history.map((item) => (
+              <button
+                key={item.comparison_id}
+                type="button"
+                onClick={() => viewHistoryDetail(item.comparison_id)}
+                className="w-full text-left rounded-xl border border-gray-200 p-3 hover:bg-gray-50 transition"
+              >
+                <div className="flex flex-wrap gap-2 items-center justify-between">
+                  <p className="font-semibold text-gray-900">
+                    {item.criteria_title || `Phiên so sánh #${item.comparison_id}`}
+                  </p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">
+                    {item.candidate_count} ứng viên
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(item.created_at).toLocaleString('vi-VN')}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedHistory && (
+          <div className="mt-5 rounded-xl border border-gray-200 p-4 bg-slate-50">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="font-semibold text-gray-900">
+                Chi tiết phiên #{selectedHistory.comparison_id}
+              </h4>
+              {selectedHistoryLoading && <span className="text-xs text-gray-500">Đang tải...</span>}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {new Date(selectedHistory.created_at).toLocaleString('vi-VN')}
+            </p>
+            <p className="text-sm text-gray-700 mt-3">
+              Số ứng viên trong phiên: <span className="font-semibold">{selectedHistory.participant_candidate_ids.length}</span>
+            </p>
+            <p className="text-sm text-gray-700 mt-1">
+              Candidate IDs: {selectedHistory.participant_candidate_ids.join(', ') || '—'}
+            </p>
+            <details className="mt-3">
+              <summary className="cursor-pointer text-sm font-semibold text-gray-700">
+                Xem snapshot criteria JSON
+              </summary>
+              <pre className="mt-2 text-xs bg-white border border-gray-200 rounded-lg p-3 overflow-auto max-h-72">
+                {JSON.stringify(selectedHistory.criteria_json, null, 2)}
+              </pre>
+            </details>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

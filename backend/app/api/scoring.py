@@ -10,16 +10,23 @@ or an inline `criteria` object so this module is usable end-to-end today.
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from datetime import datetime, timezone
+import logging
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.models.analytics import Comparison, ComparisonCandidate
 from app.models.candidate import CandidateProfile
-from app.models.recruiter import JobRequirement
+from app.models.recruiter import Company, JobRequirement
+from app.models.user import UserRole
 from app.schemas.scoring import (
     CandidateScoreResponse,
+    ComparisonDetailResponse,
+    ComparisonHistoryItem,
+    ComparisonHistoryResponse,
     CompareCandidatesRequest,
     InlineJobCriteria,
     RadarScoresResponse,
@@ -27,6 +34,7 @@ from app.schemas.scoring import (
     RankingResponse,
     ScoreCandidateRequest,
 )
+from app.services.auth import AuthService
 from app.services.scoring import (
     ScoreResult,
     compute_candidate_score,
@@ -35,6 +43,7 @@ from app.services.scoring import (
 
 
 router = APIRouter(prefix="/api/v1/candidates", tags=["scoring"])
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +63,49 @@ def _criteria_to_job(criteria: InlineJobCriteria) -> JobRequirement:
         is_management_role=bool(criteria.is_management_role),
         weights_config=criteria.weights_config or None,
     )
+
+
+def get_current_recruiter_company_id(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> int:
+    """Resolve authenticated recruiter's company id from bearer token."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    token = auth_header[7:]
+    try:
+        user = AuthService.get_current_user(db, token)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+
+    if user.role != UserRole.RECRUITER:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Recruiter only")
+
+    company = db.query(Company).filter(Company.user_id == user.id).first()
+    if not company:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+    return company.id
+
+
+def get_optional_recruiter_company_id(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Optional[int]:
+    """Best-effort recruiter company resolution for non-protected endpoints."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header[7:]
+    try:
+        user = AuthService.get_current_user(db, token)
+    except ValueError:
+        return None
+    if user.role != UserRole.RECRUITER:
+        return None
+    company = db.query(Company).filter(Company.user_id == user.id).first()
+    return company.id if company else None
 
 
 def _resolve_job(
@@ -99,6 +151,75 @@ def _to_response(result: ScoreResult) -> CandidateScoreResponse:
         overall_match=round(result.overall_match, 2),
         match_details=result.match_details,
     )
+
+
+def _build_criteria_snapshot(
+    request: CompareCandidatesRequest,
+    job: JobRequirement,
+    responses: List[CandidateScoreResponse],
+) -> Dict[str, Any]:
+    if request.criteria:
+        criteria_source = request.criteria.model_dump()
+    else:
+        criteria_source = {
+            "job_id": job.id,
+            "title": job.title,
+            "required_skills": job.required_skills or [],
+            "years_experience": job.years_experience,
+            "required_role": job.required_role,
+            "customer_facing": bool(job.customer_facing),
+            "tech_stack": job.tech_stack or [],
+            "is_management_role": bool(job.is_management_role),
+            "weights_config": job.weights_config,
+        }
+
+    return {
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "criteria_source": criteria_source,
+        "candidate_ids": request.candidate_ids,
+        "results": [
+            {
+                "candidate_id": item.candidate_id,
+                "full_name": item.full_name,
+                "overall_match": item.overall_match,
+                "radar_scores": item.radar_scores.model_dump(),
+            }
+            for item in responses
+        ],
+    }
+
+
+def _try_persist_comparison(
+    db: Session,
+    request: CompareCandidatesRequest,
+    job: JobRequirement,
+    responses: List[CandidateScoreResponse],
+    company_id_override: Optional[int] = None,
+) -> Optional[int]:
+    """
+    Persist comparison snapshot when company context exists.
+
+    - With `job_id`: company_id is available from JobRequirement → persist.
+    - With inline criteria only: no company_id relationship → skip persistence.
+    """
+    company_id = company_id_override or getattr(job, "company_id", None)
+    if not company_id:
+        return None
+
+    snapshot = _build_criteria_snapshot(request, job, responses)
+    comparison_row = Comparison(company_id=company_id, criteria_json=snapshot)
+    db.add(comparison_row)
+    db.flush()
+
+    for candidate_id in dict.fromkeys(request.candidate_ids):
+        db.add(
+            ComparisonCandidate(
+                comparison_id=comparison_row.id,
+                candidate_id=candidate_id,
+            )
+        )
+
+    return comparison_row.id
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +281,26 @@ async def compare_candidates(
     else:
         comparison = None
 
+    comparison_saved = False
+    comparison_id = None
+    persist_error: Optional[str] = None
+    try:
+        comparison_id = _try_persist_comparison(db, request, job, responses)
+        comparison_saved = comparison_id is not None
+        if comparison_saved:
+            db.commit()
+    except Exception:
+        # Do not fail compare scoring due to history-write issues.
+        db.rollback()
+        logger.error("Failed to persist comparison history", exc_info=True)
+        persist_error = "comparison history unavailable"
+
+    if comparison is not None:
+        comparison["comparison_saved"] = comparison_saved
+        comparison["comparison_id"] = comparison_id
+        if persist_error:
+            comparison["save_error"] = persist_error
+
     return RankingResponse(
         job_id=job.id,
         total=len(responses),
@@ -171,6 +312,7 @@ async def compare_candidates(
 @router.post("/rank", response_model=RankingResponse)
 async def rank_candidates_endpoint(
     request: RankCandidatesRequest,
+    recruiter_company_id: Optional[int] = Depends(get_optional_recruiter_company_id),
     db: Session = Depends(get_db),
 ):
     """Rank candidates by overall_match desc.
@@ -189,10 +331,100 @@ async def rank_candidates_endpoint(
     profiles: List[CandidateProfile] = query.all()
     results = rank_candidates(profiles, job)[: request.limit]
     responses = [_to_response(r) for r in results]
+    try:
+        # Persist ranking session for authenticated recruiters (used by ranking history UI).
+        ranked_candidate_ids = [item.candidate_id for item in responses]
+        compare_like_request = CompareCandidatesRequest(
+            candidate_ids=ranked_candidate_ids,
+            job_id=request.job_id,
+            criteria=request.criteria,
+        )
+        persisted_id = _try_persist_comparison(
+            db,
+            compare_like_request,
+            job,
+            responses,
+            company_id_override=recruiter_company_id,
+        )
+        if persisted_id is not None:
+            db.commit()
+    except Exception:
+        db.rollback()
+        logger.error("Failed to persist rank history", exc_info=True)
 
     return RankingResponse(
         job_id=job.id,
         total=len(responses),
         candidates=responses,
         comparison=None,
+    )
+
+
+@router.get("/compare/history", response_model=ComparisonHistoryResponse)
+async def get_compare_history(
+    limit: int = 20,
+    offset: int = 0,
+    company_id: int = Depends(get_current_recruiter_company_id),
+    db: Session = Depends(get_db),
+):
+    """List comparison sessions of current recruiter company."""
+    safe_limit = max(1, min(limit, 100))
+    safe_offset = max(0, offset)
+
+    query = db.query(Comparison).filter(Comparison.company_id == company_id)
+    total = query.count()
+    rows = (
+        query.order_by(Comparison.created_at.desc())
+        .offset(safe_offset)
+        .limit(safe_limit)
+        .all()
+    )
+
+    items: List[ComparisonHistoryItem] = []
+    for row in rows:
+        payload = row.criteria_json or {}
+        source = payload.get("criteria_source") or {}
+        title = source.get("title") if isinstance(source, dict) else None
+        job_requirement_id = source.get("job_id") if isinstance(source, dict) else None
+        candidate_ids = payload.get("candidate_ids")
+        candidate_count = len(candidate_ids) if isinstance(candidate_ids, list) else 0
+        items.append(
+            ComparisonHistoryItem(
+                comparison_id=row.id,
+                company_id=row.company_id,
+                created_at=row.created_at,
+                criteria_title=title,
+                job_requirement_id=job_requirement_id,
+                candidate_count=candidate_count,
+            )
+        )
+
+    return ComparisonHistoryResponse(total=total, items=items)
+
+
+@router.get("/compare/history/{comparison_id}", response_model=ComparisonDetailResponse)
+async def get_compare_history_detail(
+    comparison_id: int,
+    company_id: int = Depends(get_current_recruiter_company_id),
+    db: Session = Depends(get_db),
+):
+    """Get one persisted comparison session owned by current recruiter company."""
+    row = (
+        db.query(Comparison)
+        .filter(
+            Comparison.id == comparison_id,
+            Comparison.company_id == company_id,
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comparison not found")
+
+    candidate_ids = [p.candidate_id for p in (row.participants or [])]
+    return ComparisonDetailResponse(
+        comparison_id=row.id,
+        company_id=row.company_id,
+        created_at=row.created_at,
+        criteria_json=row.criteria_json or {},
+        participant_candidate_ids=candidate_ids,
     )

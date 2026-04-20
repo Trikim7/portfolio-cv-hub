@@ -100,7 +100,7 @@ function DashboardContent() {
       headerAction={
         <Link
           href={profile.public_slug ? `/portfolio/${profile.public_slug}` : '/portfolio'}
-          className="bg-white text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-xl text-sm font-semibold transition shadow"
+          className="bg-white text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm w-full sm:w-auto text-center"
         >
           Xem portfolio công khai
         </Link>

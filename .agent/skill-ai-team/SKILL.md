@@ -19,6 +19,7 @@ Thiết lập cách dùng AI thống nhất cho team 4 người để:
 - [Mẫu prompt theo tác vụ](prompt-templates.md)
 - [Checklist review đầu ra AI](review-checklist.md)
 - [Bảo mật và giới hạn](security.md)
+- [Giao diện dashboard / Kỹ năng — đồng bộ UI](Design.md)
 
 ## Cách áp dụng
 

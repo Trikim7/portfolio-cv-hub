@@ -1,6 +1,7 @@
 """Pydantic schemas for the Scoring & Ranking API (Phase 2 — Member 1)."""
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -81,3 +82,31 @@ class RankingResponse(BaseModel):
     total: int
     candidates: List[CandidateScoreResponse]
     comparison: Optional[Dict[str, Any]] = None
+
+
+class ComparisonHistoryItem(BaseModel):
+    comparison_id: int
+    company_id: int
+    created_at: datetime
+    criteria_title: Optional[str] = None
+    job_requirement_id: Optional[int] = None
+    candidate_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ComparisonHistoryResponse(BaseModel):
+    total: int
+    items: List[ComparisonHistoryItem]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ComparisonDetailResponse(BaseModel):
+    comparison_id: int
+    company_id: int
+    created_at: datetime
+    criteria_json: Dict[str, Any]
+    participant_candidate_ids: List[int]
+
+    model_config = ConfigDict(from_attributes=True)
