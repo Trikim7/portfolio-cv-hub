@@ -1,9 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { CandidateSearchResult } from '@/types'
+import { CandidateSearchResult, I18nText } from '@/types'
 import { apiClient } from '@/services/api'
 import { Toast, useToast } from '@/components/Toast'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 interface ComparisonTableProps {
   candidates: CandidateSearchResult[]
@@ -36,7 +42,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
     setInvitationState({
       candidateId: candidate.id,
       candidateName: candidate.full_name || 'Ứng viên',
-      jobTitle: candidate.title || '',
+      jobTitle: candidate.headline || '',
       message: '',
       loading: false,
     })
@@ -68,7 +74,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
         invitationState.jobTitle,
         invitationState.message
       )
-      showToast(`✓ Gửi lời mời tới ${invitationState.candidateName} thành công!`, 'success')
+      showToast(`Đã gửi lời mời tới ${invitationState.candidateName}`, 'success')
       closeInvitationForm()
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Gửi lời mời thất bại', 'error')
@@ -79,16 +85,16 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-700 text-white p-6 flex justify-between items-center">
-            <h2 className="text-2xl font-bold">📊 So sánh ứng viên</h2>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-auto">
+          <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white p-6 flex justify-between items-center">
+            <h2 className="text-xl font-bold">So sánh ứng viên</h2>
             <button
               onClick={onClose}
-              className="text-2xl hover:scale-110 transition"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition flex items-center justify-center text-lg"
+              aria-label="Đóng"
             >
-              ✕
+              ×
             </button>
           </div>
 
@@ -101,7 +107,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   {candidates.map((candidate) => (
                     <th key={candidate.id} className="p-4 font-semibold text-center min-w-[200px] border-l border-gray-300">
                       <div className="font-bold text-blue-700">{candidate.full_name}</div>
-                      <div className="text-sm text-gray-600">{candidate.title}</div>
+                      <div className="text-sm text-gray-600">{candidate.headline}</div>
                     </th>
                   ))}
                 </tr>
@@ -109,7 +115,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
               <tbody>
                 {/* Full Name */}
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">👤 Họ tên</td>
+                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">Họ tên</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 text-center border-l border-gray-300">
                       {candidate.full_name}
@@ -119,27 +125,27 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
 
                 {/* Title / Position */}
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">💼 Vị trí</td>
+                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">Vị trí</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 text-center border-l border-gray-300 text-sm">
-                      {candidate.title || '-'}
+                      {candidate.headline || '-'}
                     </td>
                   ))}
                 </tr>
 
                 {/* Bio / Description */}
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">📝 Giới thiệu</td>
+                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">Giới thiệu</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 border-l border-gray-300 text-sm text-gray-700 max-w-xs">
-                      <p className="line-clamp-3">{candidate.bio || '-'}</p>
+                      <p className="line-clamp-3">{i18nToText(candidate.bio) || '-'}</p>
                     </td>
                   ))}
                 </tr>
 
                 {/* Skills */}
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">🛠️ Kỹ năng</td>
+                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">Kỹ năng</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 border-l border-gray-300">
                       <div className="flex flex-wrap gap-2 justify-center">
@@ -162,7 +168,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
 
                 {/* Experience - Skills count as proxy */}
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">⭐ Tổng kỹ năng</td>
+                  <td className="p-4 font-semibold text-gray-700 bg-gray-50">Tổng kỹ năng</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 text-center border-l border-gray-300 text-lg font-bold text-blue-600">
                       {candidate.skills.length}
@@ -171,15 +177,15 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                 </tr>
 
                 {/* Quick Actions */}
-                <tr className="bg-blue-50 border-t-2 border-blue-300">
-                  <td className="p-4 font-semibold text-gray-700">⚡ Hành động</td>
+                <tr className="bg-purple-50 border-t-2 border-purple-300">
+                  <td className="p-4 font-semibold text-gray-700">Hành động</td>
                   {candidates.map((candidate) => (
                     <td key={candidate.id} className="p-4 border-l border-gray-300 text-center">
                       <button
                         onClick={() => openInvitationForm(candidate)}
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-semibold"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold"
                       >
-                        💼 Gửi lời mời
+                        Gửi lời mời
                       </button>
                     </td>
                   ))}
@@ -191,7 +197,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
           {/* Footer */}
           <div className="bg-gray-50 border-t border-gray-200 p-4 text-center">
             <p className="text-sm text-gray-600">
-              Đang so sánh <span className="font-bold text-blue-600">{candidates.length}</span> ứng viên
+              Đang so sánh <span className="font-bold text-purple-600">{candidates.length}</span> ứng viên
             </p>
           </div>
         </div>
@@ -199,11 +205,11 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
 
       {/* Invitation Form Modal */}
       {invitationState.candidateId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="bg-gradient-to-r from-green-500 to-green-700 text-white p-6">
-              <h3 className="text-2xl font-bold">💼 Gửi lời mời</h3>
-              <p className="text-sm mt-2">Tới: <span className="font-bold">{invitationState.candidateName}</span></p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6">
+              <h3 className="text-xl font-bold">Gửi lời mời</h3>
+              <p className="text-sm mt-2 text-white/90">Tới: <span className="font-semibold">{invitationState.candidateName}</span></p>
             </div>
 
             <form onSubmit={handleSendInvitation} className="p-6 space-y-4">
@@ -214,7 +220,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   value={invitationState.jobTitle}
                   onChange={(e) => setInvitationState((prev) => ({ ...prev, jobTitle: e.target.value }))}
                   placeholder="VD: Frontend Developer, Senior Backend..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   required
                 />
               </div>
@@ -226,7 +232,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   onChange={(e) => setInvitationState((prev) => ({ ...prev, message: e.target.value }))}
                   placeholder="Nhập lời mời, thông tin công ty, lương, địa điểm làm việc..."
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
               </div>
 
@@ -242,9 +248,9 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                 <button
                   type="submit"
                   disabled={invitationState.loading}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold transition disabled:bg-gray-400"
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition disabled:bg-gray-400"
                 >
-                  {invitationState.loading ? '⏳ Đang gửi...' : '✓ Gửi'}
+                  {invitationState.loading ? 'Đang gửi...' : 'Gửi'}
                 </button>
               </div>
             </form>

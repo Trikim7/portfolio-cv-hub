@@ -1,17 +1,53 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cvhub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cvhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cvhub_dev_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio_cv_hub}
+    ports:
+      # Host-mapped to 5433 so the container never collides with a local
+      # Postgres install already using 5432. Inside the compose network the
+      # backend still talks to postgres:5432.
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cvhub} -d ${POSTGRES_DB:-portfolio_cv_hub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     container_name: cvhub-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://cvhub:cvhub_dev_pw@postgres:5432/portfolio_cv_hub}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      # OAuth - Phase 2 (leave blank during local dev if not testing social auth)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      OAUTH_REDIRECT_BASE_URL: ${OAUTH_REDIRECT_BASE_URL:-http://localhost:8000}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:3000}
+      # Cloudinary (avatar & logo image uploads). Leave blank to use local disk fallback.
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/portfolio_cv_hub.db:/app/portfolio_cv_hub.db
-      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   frontend:
     build:
@@ -19,8 +55,12 @@ services:
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
     container_name: cvhub-frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  postgres_data:

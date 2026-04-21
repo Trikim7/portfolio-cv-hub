@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 export default function LoginForm() {
   const { login, loading, error } = useAuth()
@@ -53,6 +54,8 @@ export default function LoginForm() {
           {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
       </form>
+
+      <SocialLoginButtons disabled={loading} />
 
       <p className="text-center text-sm text-gray-600 mt-4">
         Chưa có tài khoản?{' '}

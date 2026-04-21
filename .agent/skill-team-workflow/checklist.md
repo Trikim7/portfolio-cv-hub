@@ -1,10 +1,15 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Checklist trước khi merge/demo
 
 ## Trước khi tạo PR
 
 - [ ] Đã pull `main` mới nhất và merge vào nhánh đang làm.
 - [ ] Chức năng chính liên quan thay đổi chạy ổn.
-- [ ] **Nếu còn trong giai đoạn MVP (≤ 12.04.2026):** phạm vi không vượt `mvp-scope.md` (trừ khi đã thống nhất làm phase sau). **Sau mốc MVP** bỏ qua dòng này hoặc thay bằng quy ước phase hiện tại của nhóm.
+- [ ] Đảm bảo thiết kế Database tuân thủ tài liệu `database-design.md` (Sử dụng PostgreSQL/JSONB) cho mọi thay đổi ở Backend trong **Phase 2**.
+- [ ] Đối chiếu acceptance criteria và playbook trong `phase2-execution.md`.
 - [ ] Không có secrets trong commit.
 - [ ] Nếu đổi lệnh chạy/cấu trúc thì đã cập nhật tài liệu.
 
@@ -20,3 +25,4 @@
 - [ ] Có hướng dẫn cho cả macOS và Windows.
 - [ ] Có `.env.example` và README đầy đủ.
 - [ ] URL repository giữ nguyên theo quy định môn học.
+- [ ] Demo được ít nhất một flow Phase 2 end-to-end (job requirement -> score/compare -> radar/export hoặc flow tương đương).

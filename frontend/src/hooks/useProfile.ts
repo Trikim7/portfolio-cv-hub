@@ -206,6 +206,7 @@ export const useProfile = () => {
     loading,
     error,
     fetchProfile,
+    refreshProfile: fetchProfile,   // alias — triggers a full re-fetch
     updateProfile,
     togglePublicProfile,
     addSkill,

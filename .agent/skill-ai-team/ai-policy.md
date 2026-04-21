@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Quy tắc dùng AI
 
 ## Công cụ được phép

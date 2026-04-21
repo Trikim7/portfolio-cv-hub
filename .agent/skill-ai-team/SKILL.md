@@ -1,5 +1,6 @@
 ---
 name: skill-ai-team
+context: Portfolio CV Hub Phase 2
 description: Quy chuẩn dùng AI cho team 4 người trong dự án Portfolio CV Hub với nhiều công cụ như Cursor, GitHub Copilot, Antigravity. Dùng khi phân công task, viết prompt, review code AI sinh ra, và kiểm soát bảo mật-chất lượng trước khi merge.
 ---
 
@@ -18,6 +19,7 @@ Thiết lập cách dùng AI thống nhất cho team 4 người để:
 - [Mẫu prompt theo tác vụ](prompt-templates.md)
 - [Checklist review đầu ra AI](review-checklist.md)
 - [Bảo mật và giới hạn](security.md)
+- [Giao diện dashboard / Kỹ năng — đồng bộ UI](Design.md)
 
 ## Cách áp dụng
 

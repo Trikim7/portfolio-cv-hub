@@ -3,8 +3,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import { apiClient } from '@/services/api'
 import { useToast } from '@/components/Toast'
-import { CandidateSearchResult } from '@/types'
+import { CandidateSearchResult, I18nText } from '@/types'
 import ComparisonTable from './ComparisonTable'
+
+const i18nToText = (value: I18nText): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.vi || value.en || Object.values(value)[0] || ''
+}
 
 export default function CandidateSearch() {
   const [keyword, setKeyword] = useState('')
@@ -90,88 +96,82 @@ export default function CandidateSearch() {
 
   return (
     <div className="space-y-6">
-      {/* Search Bar & Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-6">🔍 Tìm kiếm ứng viên</h2>
-        
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <h2 className="text-lg font-bold text-gray-900 mb-5">Bộ lọc tìm kiếm</h2>
+
         <div className="space-y-4">
-          {/* Row 1: Keyword + Skill */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="📝 Tên, vị trí, bio..."
+              placeholder="Tên, vị trí, giới thiệu..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
-            
             <input
               type="text"
-              placeholder="🛠️ Kỹ năng: Python, React, Node.js..."
+              placeholder="Kỹ năng: Python, React, Node.js..."
               value={skill}
               onChange={(e) => setSkill(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
-          {/* Row 2: Experience Level + Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
               value={experienceLevel}
               onChange={(e) => setExperienceLevel(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
             >
-              <option value="">📊 Mức kinh nghiệm (Tất cả)</option>
-              <option value="fresher">🌱 Fresher (0-1 năm)</option>
-              <option value="junior">👨‍💼 Junior (1-3 năm)</option>
-              <option value="mid">👨‍💻 Mid (3-5 năm)</option>
-              <option value="senior">👴 Senior (5+ năm)</option>
+              <option value="">Mức kinh nghiệm (Tất cả)</option>
+              <option value="fresher">Fresher (0–1 năm)</option>
+              <option value="junior">Junior (1–3 năm)</option>
+              <option value="mid">Mid (3–5 năm)</option>
+              <option value="senior">Senior (5+ năm)</option>
             </select>
 
             <input
               type="text"
-              placeholder="📍 Địa điểm: Hà Nội, TP.HCM, Đà Nẵng..."
+              placeholder="Địa điểm: Hà Nội, TP.HCM, Đà Nẵng..."
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
-          {/* Search Button */}
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 transition flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 disabled:bg-gray-400 transition"
           >
-            {loading ? '⏳ Tìm kiếm...' : '🔍 Tìm kiếm ứng viên'}
+            {loading ? 'Đang tìm...' : 'Tìm kiếm ứng viên'}
           </button>
 
-          {/* Active Filters Display */}
           {(keyword || skill || experienceLevel || location) && (
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-gray-700 font-semibold mb-2">🎯 Bộ lọc đang áp dụng:</p>
+            <div className="p-3 bg-purple-50 rounded-xl border border-purple-200">
+              <p className="text-sm text-purple-900 font-semibold mb-2">Bộ lọc đang áp dụng:</p>
               <div className="flex flex-wrap gap-2">
                 {keyword && (
-                  <span className="px-3 py-1 bg-blue-200 text-blue-800 text-sm rounded-full">
-                    📝 {keyword}
+                  <span className="px-3 py-1 bg-white border border-purple-200 text-purple-800 text-xs rounded-full">
+                    {keyword}
                   </span>
                 )}
                 {skill && (
-                  <span className="px-3 py-1 bg-blue-200 text-blue-800 text-sm rounded-full">
-                    🛠️ {skill}
+                  <span className="px-3 py-1 bg-white border border-purple-200 text-purple-800 text-xs rounded-full">
+                    {skill}
                   </span>
                 )}
                 {experienceLevel && (
-                  <span className="px-3 py-1 bg-blue-200 text-blue-800 text-sm rounded-full">
-                    📊 {experienceLevel.charAt(0).toUpperCase() + experienceLevel.slice(1)}
+                  <span className="px-3 py-1 bg-white border border-purple-200 text-purple-800 text-xs rounded-full">
+                    {experienceLevel.charAt(0).toUpperCase() + experienceLevel.slice(1)}
                   </span>
                 )}
                 {location && (
-                  <span className="px-3 py-1 bg-blue-200 text-blue-800 text-sm rounded-full">
-                    📍 {location}
+                  <span className="px-3 py-1 bg-white border border-purple-200 text-purple-800 text-xs rounded-full">
+                    {location}
                   </span>
                 )}
               </div>
@@ -180,61 +180,72 @@ export default function CandidateSearch() {
         </div>
       </div>
 
-      {/* Results */}
       {results.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-bold mb-4">Kết quả ({results.length})</h3>
-          
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <h3 className="text-base font-bold text-gray-900 mb-4">Kết quả ({results.length})</h3>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {results.map((candidate) => (
-              <div
-                key={candidate.id}
-                className={`p-4 border-2 rounded-lg transition ${
-                  selectedCandidates.some(c => c.id === candidate.id)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <h4 className="font-bold text-lg">{candidate.full_name || 'Ứng viên'}</h4>
-                    <p className="text-sm text-gray-600">{candidate.title || 'Chưa cập nhật'}</p>
+            {results.map((candidate) => {
+              const selected = selectedCandidates.some((c) => c.id === candidate.id)
+              return (
+                <div
+                  key={candidate.id}
+                  className={`p-4 border rounded-xl transition ${
+                    selected
+                      ? 'border-purple-400 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 truncate">
+                        {candidate.full_name || 'Ứng viên'}
+                      </h4>
+                      <p className="text-sm text-gray-600 truncate">
+                        {candidate.headline || 'Chưa cập nhật'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleSelect(candidate)}
+                      className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                        selected
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {selected ? 'Đã chọn' : 'Chọn'}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => toggleSelect(candidate)}
-                    className={`ml-2 px-3 py-1 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
-                      selectedCandidates.some(c => c.id === candidate.id)
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {selectedCandidates.some(c => c.id === candidate.id) ? '✓ Đã chọn' : 'Chọn'}
-                  </button>
+                  <p className="text-sm text-gray-500 line-clamp-2">{i18nToText(candidate.bio)}</p>
+
+                  {candidate.skills.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {candidate.skills.map((s) => (
+                        <span
+                          key={s}
+                          className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm text-gray-500 mt-2">{candidate.bio}</p>
-                
-                {candidate.skills.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {candidate.skills.map((skill) => (
-                      <span key={skill} className="px-2 py-1 bg-gray-200 text-xs rounded">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {selectedCandidates.length > 0 && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg flex justify-between items-center">
-              <p className="text-sm text-gray-700 font-semibold">✓ Đã chọn {selectedCandidates.length} ứng viên</p>
+            <div className="mt-5 p-4 bg-purple-50 border border-purple-200 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <p className="text-sm text-purple-900 font-semibold">
+                Đã chọn {selectedCandidates.length} ứng viên
+              </p>
               <button
                 onClick={() => setShowComparison(true)}
                 disabled={selectedCandidates.length < 2}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:bg-gray-400 transition"
+                className="px-4 py-2 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 disabled:bg-gray-400 transition"
               >
-                📊 So sánh ({selectedCandidates.length})
+                So sánh ({selectedCandidates.length})
               </button>
             </div>
           )}

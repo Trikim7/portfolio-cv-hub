@@ -1,5 +1,6 @@
 """Candidate portfolio API routes"""
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Header, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
@@ -56,6 +57,23 @@ async def update_profile(
         return profile
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/profile/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload a new avatar image for the candidate profile."""
+    try:
+        avatar_url = await FileUploadService.save_avatar_file(file, user_id)
+        profile = CandidateService.update_avatar_url(db, user_id, avatar_url)
+        return {"avatar_url": profile.avatar_url}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -356,3 +374,94 @@ async def delete_cv(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# Public CV download — no auth required (portfolio is public)
+@router.get("/cvs/download/{cv_id}")
+async def download_cv_public(cv_id: int, db: Session = Depends(get_db)):
+    """Download a CV file by id (public — used from public portfolio page).
+    Always forces browser download via Content-Disposition: attachment.
+    """
+    from app.repositories.candidate import CVRepository
+    from pathlib import Path
+    from fastapi.responses import StreamingResponse
+    import httpx
+    import io
+
+    cv = CVRepository.get_cv_by_id(db, cv_id)
+    if not cv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV not found")
+
+    file_path: str = cv.file_path or ""
+    safe_filename = cv.file_name or "cv.pdf"
+    # RFC 5987 — safe ASCII fallback for Content-Disposition
+    ascii_filename = safe_filename.encode("ascii", errors="replace").decode()
+    disposition = f'attachment; filename="{ascii_filename}"'
+
+    # Cloudinary / CDN URL — proxy through backend so we control headers
+    if file_path.startswith("http://") or file_path.startswith("https://"):
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
+                resp = await client.get(file_path)
+            resp.raise_for_status()
+            return StreamingResponse(
+                io.BytesIO(resp.content),
+                media_type="application/pdf",
+                headers={"Content-Disposition": disposition},
+            )
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Could not fetch CV from storage: {exc}")
+
+    # Local disk path
+    path = Path(file_path)
+    if not path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV file not found on disk")
+
+    return FileResponse(
+        path=str(path),
+        media_type="application/pdf",
+        filename=safe_filename,
+        headers={"Content-Disposition": disposition},
+    )
+
+
+# CV inline view — opens in browser tab (used by candidate dashboard)
+@router.get("/cvs/view/{cv_id}")
+async def view_cv(cv_id: int, db: Session = Depends(get_db)):
+    """Serve CV for inline viewing in browser (Content-Disposition: inline).
+    Always proxies through backend so we fully control headers.
+    """
+    from app.repositories.candidate import CVRepository
+    from pathlib import Path
+    from fastapi.responses import Response
+    import httpx
+
+    cv = CVRepository.get_cv_by_id(db, cv_id)
+    if not cv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV not found")
+
+    file_path: str = cv.file_path or ""
+    safe_filename = cv.file_name or "cv.pdf"
+    ascii_filename = safe_filename.encode("ascii", errors="replace").decode()
+    inline_headers = {
+        "Content-Disposition": f'inline; filename="{ascii_filename}"',
+        "Content-Type": "application/pdf",
+    }
+
+    # Cloudinary / CDN URL — proxy content so we control Content-Disposition
+    if file_path.startswith("http://") or file_path.startswith("https://"):
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
+                resp = await client.get(file_path)
+            resp.raise_for_status()
+            return Response(content=resp.content, headers=inline_headers)
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Could not fetch CV: {exc}")
+
+    # Local disk path
+    path = Path(file_path)
+    if not path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV file not found on disk")
+
+    return Response(content=path.read_bytes(), headers=inline_headers)
+
