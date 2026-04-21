@@ -1,25 +1,24 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function WaitingApprovalPage() {
+  const router = useRouter()
+
+  const handleGoHome = () => {
+    // Xóa session → navbar sẽ hiện giao diện public thay vì recruiter links
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('role')
+    window.dispatchEvent(new Event('logout'))
+    router.push('/')
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
-          <div className="flex items-center justify-between mb-8">
-            <Link href="/" className="text-white/90 hover:text-white font-bold text-lg tracking-tight">
-              Portfolio CV Hub
-            </Link>
-            <Link
-              href="/recruiter/login"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium transition ring-1 ring-white/20"
-            >
-              Đăng nhập
-            </Link>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10">
           <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Doanh nghiệp</p>
-          <h1 className="text-2xl sm:text-3xl font-extrabold">Chờ duyệt</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold mt-1">Chờ duyệt</h1>
         </div>
       </div>
 
@@ -51,19 +50,13 @@ export default function WaitingApprovalPage() {
           </ul>
         </section>
 
-        <div className="flex gap-3">
-          <Link
-            href="/"
-            className="flex-1 text-center px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
+        <div className="flex justify-center">
+          <button
+            onClick={handleGoHome}
+            className="px-8 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
           >
             Trang chủ
-          </Link>
-          <Link
-            href="/recruiter/login"
-            className="flex-1 text-center px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition"
-          >
-            Đăng nhập
-          </Link>
+          </button>
         </div>
       </div>
     </div>

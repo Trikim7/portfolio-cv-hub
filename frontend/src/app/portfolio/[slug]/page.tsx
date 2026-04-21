@@ -99,9 +99,11 @@ export default function PublicPortfolioPage() {
             <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
               {profile.full_name || 'Hồ sơ Ứng viên'}
             </h1>
-            <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
-              {profile.headline || 'Chuyên viên'}
-            </p>
+            {profile.headline && (
+              <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
+                {profile.headline}
+              </p>
+            )}
 
             <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 mb-8 text-blue-100/90 text-sm md:text-base">
               <div className="flex items-center gap-2">
@@ -138,7 +140,9 @@ export default function PublicPortfolioPage() {
 
               {primaryCv ? (
                 <a
-                  href={`/api/candidate/cvs/download/${primaryCv.id}`}
+                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/cvs/download/${primaryCv.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-8 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white/30 hover:bg-white/30 transition backdrop-blur-sm shadow-lg"
                 >
                   Tải CV (PDF)

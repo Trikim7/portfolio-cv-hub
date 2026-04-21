@@ -13,7 +13,7 @@ import DashboardShell, {
   SectionCard,
   StatCard,
 } from '@/components/layout/DashboardShell'
-import { Company } from '@/types'
+import { Company, JobInvitation } from '@/types'
 
 type RecruiterSection = 'overview' | 'company' | 'actions' | 'social'
 
@@ -39,6 +39,8 @@ export default function RecruiterDashboardPage() {
   const [company, setCompany] = useState<Company | null>(null)
   const [section, setSection] = useState<RecruiterSection>('overview')
   const [logoUploading, setLogoUploading] = useState(false)
+  const [invitations, setInvitations] = useState<JobInvitation[]>([])
+  const [candidatesFound, setCandidatesFound] = useState<{ total: number; sessions: number } | null>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   const handleLogoClick = () => logoInputRef.current?.click()
@@ -82,6 +84,19 @@ export default function RecruiterDashboardPage() {
         }
         setCompany(companyData)
         setIsAuthorized(true)
+        // Load stats in parallel (non-critical)
+        await Promise.allSettled([
+          apiClient.getJobInvitations().then(invData => {
+            setInvitations(Array.isArray(invData) ? invData : [])
+          }),
+          apiClient.getComparisonHistory({ limit: 100 }).then(histData => {
+            const sessions = histData.total ?? 0
+            const total = (histData.items ?? []).reduce(
+              (acc, item) => acc + (item.candidate_count ?? 0), 0
+            )
+            setCandidatesFound({ total, sessions })
+          }),
+        ])
       } catch {
         localStorage.removeItem('access_token')
         localStorage.removeItem('role')
@@ -153,14 +168,30 @@ export default function RecruiterDashboardPage() {
       {section === 'overview' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard label="Lời mời đã gửi" value="—" hint="Thống kê sắp có" tone="purple" />
+            <StatCard
+              label="Lời mời đã gửi"
+              value={invitations.length > 0 ? String(invitations.length) : '0'}
+              hint={invitations.length > 0 ? `${invitations.filter(i => i.status === 'pending').length} đang chờ phản hồi` : 'Chưa có lời mời nào'}
+              tone="purple"
+            />
             <StatCard
               label="Ứng viên tìm thấy"
-              value="—"
-              hint="Từ công cụ tìm kiếm"
+              value={candidatesFound !== null ? String(candidatesFound.total) : '—'}
+              hint={
+                candidatesFound === null
+                  ? 'Đang tải…'
+                  : candidatesFound.sessions === 0
+                    ? 'Chưa có lần tìm kiếm nào'
+                    : `Qua ${candidatesFound.sessions} lần AI Ranking`
+              }
               tone="emerald"
             />
-            <StatCard label="Quan tâm" value="—" hint="Ứng viên đã phản hồi" tone="amber" />
+            <StatCard
+              label="Quan tâm"
+              value={invitations.filter(i => i.status === 'interested').length > 0 ? String(invitations.filter(i => i.status === 'interested').length) : '0'}
+              hint={invitations.filter(i => i.status === 'interested').length > 0 ? 'Ứng viên đã phản hồi tích cực' : 'Chưa có phản hồi'}
+              tone="amber"
+            />
           </div>
 
           <SectionCard

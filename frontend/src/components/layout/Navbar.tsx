@@ -18,11 +18,14 @@ export default function Navbar() {
     pathname === '/recruiter/search' || pathname === '/recruiter/ranking'
   // Public portfolio detail pages are standalone — no nav chrome needed
   const isPublicPortfolioPage = /^\/portfolio\/.+/.test(pathname)
+  // Waiting approval page is a standalone status page
+  const isWaitingApprovalPage = pathname === '/recruiter/waiting-approval'
 
   if (isAdminPage) return null
   if (isDashboardPage) return null
   if (isPageShellPage) return null
   if (isPublicPortfolioPage) return null
+  if (isWaitingApprovalPage) return null
 
   const effectiveRole = role === 'admin' ? null : role
   const effectiveLoggedIn = role === 'admin' ? false : isLoggedIn

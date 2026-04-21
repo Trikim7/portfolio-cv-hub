@@ -252,6 +252,21 @@ class ApiClient {
     return response.data
   }
 
+  // ── Public homepage endpoints (no auth) ─────────────────────────────────
+  async getPublicStats(): Promise<{ total_candidates: number; total_views: number; total_invitations: number }> {
+    const response = await this.client.get('/api/public/stats')
+    return response.data
+  }
+
+  async getFeaturedCandidates(limit = 4): Promise<Array<{
+    id: number; full_name: string; headline: string;
+    public_slug: string; avatar_url: string; views: number; skills: string[]
+  }>> {
+    const response = await this.client.get(`/api/public/featured-candidates?limit=${limit}`)
+    return response.data
+  }
+
+
   async sendJobInvitation(candidateId: number, jobTitle: string, message?: string) {
     const response = await this.client.post('/api/recruiter/invitations/send', {
       candidate_id: candidateId,

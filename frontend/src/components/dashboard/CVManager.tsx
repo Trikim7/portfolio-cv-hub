@@ -4,6 +4,8 @@ import { useState, useRef } from 'react'
 import { useProfileContext } from '@/hooks/ProfileContext'
 import { Toast, useToast } from '@/components/Toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 export default function CVManager() {
   const { profile, uploadCV, setPrimaryCV, deleteCV } = useProfileContext()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -98,10 +100,10 @@ export default function CVManager() {
                   </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {/* View/Download button — works for both Cloudinary URLs and local paths */}
+                  {/* View button — opens PDF inline in browser tab via backend */}
                   {cv.file_path && (
                     <a
-                      href={cv.file_path.startsWith('http') ? cv.file_path : `/api/candidate/cvs/${cv.id}/download`}
+                      href={`${API_URL}/api/candidate/cvs/view/${cv.id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-semibold"

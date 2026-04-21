@@ -69,11 +69,17 @@ class SearchService:
 
         if keyword:
             keyword_filter = f"%{keyword}%"
-            # bio is JSONB, cast to text for LIKE.
+            from sqlalchemy import exists
+            # Search across: full_name, headline, bio (JSONB cast), AND skill names
+            skill_subq = exists().where(
+                (Skill.candidate_id == CandidateProfile.id)
+                & Skill.name.ilike(keyword_filter)
+            )
             query = query.filter(
                 (CandidateProfile.full_name.ilike(keyword_filter))
                 | (CandidateProfile.headline.ilike(keyword_filter))
                 | (cast(CandidateProfile.bio, SAString).ilike(keyword_filter))
+                | skill_subq
             )
 
         if skill:

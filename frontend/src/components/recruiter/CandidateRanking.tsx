@@ -269,6 +269,15 @@ export default function CandidateRanking() {
   // Incremented after each successful run to auto-refresh history list
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
 
+  // Invitation state
+  const [inviteTarget, setInviteTarget] = useState<{ id: number; name: string } | null>(null)
+  const [inviteJobTitle, setInviteJobTitle] = useState('')
+  const [inviteMessage, setInviteMessage] = useState('')
+  const [inviteSending, setInviteSending] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  // Set of candidate IDs that already received an invite this session
+  const [invitedIds, setInvitedIds] = useState<Set<number>>(new Set())
+
   // Tooltip state — use React state instead of CSS group-hover
   // so tooltip stays alive as mouse moves from card → tooltip
   const [hoveredId, setHoveredId] = useState<number | null>(null)
@@ -369,6 +378,83 @@ export default function CandidateRanking() {
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
+
+      {/* ── Invite Modal ── */}
+      {inviteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-gray-900">Gửi lời mời phỏng vấn</h3>
+              <button
+                type="button"
+                onClick={() => { setInviteTarget(null); setInviteError(null) }}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+              >×</button>
+            </div>
+            <p className="text-sm text-gray-500">
+              Gửi lời mời tới <span className="font-semibold text-gray-800">{inviteTarget.name}</span>
+            </p>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vị trí tuyển dụng <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={inviteJobTitle}
+                onChange={e => setInviteJobTitle(e.target.value)}
+                placeholder={jobTitle || 'VD: Backend Developer'}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lời nhắn (tùy chọn)</label>
+              <textarea
+                value={inviteMessage}
+                onChange={e => setInviteMessage(e.target.value)}
+                rows={3}
+                placeholder="Xin chào! Chúng tôi rất quan tâm đến hồ sơ của bạn..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition resize-none"
+              />
+            </div>
+            {inviteError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{inviteError}</p>
+            )}
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => { setInviteTarget(null); setInviteError(null) }}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={inviteSending || !inviteJobTitle.trim()}
+                onClick={async () => {
+                  if (!inviteTarget || !inviteJobTitle.trim()) return
+                  setInviteSending(true)
+                  setInviteError(null)
+                  try {
+                    await apiClient.sendJobInvitation(
+                      inviteTarget.id,
+                      inviteJobTitle.trim(),
+                      inviteMessage.trim() || undefined,
+                    )
+                    setInvitedIds(prev => new Set(prev).add(inviteTarget.id))
+                    setInviteTarget(null)
+                    setInviteMessage('')
+                  } catch (err: unknown) {
+                    setInviteError(extractError(err, 'Không thể gửi lời mời'))
+                  } finally {
+                    setInviteSending(false)
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold transition shadow-sm"
+              >
+                {inviteSending ? 'Đang gửi…' : 'Gửi lời mời'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Section 1: Job Overview ── */}
       <Section step={1} title="Thông tin vị trí tuyển dụng" desc="Mô tả công việc để AI hiểu bạn đang tìm kiếm ai">
@@ -662,9 +748,26 @@ export default function CandidateRanking() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-bold text-gray-900 truncate text-sm">{name}</p>
-                          <span className={`shrink-0 px-2.5 py-0.5 rounded-full border text-xs font-extrabold ${scoreColor(score)}`}>
-                            {score.toFixed(0)}%
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (invitedIds.has(c.candidate_id)) return
+                                setInviteJobTitle(jobTitle)
+                                setInviteTarget({ id: c.candidate_id, name })
+                              }}
+                              className={`text-xs px-2.5 py-1 rounded-full font-semibold transition ${
+                                invitedIds.has(c.candidate_id)
+                                  ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                                  : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                              }`}
+                            >
+                              {invitedIds.has(c.candidate_id) ? '✔ Đã gửi' : 'Gửi lời mời'}
+                            </button>
+                            <span className={`px-2.5 py-0.5 rounded-full border text-xs font-extrabold ${scoreColor(score)}`}>
+                              {score.toFixed(0)}%
+                            </span>
+                          </div>
                         </div>
                         {/* Score bar */}
                         <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
