@@ -58,7 +58,7 @@ export default function CompanyProfile() {
       console.log('Update response:', updated)
       setCompany(updated)
       setEditing(false)
-      showToast('✓ Đã cập nhật thông tin công ty', 'success')
+      showToast('Đã cập nhật thông tin công ty', 'success')
     } catch (err: any) {
       console.error('Update error:', err.response?.data)
       
@@ -79,27 +79,38 @@ export default function CompanyProfile() {
   if (loading) return <div className="text-center py-8">Đang tải...</div>
   if (!company) return <div className="text-center py-8">Không tìm thấy công ty</div>
 
-  // Count status badge color
-  const statusColor = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    suspended: 'bg-gray-100 text-gray-800',
-  }[company.status] || 'bg-gray-100'
+  const statusColor =
+    {
+      pending: 'bg-amber-100 text-amber-800 border-amber-200',
+      approved: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      rejected: 'bg-red-100 text-red-800 border-red-200',
+      suspended: 'bg-gray-100 text-gray-700 border-gray-200',
+    }[company.status] || 'bg-gray-100 border-gray-200'
+
+  const statusLabel =
+    {
+      pending: 'Chờ duyệt',
+      approved: 'Đã duyệt',
+      rejected: 'Từ chối',
+      suspended: 'Tạm khóa',
+    }[company.status] || company.status
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
-      <div className="flex justify-between items-start">
-        <h2 className="text-2xl font-bold">Thông tin công ty</h2>
-        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColor}`}>
-          {company.status === 'pending' ? '⏳ Chờ duyệt' : '✓ Đã duyệt'}
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-6">
+      <div className="flex justify-between items-start gap-3">
+        <h2 className="text-lg font-bold text-gray-900">Thông tin công ty</h2>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${statusColor}`}
+        >
+          {statusLabel}
         </span>
       </div>
 
       {company.status === 'pending' && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            Công ty của bạn đang chờ Admin duyệt. Bạn sẽ có thể sử dụng tất cả tính năng sau khi được phê duyệt.
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p className="text-sm text-amber-800">
+            Công ty của bạn đang chờ Admin duyệt. Bạn sẽ có thể sử dụng tất cả tính năng sau
+            khi được phê duyệt.
           </p>
         </div>
       )}
@@ -142,9 +153,9 @@ export default function CompanyProfile() {
 
           <button
             onClick={() => setEditing(true)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+            className="px-5 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
           >
-            ✏️ Chỉnh sửa
+            Chỉnh sửa
           </button>
         </div>
       ) : (
@@ -227,18 +238,18 @@ export default function CompanyProfile() {
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={handleUpdate}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+              className="px-5 py-2 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition"
             >
-              ✓ Lưu
+              Lưu
             </button>
             <button
               onClick={() => setEditing(false)}
-              className="px-6 py-2 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition"
+              className="px-5 py-2 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
             >
-              ✕ Hủy
+              Hủy
             </button>
           </div>
         </div>

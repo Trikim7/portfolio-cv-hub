@@ -1,5 +1,20 @@
 import axios, { AxiosInstance } from 'axios'
-import { TokenResponse, CandidateProfile, Skill, Experience, Project, CV, CandidateAnalytics } from '@/types'
+import {
+  TokenResponse,
+  CandidateProfile,
+  Skill,
+  Experience,
+  Project,
+  CV,
+  CandidateAnalytics,
+  CandidateScore,
+  RankingResponse,
+  ScoringCriteria,
+  ComparisonHistoryResponse,
+  ComparisonDetailResponse,
+  SocialAccount,
+  OAuthProvider,
+} from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -19,9 +34,6 @@ class ApiClient {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
-        console.log('✓ Token attached:', token.substring(0, 20) + '...')
-      } else {
-        console.warn('⚠️ No token found in localStorage')
       }
       return config
     })
@@ -68,6 +80,24 @@ class ApiClient {
 
   async getPublicProfile(slug: string): Promise<CandidateProfile> {
     const response = await this.client.get(`/api/candidate/public/${slug}`)
+    return response.data
+  }
+
+  async uploadAvatar(file: File): Promise<{ avatar_url: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await this.client.post('/api/candidate/profile/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  }
+
+  async uploadCompanyLogo(file: File): Promise<{ logo_url: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await this.client.post('/api/recruiter/company/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return response.data
   }
 
@@ -165,7 +195,17 @@ class ApiClient {
   }
 
   // Recruiter endpoints
-  async registerRecruiter(userdata: any, companydata: any): Promise<TokenResponse> {
+  async registerRecruiter(
+    userdata: { email: string; password: string; role?: string },
+    companydata: {
+      company_name: string
+      website?: string
+      location?: string
+      description?: string
+      email?: string
+      phone?: string
+    }
+  ): Promise<TokenResponse> {
     const response = await this.client.post('/api/auth/register-recruiter', {
       email: userdata.email,
       password: userdata.password,
@@ -211,6 +251,21 @@ class ApiClient {
     const response = await this.client.get(`/api/recruiter/candidates/search?${params}`)
     return response.data
   }
+
+  // ── Public homepage endpoints (no auth) ─────────────────────────────────
+  async getPublicStats(): Promise<{ total_candidates: number; total_views: number; total_invitations: number }> {
+    const response = await this.client.get('/api/public/stats')
+    return response.data
+  }
+
+  async getFeaturedCandidates(limit = 4): Promise<Array<{
+    id: number; full_name: string; headline: string;
+    public_slug: string; avatar_url: string; views: number; skills: string[]
+  }>> {
+    const response = await this.client.get(`/api/public/featured-candidates?limit=${limit}`)
+    return response.data
+  }
+
 
   async sendJobInvitation(candidateId: number, jobTitle: string, message?: string) {
     const response = await this.client.post('/api/recruiter/invitations/send', {
@@ -285,6 +340,72 @@ class ApiClient {
     const response = await this.client.put(`/api/admin/companies/${companyId}/status`, {
       status,
     })
+    return response.data
+  }
+
+  // ─── Scoring & Ranking (Phase 2) ───────────────────────────
+  async scoreCandidate(params: {
+    candidate_id: number
+    job_id?: number
+    criteria?: ScoringCriteria
+  }): Promise<CandidateScore> {
+    const response = await this.client.post('/api/v1/candidates/score', params)
+    return response.data
+  }
+
+  async compareCandidates(params: {
+    candidate_ids: number[]
+    job_id?: number
+    criteria?: ScoringCriteria
+  }): Promise<RankingResponse> {
+    const response = await this.client.post('/api/v1/candidates/compare', params)
+    return response.data
+  }
+
+  async rankCandidates(params: {
+    job_id?: number
+    criteria?: ScoringCriteria
+    candidate_ids?: number[]
+    limit?: number
+  }): Promise<RankingResponse> {
+    const response = await this.client.post('/api/v1/candidates/rank', {
+      limit: 50,
+      ...params,
+    })
+    return response.data
+  }
+
+  async getComparisonHistory(params?: { limit?: number; offset?: number }): Promise<ComparisonHistoryResponse> {
+    const queryParams = new URLSearchParams()
+    if (params?.limit !== undefined) queryParams.append('limit', String(params.limit))
+    if (params?.offset !== undefined) queryParams.append('offset', String(params.offset))
+    const suffix = queryParams.toString() ? `?${queryParams.toString()}` : ''
+    const response = await this.client.get(`/api/v1/candidates/compare/history${suffix}`)
+    return response.data
+  }
+
+  async getComparisonDetail(comparisonId: number): Promise<ComparisonDetailResponse> {
+    const response = await this.client.get(`/api/v1/candidates/compare/history/${comparisonId}`)
+    return response.data
+  }
+
+  // ─── OAuth / Social Auth (Phase 2) ─────────────────────────
+  getOAuthLoginUrl(provider: OAuthProvider): string {
+    return `${API_URL}/api/auth/oauth/${provider}/login`
+  }
+
+  async startOAuthLink(provider: OAuthProvider): Promise<{ url: string }> {
+    const response = await this.client.get(`/api/auth/oauth/${provider}/link-start`)
+    return response.data
+  }
+
+  async listSocialAccounts(): Promise<SocialAccount[]> {
+    const response = await this.client.get('/api/auth/oauth/accounts')
+    return response.data
+  }
+
+  async unlinkSocialAccount(provider: OAuthProvider): Promise<{ status: string; provider: string }> {
+    const response = await this.client.delete(`/api/auth/oauth/${provider}`)
     return response.data
   }
 }

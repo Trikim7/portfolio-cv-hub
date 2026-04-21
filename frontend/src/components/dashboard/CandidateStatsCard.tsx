@@ -42,12 +42,8 @@ export default function CandidateStatsCard() {
 
   return (
     <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-      <div className="flex items-start justify-between gap-4 mb-5">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">Thống kê hồ sơ</h2>
-          <p className="text-sm text-gray-500">Cập nhật theo dữ liệu public profile và lời mời tuyển dụng</p>
-        </div>
-        <span className="text-2xl">📈</span>
+      <div className="mb-5">
+        <h2 className="text-lg font-bold text-gray-900">Thống kê hồ sơ</h2>
       </div>
 
       {loading && (

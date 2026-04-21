@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Checklist review đầu ra AI
 
 ## Correctness
