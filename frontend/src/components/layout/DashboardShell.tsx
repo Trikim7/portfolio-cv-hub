@@ -28,6 +28,7 @@ interface DashboardShellProps {
   userName?: string
   userEmail?: string
   userAvatarUrl?: string | null
+  onAvatarClick?: () => void
   badge?: string
   nav: DashboardNavItem[]
   activeId: string
@@ -66,6 +67,7 @@ export default function DashboardShell({
   userName,
   userEmail,
   userAvatarUrl,
+  onAvatarClick,
   badge,
   nav,
   activeId,
@@ -118,17 +120,48 @@ export default function DashboardShell({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="shrink-0">
-                {userAvatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={userAvatarUrl}
-                    alt={userName || 'avatar'}
-                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-white/40 shadow-md"
-                  />
+                {onAvatarClick ? (
+                  <button
+                    type="button"
+                    onClick={onAvatarClick}
+                    title="Đổi ảnh đại diện"
+                    className="relative group block focus:outline-none"
+                  >
+                    {userAvatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={userAvatarUrl}
+                        alt={userName || 'avatar'}
+                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-white/40 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-base sm:text-lg font-bold shadow-md ring-2 ring-white/30">
+                        {initials || 'U'}
+                      </div>
+                    )}
+                    {/* Camera overlay on hover */}
+                    <span className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                      </svg>
+                    </span>
+                  </button>
                 ) : (
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-base sm:text-lg font-bold shadow-md ring-2 ring-white/30">
-                    {initials || 'U'}
-                  </div>
+                  <>
+                    {userAvatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={userAvatarUrl}
+                        alt={userName || 'avatar'}
+                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-white/40 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-base sm:text-lg font-bold shadow-md ring-2 ring-white/30">
+                        {initials || 'U'}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               <div className="min-w-0">
@@ -297,29 +330,30 @@ export function PageShell({
   backLabel?: string
   children: ReactNode
 }) {
+  const router = useRouter()
   const styles = ACCENT_STYLES[accent]
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('role')
+    window.dispatchEvent(new Event('logout'))
+    router.push('/')
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className={`bg-gradient-to-r ${styles.hero} text-white`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4 sm:pb-5">
-          <div className="flex items-center justify-between mb-3 sm:mb-3.5">
-            <Link
-              href="/"
-              className="text-white/90 hover:text-white font-bold text-base sm:text-lg tracking-tight"
-            >
-              Portfolio CV Hub
-            </Link>
-            {backHref && (
-              <Link
-                href={backHref}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
-              >
-                {backLabel}
-              </Link>
-            )}
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-5 sm:pb-6">
+          {/* Single unified hero bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            {/* Left: title block */}
             <div className="min-w-0">
+              <Link
+                href="/"
+                className="text-white/70 hover:text-white text-xs font-semibold uppercase tracking-widest transition mb-1 inline-block"
+              >
+                Portfolio CV Hub
+              </Link>
               {subtitle && (
                 <p className="text-white/80 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
                   {subtitle}
@@ -327,7 +361,26 @@ export function PageShell({
               )}
               <h1 className="text-xl sm:text-2xl font-extrabold leading-snug">{title}</h1>
             </div>
-            {headerAction && <div className="shrink-0">{headerAction}</div>}
+
+            {/* Right: action buttons */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {backHref && (
+                <Link
+                  href={backHref}
+                  className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
+                >
+                  {backLabel}
+                </Link>
+              )}
+              {headerAction}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ring-1 ring-white/30 text-white"
+              >
+                Đăng xuất
+              </button>
+            </div>
           </div>
         </div>
       </div>

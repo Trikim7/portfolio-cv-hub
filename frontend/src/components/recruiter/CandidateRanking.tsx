@@ -1,453 +1,800 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiClient } from '@/services/api'
 import {
   CandidateScore,
-  ComparisonDetailResponse,
-  ComparisonHistoryItem,
+  RadarScores,
   RankingResponse,
-  ScoringCriteria,
 } from '@/types'
+import SearchHistoryList from './SearchHistoryList'
 
-const defaultCriteria: ScoringCriteria = {
-  title: 'Ad-hoc search',
-  required_skills: [],
-  years_experience: 2,
-  required_role: '',
-  customer_facing: false,
-  tech_stack: [],
-  is_management_role: false,
-  weights_config: {
-    technical_skills: 0.25,
-    experience: 0.25,
-    portfolio: 0.2,
-    soft_skills: 0.1,
-    leadership: 0.1,
-    readiness_signals: 0.1,
+// ─── Local types ──────────────────────────────────────────────────────────────
+/** All 6 weights fully required — avoids fighting with Partial<> from ScoringCriteria */
+type WeightsConfig = {
+  technical_skills: number
+  experience: number
+  portfolio: number
+  soft_skills: number
+  leadership: number
+  readiness_signals: number
+}
+
+type RadarKey = keyof WeightsConfig
+
+// ─── Presets ──────────────────────────────────────────────────────────────────
+type PresetKey = 'balanced' | 'tech' | 'portfolio'
+
+interface Preset {
+  label: string
+  desc: string
+  icon: string
+  weights: WeightsConfig
+}
+
+const PRESETS: Record<PresetKey, Preset> = {
+  balanced: {
+    label: 'Cân bằng',
+    desc: 'Đánh giá đều tất cả tiêu chí',
+    icon: '⚖️',
+    weights: { technical_skills: 0.25, experience: 0.25, portfolio: 0.2, soft_skills: 0.1, leadership: 0.1, readiness_signals: 0.1 },
+  },
+  tech: {
+    label: 'Ưu tiên kỹ thuật',
+    desc: 'Chú trọng kỹ năng & kinh nghiệm thực chiến',
+    icon: '⚡',
+    weights: { technical_skills: 0.4, experience: 0.3, portfolio: 0.15, soft_skills: 0.05, leadership: 0.05, readiness_signals: 0.05 },
+  },
+  portfolio: {
+    label: 'Ưu tiên Portfolio',
+    desc: 'Đề cao dự án thực tế đã làm',
+    icon: '🎨',
+    weights: { technical_skills: 0.2, experience: 0.15, portfolio: 0.4, soft_skills: 0.1, leadership: 0.05, readiness_signals: 0.1 },
   },
 }
 
-const AXIS_LABEL: Record<keyof NonNullable<ScoringCriteria['weights_config']>, string> = {
-  technical_skills: 'Kỹ năng kỹ thuật',
-  experience: 'Kinh nghiệm',
-  portfolio: 'Portfolio',
-  soft_skills: 'Kỹ năng mềm',
-  leadership: 'Lãnh đạo',
-  readiness_signals: 'Tín hiệu sẵn sàng',
+// ─── Auto-fill suggestions ─────────────────────────────────────────────────────
+interface RoleSuggestion { role: string; skills: string[]; tech: string[] }
+const ROLE_SUGGESTIONS: Record<string, RoleSuggestion> = {
+  backend: { role: 'Backend', skills: ['Python', 'Node.js', 'REST API', 'SQL'], tech: ['FastAPI', 'PostgreSQL', 'Docker', 'Redis'] },
+  frontend: { role: 'Frontend', skills: ['JavaScript', 'React', 'CSS', 'TypeScript'], tech: ['Next.js', 'Tailwind CSS', 'Figma'] },
+  fullstack: { role: 'Fullstack', skills: ['JavaScript', 'React', 'Node.js', 'SQL'], tech: ['Next.js', 'PostgreSQL', 'Docker'] },
+  data: { role: 'Data', skills: ['Python', 'SQL', 'Machine Learning', 'Statistics'], tech: ['Pandas', 'Scikit-learn', 'Spark', 'Tableau'] },
+  devops: { role: 'DevOps', skills: ['Linux', 'CI/CD', 'Docker', 'Cloud'], tech: ['Kubernetes', 'Terraform', 'AWS', 'GitHub Actions'] },
 }
 
-function scoreColor(value: number): string {
-  if (value >= 80) return 'bg-green-100 text-green-700 border-green-200'
-  if (value >= 60) return 'bg-yellow-100 text-yellow-700 border-yellow-200'
-  if (value >= 40) return 'bg-orange-100 text-orange-700 border-orange-200'
+const SKILL_SUGGESTIONS = [
+  'Python', 'JavaScript', 'TypeScript', 'React', 'Node.js',
+  'Java', 'Go', 'SQL', 'NoSQL', 'Docker', 'Kubernetes',
+  'AWS', 'REST API', 'GraphQL', 'Machine Learning',
+]
+
+const AXIS_META: Record<RadarKey, { label: string; tooltip: string }> = {
+  technical_skills: { label: 'Kỹ năng kỹ thuật', tooltip: 'Mức độ thành thạo các công nghệ trong yêu cầu' },
+  experience: { label: 'Kinh nghiệm làm việc', tooltip: 'Số năm và độ phù hợp với vị trí đã trải qua' },
+  portfolio: { label: 'Dự án thực tế', tooltip: 'Chất lượng và số lượng dự án đã thực hiện' },
+  soft_skills: { label: 'Kỹ năng mềm', tooltip: 'Giao tiếp, teamwork và các kỹ năng tổng quát' },
+  leadership: { label: 'Khả năng lãnh đạo', tooltip: 'Kinh nghiệm dẫn dắt nhóm hoặc mentoring' },
+  readiness_signals: { label: 'Sẵn sàng đảm nhận', tooltip: 'Các tín hiệu cho thấy ứng viên sẵn sàng vào vai' },
+}
+
+const RADAR_KEYS: RadarKey[] = [
+  'technical_skills', 'experience', 'portfolio',
+  'soft_skills', 'leadership', 'readiness_signals',
+]
+
+const AXIS_SHORT: Record<RadarKey, string> = {
+  technical_skills: 'Kỹ thuật',
+  experience: 'Kinh nghiệm',
+  portfolio: 'Dự án',
+  soft_skills: 'Kỹ năng mềm',
+  leadership: 'Lãnh đạo',
+  readiness_signals: 'Sẵn sàng',
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function scoreColor(v: number): string {
+  if (v >= 80) return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+  if (v >= 60) return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+  if (v >= 40) return 'bg-orange-100 text-orange-700 border-orange-200'
   return 'bg-red-100 text-red-700 border-red-200'
 }
 
-function axisColor(value: number): string {
-  if (value >= 8) return 'text-green-600'
-  if (value >= 5) return 'text-yellow-600'
-  return 'text-red-500'
+function scoreBar(v: number): string {
+  if (v >= 80) return 'bg-emerald-500'
+  if (v >= 60) return 'bg-yellow-400'
+  if (v >= 40) return 'bg-orange-400'
+  return 'bg-red-400'
 }
 
-function extractErrorMessage(err: unknown, fallback: string): string {
-  const maybeAxios = err as { response?: { data?: { detail?: string } }; message?: string }
-  return maybeAxios?.response?.data?.detail || maybeAxios?.message || fallback
+function extractError(err: unknown, fallback: string): string {
+  const e = err as { response?: { data?: { detail?: string } }; message?: string }
+  return e?.response?.data?.detail ?? e?.message ?? fallback
 }
 
-export default function CandidateRanking() {
-  const [criteria, setCriteria] = useState<ScoringCriteria>(defaultCriteria)
-  const [skillsInput, setSkillsInput] = useState('')
-  const [techInput, setTechInput] = useState('')
-  const [minScore, setMinScore] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [historyError, setHistoryError] = useState<string | null>(null)
-  const [detailError, setDetailError] = useState<string | null>(null)
-  const [result, setResult] = useState<RankingResponse | null>(null)
-  const [history, setHistory] = useState<ComparisonHistoryItem[]>([])
-  const [selectedHistory, setSelectedHistory] = useState<ComparisonDetailResponse | null>(null)
-  const [selectedHistoryLoading, setSelectedHistoryLoading] = useState(false)
+// ─── TagInput ─────────────────────────────────────────────────────────────────
+interface TagInputProps {
+  tags: string[]
+  onChange: (tags: string[]) => void
+  suggestions?: string[]
+  placeholder?: string
+}
 
-  const loadHistory = async () => {
-    setHistoryLoading(true)
-    setHistoryError(null)
-    try {
-      const response = await apiClient.getComparisonHistory({ limit: 12, offset: 0 })
-      setHistory(response.items || [])
-    } catch (err: unknown) {
-      setHistoryError(extractErrorMessage(err, 'Không thể tải lịch sử so sánh'))
-    } finally {
-      setHistoryLoading(false)
+function TagInput({ tags, onChange, suggestions = [], placeholder }: TagInputProps) {
+  const [input, setInput] = useState('')
+  const [showSuggest, setShowSuggest] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const filtered = suggestions.filter(
+    (s) => s.toLowerCase().includes(input.toLowerCase()) && !tags.includes(s),
+  )
+
+  const addTag = (tag: string) => {
+    const t = tag.trim()
+    if (t && !tags.includes(t)) onChange([...tags, t])
+    setInput('')
+    setShowSuggest(false)
+    inputRef.current?.focus()
+  }
+
+  const removeTag = (tag: string) => onChange(tags.filter((t) => t !== tag))
+
+  const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === 'Enter' || e.key === ',') && input.trim()) {
+      e.preventDefault()
+      addTag(input)
+    }
+    if (e.key === 'Backspace' && !input && tags.length) {
+      onChange(tags.slice(0, -1))
     }
   }
 
-  useEffect(() => {
-    loadHistory()
-  }, [])
+  return (
+    <div className="relative">
+      <div
+        className="min-h-[44px] flex flex-wrap gap-1.5 items-center px-3 py-2 border border-gray-300 rounded-xl bg-white focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-violet-500 transition cursor-text"
+        onClick={() => inputRef.current?.focus()}
+      >
+        {tags.map((tag) => (
+          <span key={tag} className="inline-flex items-center gap-1 bg-violet-100 text-violet-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeTag(tag)}
+              className="hover:text-red-500 transition leading-none"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={(e) => { setInput(e.target.value); setShowSuggest(true) }}
+          onKeyDown={handleKey}
+          onFocus={() => setShowSuggest(true)}
+          onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+          placeholder={tags.length === 0 ? placeholder : ''}
+          className="flex-1 min-w-24 outline-none bg-transparent text-sm text-gray-700 placeholder:text-gray-400"
+        />
+      </div>
+      {showSuggest && filtered.length > 0 && (
+        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-44 overflow-auto">
+          {filtered.slice(0, 8).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={() => addTag(s)}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-violet-50 text-gray-700 transition"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
-  const filteredCandidates: CandidateScore[] = useMemo(() => {
-    if (!result) return []
-    return result.candidates.filter((c) => c.overall_match >= minScore)
-  }, [result, minScore])
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
+function Tooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false)
+  return (
+    <span className="relative inline-block ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold inline-flex items-center justify-center hover:bg-violet-200 hover:text-violet-700 transition"
+      >
+        ?
+      </button>
+      {show && (
+        <span className="absolute left-5 top-0 z-30 w-52 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl leading-relaxed">
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
+// ─── Section wrapper ──────────────────────────────────────────────────────────
+interface SectionProps { step: number; title: string; desc: string; children: React.ReactNode }
+function Section({ step, title, desc, children }: SectionProps) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+      <div className="flex items-start gap-4 mb-5">
+        <div className="w-8 h-8 rounded-xl bg-violet-600 text-white text-sm font-extrabold flex items-center justify-center shrink-0 shadow">
+          {step}
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-gray-900">{title}</h3>
+          <p className="text-sm text-gray-500 mt-0.5">{desc}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+// ─── Label ────────────────────────────────────────────────────────────────────
+interface LabelProps { children: React.ReactNode; tooltip?: string }
+function FieldLabel({ children, tooltip }: LabelProps) {
+  return (
+    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+      {children}
+      {tooltip && <Tooltip text={tooltip} />}
+    </label>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function CandidateRanking() {
+  // Form state
+  const [jobTitle, setJobTitle] = useState('')
+  const [roleType, setRoleType] = useState('')
+  const [yearsExp, setYearsExp] = useState(2)
+  const [skills, setSkills] = useState<string[]>([])
+  const [techStack, setTechStack] = useState<string[]>([])
+  const [preset, setPreset] = useState<PresetKey>('balanced')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [weights, setWeights] = useState<WeightsConfig>(PRESETS.balanced.weights)
+  const [minScore, setMinScore] = useState(0)
+
+  // API state
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<RankingResponse | null>(null)
+
+  // Incremented after each successful run to auto-refresh history list
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
+
+  // Tooltip state — use React state instead of CSS group-hover
+  // so tooltip stays alive as mouse moves from card → tooltip
+  const [hoveredId, setHoveredId] = useState<number | null>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const openTooltip  = (id: number) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    setHoveredId(id)
+  }
+  const closeTooltip = () => {
+    closeTimer.current = setTimeout(() => setHoveredId(null), 120)
+  }
+
+  // Auto-fill when job title changes
+  useEffect(() => {
+    const lower = jobTitle.toLowerCase()
+    const matchKey = Object.keys(ROLE_SUGGESTIONS).find((k) => lower.includes(k))
+    if (matchKey) {
+      const s = ROLE_SUGGESTIONS[matchKey]
+      if (!roleType) setRoleType(s.role)
+      if (skills.length === 0) setSkills(s.skills)
+      if (techStack.length === 0) setTechStack(s.tech)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobTitle])
+
+  const applyPreset = (key: PresetKey) => {
+    setPreset(key)
+    setWeights(PRESETS[key].weights)
+    setShowAdvanced(false)
+  }
+
+  const updateWeight = (axis: RadarKey, val: number) => {
+    setWeights((prev) => ({ ...prev, [axis]: val }))
+  }
+
+
+  const handleRerun = (criteriaJson: Record<string, unknown>) => {
+    // criteria_json is stored as { criteria_source: {...}, results: [...] }
+    // the actual search params live inside criteria_source
+    const raw = (criteriaJson.criteria_source as Record<string, unknown> | undefined) ?? criteriaJson
+    if (raw.title && typeof raw.title === 'string') setJobTitle(raw.title)
+    if (raw.required_role && typeof raw.required_role === 'string') setRoleType(raw.required_role)
+    if (raw.years_experience !== undefined) setYearsExp(Number(raw.years_experience))
+    const rawSkills = raw.required_skills as unknown[] | undefined
+    if (rawSkills?.length) {
+      setSkills(rawSkills.map((s) => typeof s === 'string' ? s : (s as { name: string }).name).filter(Boolean))
+    }
+    const rawTech = raw.tech_stack as string[] | undefined
+    if (rawTech?.length) setTechStack(rawTech)
+    const rawW = raw.weights_config as Record<string, number> | undefined
+    if (rawW) {
+      setWeights((prev) => ({ ...prev, ...rawW } as WeightsConfig))
+      setPreset('balanced')
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handleRun = async () => {
     setLoading(true)
     setError(null)
     try {
-      const required_skills = skillsInput
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-      const tech_stack = techInput
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-
-      const response = await apiClient.rankCandidates({
+      const res = await apiClient.rankCandidates({
         criteria: {
-          ...criteria,
-          required_skills,
-          tech_stack: tech_stack.length > 0 ? tech_stack : undefined,
+          title: jobTitle || 'Ad-hoc search',
+          required_skills: skills,
+          years_experience: yearsExp,
+          required_role: roleType,
+          customer_facing: false,
+          tech_stack: techStack.length > 0 ? techStack : undefined,
+          is_management_role: false,
+          weights_config: weights,
         },
         limit: 50,
       })
-      setResult(response)
+      setResult(res)
+      // Trigger auto-refresh of the history panel
+      setHistoryRefreshKey((k) => k + 1)
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, 'Không thể tải ranking'))
+      setError(extractError(err, 'Không thể tải kết quả'))
     } finally {
       setLoading(false)
     }
   }
 
-  const updateWeight = (axis: keyof NonNullable<ScoringCriteria['weights_config']>, value: number) => {
-    setCriteria((prev) => ({
-      ...prev,
-      weights_config: {
-        ...(prev.weights_config || {}),
-        [axis]: value,
-      },
-    }))
-  }
 
-  const viewHistoryDetail = async (comparisonId: number) => {
-    setSelectedHistoryLoading(true)
-    setDetailError(null)
-    try {
-      const detail = await apiClient.getComparisonDetail(comparisonId)
-      setSelectedHistory(detail)
-    } catch (err: unknown) {
-      setDetailError(extractErrorMessage(err, 'Không thể tải chi tiết phiên so sánh'))
-    } finally {
-      setSelectedHistoryLoading(false)
-    }
-  }
+  const filteredCandidates: CandidateScore[] = useMemo(
+    () => (result?.candidates ?? []).filter((c) => c.overall_match >= minScore),
+    [result, minScore],
+  )
 
+  const totalWeight = RADAR_KEYS.reduce((sum, k) => sum + weights[k], 0) || 1
+
+  const previewPriorities = RADAR_KEYS
+    .map((k) => ({ key: k, label: AXIS_META[k].label, pct: Math.round((weights[k] / totalWeight) * 100) }))
+    .sort((a, b) => b.pct - a.pct)
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-        <h2 className="text-2xl font-bold mb-1 text-gray-900">Xếp hạng ứng viên</h2>
-        <p className="text-sm text-gray-500 mb-6">
-          Nhập yêu cầu công việc và chạy thuật toán chấm điểm AI (6 trục radar).
-        </p>
+    <div className="space-y-5">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Vị trí</label>
+      {/* ── Section 1: Job Overview ── */}
+      <Section step={1} title="Thông tin vị trí tuyển dụng" desc="Mô tả công việc để AI hiểu bạn đang tìm kiếm ai">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <FieldLabel tooltip="Tên công việc giúp AI gợi ý kỹ năng phù hợp tự động">Tên vị trí</FieldLabel>
             <input
               type="text"
-              value={criteria.title || ''}
-              onChange={(e) => setCriteria({ ...criteria, title: e.target.value })}
-              placeholder="VD: Senior Backend Engineer"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="VD: Backend Developer"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Role hint (Backend/Frontend/…)
-            </label>
-            <input
-              type="text"
-              value={criteria.required_role || ''}
-              onChange={(e) => setCriteria({ ...criteria, required_role: e.target.value })}
-              placeholder="Backend"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <FieldLabel tooltip="Phân loại chuyên môn của vị trí">Loại vai trò</FieldLabel>
+            <select
+              value={roleType}
+              onChange={(e) => setRoleType(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+            >
+              <option value="">-- Chọn --</option>
+              <option value="Backend">Backend</option>
+              <option value="Frontend">Frontend</option>
+              <option value="Fullstack">Fullstack</option>
+              <option value="Data">Data / AI</option>
+              <option value="DevOps">DevOps / Cloud</option>
+              <option value="Mobile">Mobile</option>
+            </select>
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kỹ năng yêu cầu (phân tách bởi dấu phẩy)
-            </label>
-            <input
-              type="text"
-              value={skillsInput}
-              onChange={(e) => setSkillsInput(e.target.value)}
-              placeholder="Python, React, PostgreSQL"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tech stack (phân tách bởi dấu phẩy)
-            </label>
-            <input
-              type="text"
-              value={techInput}
-              onChange={(e) => setTechInput(e.target.value)}
-              placeholder="Python, React, PostgreSQL, Docker"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Năm kinh nghiệm yêu cầu</label>
-            <input
-              type="number"
-              min={0}
-              value={criteria.years_experience ?? 0}
-              onChange={(e) =>
-                setCriteria({ ...criteria, years_experience: Number(e.target.value) })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex items-center gap-6 pt-5">
-            <label className="inline-flex items-center gap-2 text-sm">
+            <FieldLabel tooltip="Số năm kinh nghiệm tối thiểu ứng viên cần có">Kinh nghiệm tối thiểu</FieldLabel>
+            <div className="flex items-center gap-3">
               <input
-                type="checkbox"
-                checked={!!criteria.customer_facing}
-                onChange={(e) =>
-                  setCriteria({ ...criteria, customer_facing: e.target.checked })
-                }
+                type="range" min={0} max={10} step={1}
+                value={yearsExp}
+                onChange={(e) => setYearsExp(Number(e.target.value))}
+                className="flex-1 accent-violet-600"
               />
-              Tiếp xúc khách hàng
-            </label>
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={!!criteria.is_management_role}
-                onChange={(e) =>
-                  setCriteria({ ...criteria, is_management_role: e.target.checked })
-                }
-              />
-              Vai trò quản lý
-            </label>
+              <span className="w-24 text-center text-sm font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg py-1.5">
+                {yearsExp === 0 ? 'Không yêu cầu' : `${yearsExp} năm`}
+              </span>
+            </div>
           </div>
         </div>
+      </Section>
 
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Tùy chỉnh trọng số radar</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {(Object.keys(AXIS_LABEL) as Array<keyof typeof AXIS_LABEL>).map((axis) => (
-              <label key={axis} className="text-xs text-gray-600">
-                <span className="block mb-1">
-                  {AXIS_LABEL[axis]} ({(criteria.weights_config?.[axis] ?? 0).toFixed(2)})
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={criteria.weights_config?.[axis] ?? 0}
-                  onChange={(e) => updateWeight(axis, Number(e.target.value))}
-                  className="w-full"
-                />
-              </label>
+      {/* ── Section 2: Core Requirements ── */}
+      <Section step={2} title="Yêu cầu kỹ năng" desc="Nhập kỹ năng bắt buộc">
+        <div className="space-y-4">
+          <div>
+            <FieldLabel tooltip="Các kỹ năng mà ứng viên cần có. Thêm bằng cách chọn gợi ý hoặc nhập rồi Enter">
+              Kỹ năng yêu cầu <span className="text-red-500">*</span>
+            </FieldLabel>
+            <TagInput
+              tags={skills}
+              onChange={setSkills}
+              suggestions={SKILL_SUGGESTIONS}
+              placeholder="VD: Python, React, SQL… (chọn gợi ý hoặc nhập rồi Enter)"
+            />
+            {skills.length === 0 && (
+              <p className="text-xs text-gray-400 mt-1.5">
+                💡 Thêm ít nhất 1 kỹ năng để có kết quả tốt hơn
+              </p>
+            )}
+          </div>
+          <div>
+            <FieldLabel tooltip="Công nghệ, framework hoặc công cụ cụ thể ứng viên đã dùng trong dự án thực tế">
+              Tech Stack{' '}
+            </FieldLabel>
+            <TagInput
+              tags={techStack}
+              onChange={setTechStack}
+              suggestions={['Docker', 'PostgreSQL', 'Redis', 'Next.js', 'FastAPI', 'Django', 'Spring Boot', 'Kubernetes', 'AWS', 'GCP', 'Figma', 'Tailwind CSS']}
+              placeholder="VD: Docker, PostgreSQL, AWS… (nhập rồi Enter)"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Section 3: Evaluation Preferences ── */}
+      <Section step={3} title="Tiêu chí đánh giá" desc="Chọn cách AI ưu tiên đánh giá ứng viên cho vị trí này">
+        {/* Presets */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          {(Object.keys(PRESETS) as PresetKey[]).map((key) => {
+            const p = PRESETS[key]
+            const active = preset === key && !showAdvanced
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => applyPreset(key)}
+                className={`rounded-xl border-2 p-4 text-left transition ${active
+                  ? 'border-violet-500 bg-violet-50 shadow-sm'
+                  : 'border-gray-200 hover:border-violet-300 hover:bg-gray-50'
+                  }`}
+              >
+                <span className="text-2xl">{p.icon}</span>
+                <p className={`text-sm font-bold mt-1 ${active ? 'text-violet-700' : 'text-gray-800'}`}>
+                  {p.label}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">{p.desc}</p>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Evaluation preview — hidden when advanced sliders are open */}
+        {!showAdvanced && <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-100 rounded-xl p-4 mb-4">
+          <p className="text-xs font-semibold text-violet-700 uppercase tracking-wider mb-3">
+            Xem trước cách AI sẽ chấm điểm
+          </p>
+          <div className="space-y-2">
+            {previewPriorities.map(({ key, label, pct }) => (
+              <div key={key} className="flex items-center gap-3">
+                <span className="text-xs text-gray-600 w-36 shrink-0 truncate">{label}</span>
+                <div className="flex-1 h-2 bg-white/70 rounded-full overflow-hidden border border-violet-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-violet-700 w-9 text-right shrink-0">{pct}%</span>
+              </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            Backend sẽ tự động chuẩn hóa tổng trọng số = 1.
-          </p>
-        </div>
+        </div>}
 
-        <div className="mt-6 flex flex-wrap gap-3 items-center">
-          <button
-            onClick={handleRun}
-            disabled={loading}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
-          >
-            {loading ? 'Đang chấm điểm…' : 'Chạy AI Ranking'}
-          </button>
+        {/* Advanced toggle */}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="flex items-center gap-2 text-sm font-semibold text-violet-600 hover:text-violet-800 transition"
+        >
+          <span className={`inline-block transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
+          {showAdvanced ? 'Ẩn tùy chỉnh nâng cao' : 'Tùy chỉnh nâng cao'}
+        </button>
 
-          <div className="ml-auto flex items-center gap-2 text-sm">
-            <span className="text-gray-600">Lọc điểm tối thiểu:</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={minScore}
-              onChange={(e) => setMinScore(Number(e.target.value))}
-              className="w-32"
-            />
-            <span className="font-semibold text-blue-600 w-10 text-right">{minScore}</span>
+        {showAdvanced && (
+          <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <p className="text-xs text-gray-500 mb-4">
+              Điều chỉnh mức độ quan trọng của từng tiêu chí. Hệ thống sẽ tự cân bằng tổng = 100%.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {RADAR_KEYS.map((axis) => (
+                <div key={axis}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-gray-700 flex items-center">
+                      {AXIS_META[axis].label}
+                      <Tooltip text={AXIS_META[axis].tooltip} />
+                    </span>
+                    <span className="text-xs font-bold text-violet-700">
+                      {Math.round((weights[axis] / totalWeight) * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range" min={0} max={1} step={0.05}
+                    value={weights[axis]}
+                    onChange={(e) => updateWeight(axis, Number(e.target.value))}
+                    className="w-full accent-violet-600"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
+        )}
+      </Section>
+
+      {/* ── CTA + Score filter ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1">
+            <button
+              onClick={handleRun}
+              disabled={loading}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition shadow-md hover:shadow-lg"
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Đang tìm kiếm…
+                </>
+              ) : (
+                <> Tìm ứng viên phù hợp</>
+              )}
+            </button>
+          </div>
+
+          {result && (
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-sm text-gray-500 whitespace-nowrap">Điểm tối thiểu</span>
+              <input
+                type="range" min={0} max={100} step={5}
+                value={minScore}
+                onChange={(e) => setMinScore(Number(e.target.value))}
+                className="w-28 accent-violet-600"
+              />
+              <span className="text-sm font-bold text-violet-700 w-10 text-right">{minScore}%</span>
+            </div>
+          )}
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">
+          <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             {error}
           </p>
         )}
       </div>
 
+      {/* ── Results ── */}
       {result && (
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+          <div className="mb-4">
             <h3 className="text-lg font-bold text-gray-900">
-              Kết quả ({filteredCandidates.length}/{result.total} ứng viên)
+              Kết quả{' '}
+              <span className="text-violet-600">{filteredCandidates.length}</span>
+              <span className="text-gray-400 font-normal text-base">/{result.total} ứng viên</span>
             </h3>
+            <p className="text-xs text-gray-500 mt-0.5">Sắp xếp theo mức độ phù hợp cao nhất</p>
           </div>
 
           {filteredCandidates.length === 0 ? (
-            <p className="text-gray-500 italic">Không có ứng viên nào vượt ngưỡng.</p>
+            <div className="text-center py-10">
+              <p className="text-4xl mb-3">🔍</p>
+              <p className="text-gray-500 font-medium">Không tìm thấy ứng viên phù hợp</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Thử giảm Điểm tối thiểu hoặc bỏ bớt kỹ năng yêu cầu
+              </p>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-3 font-semibold text-gray-700">#</th>
-                    <th className="text-left p-3 font-semibold text-gray-700">Ứng viên</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Tech</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Exp</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Portfolio</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Soft</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Lead</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Ready</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Overall</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCandidates.map((c, index) => (
-                    <tr
-                      key={c.candidate_id}
-                      className="border-b hover:bg-blue-50 transition"
-                    >
-                      <td className="p-3 text-gray-500">
-                        {c.match_details?.ranking ?? index + 1}
-                      </td>
-                      <td className="p-3 font-medium text-gray-900">
-                        {c.full_name || `Ứng viên #${c.candidate_id}`}
-                      </td>
-                      <td className={`p-3 text-right font-semibold ${axisColor(c.radar_scores.technical_skills)}`}>
-                        {c.radar_scores.technical_skills.toFixed(1)}
-                      </td>
-                      <td className={`p-3 text-right font-semibold ${axisColor(c.radar_scores.experience)}`}>
-                        {c.radar_scores.experience.toFixed(1)}
-                      </td>
-                      <td className={`p-3 text-right font-semibold ${axisColor(c.radar_scores.portfolio)}`}>
-                        {c.radar_scores.portfolio.toFixed(1)}
-                      </td>
-                      <td className={`p-3 text-right font-semibold ${axisColor(c.radar_scores.soft_skills)}`}>
-                        {c.radar_scores.soft_skills.toFixed(1)}
-                      </td>
-                      <td className={`p-3 text-right font-semibold ${axisColor(c.radar_scores.leadership)}`}>
-                        {c.radar_scores.leadership.toFixed(1)}
-                      </td>
-                      <td className={`p-3 text-right font-semibold ${axisColor(c.radar_scores.readiness_signals)}`}>
-                        {c.radar_scores.readiness_signals.toFixed(1)}
-                      </td>
-                      <td className="p-3 text-right">
-                        <span
-                          className={`px-3 py-1 rounded-full border font-bold ${scoreColor(c.overall_match)}`}
-                        >
-                          {c.overall_match.toFixed(1)}%
+            <div className="space-y-3">
+              {filteredCandidates.map((c, idx) => {
+                const rank = (c.match_details?.ranking as number | undefined) ?? idx + 1
+                const score = c.overall_match
+                const radarScores = c.radar_scores as RadarScores
+                const name = c.full_name ?? `Ứng viên ${c.candidate_id}`
+                const avatarUrl = c.match_details?.avatar_url as string | undefined
+
+                // Avatar initials + deterministic colour (fallback when no photo)
+                const AVATAR_PALETTE = [
+                  'bg-violet-500', 'bg-blue-500', 'bg-emerald-500',
+                  'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-fuchsia-500',
+                ]
+                const avatarBg = AVATAR_PALETTE[c.candidate_id % AVATAR_PALETTE.length]
+                const initials = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(-2).join('').toUpperCase()
+
+                // Rank ring colour
+                const ringCls = rank === 1 ? 'ring-2 ring-violet-500' :
+                  rank === 2 ? 'ring-2 ring-gray-400' :
+                    rank === 3 ? 'ring-2 ring-amber-400' : ''
+
+                // Insights: top axes vs bottom axes vs required skills
+                const sortedAxes = RADAR_KEYS
+                  .map((k) => ({ key: k, val: radarScores[k] }))
+                  .sort((a, b) => b.val - a.val)
+                const strongAxes = sortedAxes.filter(a => a.val >= 7).slice(0, 2)
+                const weakAxes = sortedAxes.filter(a => a.val < 5).slice(0, 1)
+
+                return (
+                  <div
+                    key={c.candidate_id}
+                    className={`relative rounded-xl border p-4 transition ${rank === 1 ? 'border-violet-300 bg-violet-50/40' : 'border-gray-200 hover:border-violet-200 hover:bg-gray-50/60'}`}
+                    onMouseEnter={() => openTooltip(c.candidate_id)}
+                    onMouseLeave={closeTooltip}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* ── Avatar with rank badge ── */}
+                      <div className="relative shrink-0">
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt={name}
+                            className={`w-10 h-10 rounded-xl object-cover shadow-sm ${ringCls}`}
+                          />
+                        ) : (
+                          <div className={`w-10 h-10 rounded-xl ${avatarBg} ${ringCls} text-white flex items-center justify-center text-sm font-extrabold shadow-sm`}>
+                            {initials || '?'}
+                          </div>
+                        )}
+                        {/* Rank pill */}
+                        <span className={`absolute -bottom-1.5 -right-1.5 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full leading-none ${rank === 1 ? 'bg-violet-600 text-white' :
+                          rank === 2 ? 'bg-gray-600   text-white' :
+                            rank === 3 ? 'bg-amber-500  text-white' :
+                              'bg-gray-100 text-gray-500'
+                          }`}>
+                          {rank}
                         </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+
+                      {/* ── Main info ── */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-bold text-gray-900 truncate text-sm">{name}</p>
+                          <span className={`shrink-0 px-2.5 py-0.5 rounded-full border text-xs font-extrabold ${scoreColor(score)}`}>
+                            {score.toFixed(0)}%
+                          </span>
+                        </div>
+                        {/* Score bar */}
+                        <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all ${scoreBar(score)}`} style={{ width: `${score}%` }} />
+                        </div>
+                        {/* Mini breakdown chips */}
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {RADAR_KEYS.map((axis) => {
+                            const val = radarScores[axis]
+                            return (
+                              <span key={axis} className={`text-[11px] px-2 py-0.5 rounded-full ${val >= 7 ? 'bg-emerald-50 text-emerald-700' :
+                                val >= 4 ? 'bg-gray-100 text-gray-500' : 'bg-red-50 text-red-500'
+                                }`}>
+                                {AXIS_SHORT[axis]}: {val.toFixed(1)}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Hover Tooltip ── */}
+                    <div
+                      onMouseEnter={() => openTooltip(c.candidate_id)}
+                      onMouseLeave={closeTooltip}
+                      className={`absolute left-0 top-full pt-2 z-50 w-72 transition-all duration-200 ${
+                        hoveredId === c.candidate_id
+                          ? 'opacity-100 translate-y-0 pointer-events-auto'
+                          : 'opacity-0 translate-y-1 pointer-events-none'
+                      }`}
+                    >
+                      <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-4 space-y-3">
+                        {/* Header */}
+                        <div className="flex items-center gap-2.5">
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={name}
+                              className="w-9 h-9 rounded-xl object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className={`w-9 h-9 rounded-xl ${avatarBg} text-white flex items-center justify-center text-xs font-extrabold shrink-0`}>
+                              {initials || '?'}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-gray-900 truncate">{name}</p>
+                            <p className="text-xs text-gray-400">
+                              Điểm tổng: <span className="font-semibold text-violet-600">{score.toFixed(1)}%</span>
+                              &nbsp;·&nbsp;Hạng {rank}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Key Insights */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Nhận xét nhanh</p>
+                          <ul className="space-y-1">
+                            {strongAxes.map(a => (
+                              <li key={a.key} className="flex items-start gap-1.5 text-xs text-gray-700">
+                                <span className="text-emerald-500 mt-0.5 shrink-0">✔</span>
+                                <span>Tốt: <span className="font-semibold">{AXIS_META[a.key].label}</span> ({a.val.toFixed(1)}/10)</span>
+                              </li>
+                            ))}
+                            {weakAxes.map(a => (
+                              <li key={a.key} className="flex items-start gap-1.5 text-xs text-gray-700">
+                                <span className="text-amber-500 mt-0.5 shrink-0">⚠</span>
+                                <span>Yếu: <span className="font-semibold">{AXIS_META[a.key].label}</span> ({a.val.toFixed(1)}/10)</span>
+                              </li>
+                            ))}
+                            {strongAxes.length === 0 && weakAxes.length === 0 && (
+                              <li className="text-xs text-gray-400 italic">Cần xem xét thêm hồ sơ</li>
+                            )}
+                          </ul>
+                        </div>
+
+                        {/* Full radar breakdown */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Chi tiết điểm</p>
+                          <div className="space-y-1">
+                            {RADAR_KEYS.map(axis => {
+                              const val = radarScores[axis]
+                              return (
+                                <div key={axis} className="flex items-center gap-2">
+                                  <span className="text-[11px] text-gray-500 w-28 shrink-0 truncate">{AXIS_META[axis].label}</span>
+                                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${val >= 7 ? 'bg-emerald-400' : val >= 4 ? 'bg-yellow-400' : 'bg-red-400'}`}
+                                      style={{ width: `${val * 10}%` }}
+                                    />
+                                  </div>
+                                  <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${val >= 7 ? 'text-emerald-600' : val >= 4 ? 'text-yellow-600' : 'text-red-500'}`}>
+                                    {val.toFixed(1)}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        {/* CTA — view full profile */}
+                        <div className="pt-2 border-t border-gray-100">
+                          <a
+                            href={
+                              (c.match_details?.public_slug as string | undefined)
+                                ? `/portfolio/${c.match_details.public_slug}`
+                                : `/portfolio?id=${c.candidate_id}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-semibold transition shadow-sm"
+                          >
+                            Xem hồ sơ đầy đủ →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Lịch sử so sánh</h3>
-          <button
-            type="button"
-            onClick={loadHistory}
-            disabled={historyLoading}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-60 transition"
-          >
-            {historyLoading ? 'Đang tải...' : 'Tải lại'}
-          </button>
-        </div>
 
-        {historyError && (
-          <p className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">{historyError}</p>
-        )}
-        {detailError && (
-          <p className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">{detailError}</p>
-        )}
-        {selectedHistoryLoading && !selectedHistory && (
-          <p className="mb-3 text-sm text-gray-500">Đang tải chi tiết phiên so sánh...</p>
-        )}
+      {/* ── History ── */}
+      <SearchHistoryList onRerun={handleRerun} refreshKey={historyRefreshKey} />
 
-        {historyLoading && history.length === 0 ? (
-          <p className="text-sm text-gray-500">Đang tải lịch sử...</p>
-        ) : history.length === 0 ? (
-          <p className="text-sm text-gray-500">Chưa có phiên so sánh nào được lưu.</p>
-        ) : (
-          <div className="space-y-2">
-            {history.map((item) => (
-              <button
-                key={item.comparison_id}
-                type="button"
-                onClick={() => viewHistoryDetail(item.comparison_id)}
-                className="w-full text-left rounded-xl border border-gray-200 p-3 hover:bg-gray-50 transition"
-              >
-                <div className="flex flex-wrap gap-2 items-center justify-between">
-                  <p className="font-semibold text-gray-900">
-                    {item.criteria_title || `Phiên so sánh #${item.comparison_id}`}
-                  </p>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">
-                    {item.candidate_count} ứng viên
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {new Date(item.created_at).toLocaleString('vi-VN')}
-                </p>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {selectedHistory && (
-          <div className="mt-5 rounded-xl border border-gray-200 p-4 bg-slate-50">
-            <div className="flex items-center justify-between gap-3">
-              <h4 className="font-semibold text-gray-900">
-                Chi tiết phiên #{selectedHistory.comparison_id}
-              </h4>
-              {selectedHistoryLoading && <span className="text-xs text-gray-500">Đang tải...</span>}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(selectedHistory.created_at).toLocaleString('vi-VN')}
-            </p>
-            <p className="text-sm text-gray-700 mt-3">
-              Số ứng viên trong phiên: <span className="font-semibold">{selectedHistory.participant_candidate_ids.length}</span>
-            </p>
-            <p className="text-sm text-gray-700 mt-1">
-              Candidate IDs: {selectedHistory.participant_candidate_ids.join(', ') || '—'}
-            </p>
-            <details className="mt-3">
-              <summary className="cursor-pointer text-sm font-semibold text-gray-700">
-                Xem snapshot criteria JSON
-              </summary>
-              <pre className="mt-2 text-xs bg-white border border-gray-200 rounded-lg p-3 overflow-auto max-h-72">
-                {JSON.stringify(selectedHistory.criteria_json, null, 2)}
-              </pre>
-            </details>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

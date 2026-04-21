@@ -53,6 +53,16 @@ class CandidateService:
         return CandidateProfileRepository.update_profile(db, profile.id, is_public=is_public)
 
     @staticmethod
+    def update_avatar_url(
+        db: Session, user_id: int, avatar_url: str
+    ) -> Optional[CandidateProfile]:
+        """Persist a new avatar_url for the candidate profile."""
+        profile = CandidateProfileRepository.get_profile_by_user_id(db, user_id)
+        if not profile:
+            raise ValueError(f"Profile not found for user {user_id}")
+        return CandidateProfileRepository.update_profile(db, profile.id, avatar_url=avatar_url)
+
+    @staticmethod
     def get_public_profile(
         db: Session, public_slug: str, viewer_company_id: Optional[int] = None
     ) -> Optional[CandidateProfile]:

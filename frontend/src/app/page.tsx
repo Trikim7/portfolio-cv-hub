@@ -105,9 +105,6 @@ export default function HomePage() {
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>© {new Date().getFullYear()} Portfolio CV Hub</span>
-          <Link href="/login" className="hover:text-gray-800">
-            Quản trị viên
-          </Link>
         </div>
       </footer>
     </div>

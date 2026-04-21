@@ -97,7 +97,18 @@ export default function CVManager() {
                     {new Date(cv.created_at).toLocaleDateString('vi-VN')}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  {/* View/Download button — works for both Cloudinary URLs and local paths */}
+                  {cv.file_path && (
+                    <a
+                      href={cv.file_path.startsWith('http') ? cv.file_path : `/api/candidate/cvs/${cv.id}/download`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-semibold"
+                    >
+                      Xem CV
+                    </a>
+                  )}
                   {!cv.is_primary && (
                     <button
                       onClick={() => handleSetPrimary(cv.id)}

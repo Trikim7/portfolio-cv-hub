@@ -83,6 +83,24 @@ class ApiClient {
     return response.data
   }
 
+  async uploadAvatar(file: File): Promise<{ avatar_url: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await this.client.post('/api/candidate/profile/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  }
+
+  async uploadCompanyLogo(file: File): Promise<{ logo_url: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await this.client.post('/api/recruiter/company/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  }
+
   async getCandidateAnalytics(): Promise<CandidateAnalytics> {
     const response = await this.client.get('/api/candidate/analytics/stats')
     return response.data

@@ -60,6 +60,23 @@ async def update_profile(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.post("/profile/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Upload a new avatar image for the candidate profile."""
+    try:
+        avatar_url = await FileUploadService.save_avatar_file(file, user_id)
+        profile = CandidateService.update_avatar_url(db, user_id, avatar_url)
+        return {"avatar_url": profile.avatar_url}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 @router.put("/profile/toggle-public")
 async def toggle_public_profile(
     is_public: bool,

@@ -62,7 +62,7 @@ export default function RecruiterSearchPage() {
       title="Tìm kiếm ứng viên"
       subtitle="Bộ lọc nâng cao"
       backHref="/recruiter/dashboard"
-      backLabel="Về Dashboard"
+      backLabel="Dashboard"
       headerAction={
         <Link
           href="/recruiter/ranking"

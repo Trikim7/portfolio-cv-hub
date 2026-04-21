@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { apiClient } from '@/services/api'
 import { ProfileProvider, useProfileContext } from '@/hooks/ProfileContext'
 import ProfileForm from '@/components/dashboard/ProfileForm'
 import SkillsManager from '@/components/dashboard/SkillsManager'
@@ -50,8 +51,27 @@ const SIDEBAR_NAV: (DashboardNavItem & { id: CandidateSection })[] = SECTION_ORD
 )
 
 function DashboardContent() {
-  const { profile } = useProfileContext()
+  const { profile, refreshProfile } = useProfileContext()
   const [section, setSection] = useState<CandidateSection>('overview')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarClick = () => avatarInputRef.current?.click()
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    try {
+      await apiClient.uploadAvatar(file)
+      await refreshProfile()
+    } catch {
+      // silent — user can retry
+    } finally {
+      setAvatarUploading(false)
+      e.target.value = ''
+    }
+  }
 
   const completion = useMemo(() => {
     if (!profile) return 0
@@ -93,7 +113,10 @@ function DashboardContent() {
       accent="blue"
       title={profile.full_name || 'Ứng viên'}
       subtitle="Xin chào"
-      badge={profile.is_public ? 'Công khai' : 'Chưa công khai'}
+      userName={profile.full_name || undefined}
+      userAvatarUrl={profile.avatar_url || null}
+      onAvatarClick={handleAvatarClick}
+      badge={avatarUploading ? 'Đang tải ảnh…' : (profile.is_public ? 'Công khai' : 'Chưa công khai')}
       nav={SIDEBAR_NAV}
       activeId={section}
       onSelect={(id) => setSection(id as CandidateSection)}
@@ -106,6 +129,14 @@ function DashboardContent() {
         </Link>
       }
     >
+      {/* Hidden file input for avatar upload */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        onChange={handleAvatarChange}
+      />
       {section === 'overview' && (
         <>
           <SectionCard

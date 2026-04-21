@@ -538,6 +538,8 @@ def compute_candidate_score(
             "leadership": lead_details,
             "readiness_signals": ready_details,
             "weights": {k: round(v, 4) for k, v in weights.items()},
+            "public_slug": profile.public_slug,  # used by frontend to build /portfolio/{slug}
+            "avatar_url": profile.avatar_url,     # used for avatar display in ranking cards
         },
     )
 

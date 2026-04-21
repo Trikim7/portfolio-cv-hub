@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { apiClient } from '@/services/api'
 import { useRecruiter } from '@/hooks/useRecruiter'
 import { useAuth } from '@/hooks/AuthContext'
 import CompanyProfile from '@/components/recruiter/CompanyProfile'
@@ -37,6 +38,25 @@ export default function RecruiterDashboardPage() {
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [company, setCompany] = useState<Company | null>(null)
   const [section, setSection] = useState<RecruiterSection>('overview')
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const handleLogoClick = () => logoInputRef.current?.click()
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoUploading(true)
+    try {
+      const result = await apiClient.uploadCompanyLogo(file)
+      setCompany(prev => prev ? { ...prev, logo_url: result.logo_url } : null)
+    } catch {
+      // silent — user can retry
+    } finally {
+      setLogoUploading(false)
+      e.target.value = ''
+    }
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -97,13 +117,24 @@ export default function RecruiterDashboardPage() {
       accent="purple"
       title={company?.company_name || 'Dashboard Doanh nghiệp'}
       subtitle="Trung tâm tuyển dụng"
-      badge={statusBadge}
+      userName={company?.company_name || undefined}
+      userAvatarUrl={company?.logo_url || null}
+      onAvatarClick={handleLogoClick}
+      badge={logoUploading ? 'Đang tải logo…' : statusBadge}
       nav={NAV}
       activeId={section}
       activeNavLabel={RECRUITER_SECTION_LABELS[section]}
       onSelect={(id) => setSection(id as RecruiterSection)}
       headerAction={
         <div className="flex gap-2">
+          {/* Hidden file input for logo upload */}
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+            className="hidden"
+            onChange={handleLogoChange}
+          />
           <Link
             href="/recruiter/search"
             className="bg-white/10 hover:bg-white/20 backdrop-blur px-4 py-2 rounded-xl text-sm font-semibold transition ring-1 ring-white/20"

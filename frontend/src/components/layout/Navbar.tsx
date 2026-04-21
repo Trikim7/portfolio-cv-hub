@@ -14,9 +14,15 @@ export default function Navbar() {
   const isAdminPage = pathname.startsWith('/admin')
   const isDashboardPage =
     pathname === '/dashboard' || pathname === '/recruiter/dashboard'
+  const isPageShellPage =
+    pathname === '/recruiter/search' || pathname === '/recruiter/ranking'
+  // Public portfolio detail pages are standalone — no nav chrome needed
+  const isPublicPortfolioPage = /^\/portfolio\/.+/.test(pathname)
 
   if (isAdminPage) return null
   if (isDashboardPage) return null
+  if (isPageShellPage) return null
+  if (isPublicPortfolioPage) return null
 
   const effectiveRole = role === 'admin' ? null : role
   const effectiveLoggedIn = role === 'admin' ? false : isLoggedIn
@@ -68,8 +74,8 @@ export default function Navbar() {
             onClick={handleLogout}
             className={
               mobile
-                ? 'w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition'
-                : 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition'
+                ? 'w-full px-4 py-2 text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-300 rounded-lg text-sm font-medium transition'
+                : 'px-3 py-1.5 text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-300 rounded-lg text-sm font-medium transition'
             }
           >
             Đăng xuất
@@ -90,8 +96,8 @@ export default function Navbar() {
           onClick={handleLogout}
           className={
             mobile
-              ? 'w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition'
-              : 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition'
+              ? 'w-full px-4 py-2 text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-300 rounded-lg text-sm font-medium transition'
+              : 'px-3 py-1.5 text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-300 rounded-lg text-sm font-medium transition'
           }
         >
           Đăng xuất

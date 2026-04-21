@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     minio_secret_key: Optional[str] = None
     minio_bucket_name: Optional[str] = "portfolio-files"
 
+    # Cloudinary (image uploads for avatars & logos)
+    cloudinary_cloud_name: Optional[str] = None
+    cloudinary_api_key: Optional[str] = None
+    cloudinary_api_secret: Optional[str] = None
+
     # OAuth2 providers (Phase 2 — social auth)
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None

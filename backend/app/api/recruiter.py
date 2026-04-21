@@ -1,10 +1,12 @@
 """Recruiter API routes"""
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
 from app.services.auth import AuthService
 from app.services.recruiter import RecruiterService, SearchService, JobInvitationService
+from app.services.file_upload import FileUploadService
+from app.repositories.recruiter import CompanyRepository
 from app.schemas.recruiter import (
     CompanyRegister, CompanyUpdate, CompanyResponse, JobInvitationCreate,
     JobInvitationResponse, CandidateSearchResult
@@ -67,6 +69,26 @@ async def update_company_profile(
     updated = RecruiterService.update_profile(db, company.id, company_data)
     print(f"DEBUG: Updated company - {updated.company_name}")
     return updated
+
+
+@router.post("/company/logo", response_model=CompanyResponse)
+async def upload_company_logo(
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_recruiter_id),
+    db: Session = Depends(get_db),
+):
+    """Upload / replace company logo image. Saves file to disk, updates companies.logo_url."""
+    company = RecruiterService.get_profile(db, user_id)
+    if not company:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+    try:
+        logo_url = await FileUploadService.save_logo_file(file, company.id)
+        updated = CompanyRepository.update(db, company.id, logo_url=logo_url)
+        return updated
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 # Search Candidates (Public - No Auth Required)
