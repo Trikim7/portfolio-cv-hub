@@ -1,0 +1,5 @@
+# Prevent CRLF line ending conversion on Windows — shell scripts MUST use LF
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.py        text eol=lf
+*.env*      text eol=lf
