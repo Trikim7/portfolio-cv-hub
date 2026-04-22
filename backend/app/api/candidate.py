@@ -120,6 +120,86 @@ async def get_candidate_analytics(user_id: int = Depends(get_current_user_id), d
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.get("/invitations")
+async def get_my_invitations(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    """Get all job invitations received by the current candidate (UC5)."""
+    try:
+        from app.services.recruiter import JobInvitationService
+        from app.repositories.candidate import CandidateProfileRepository
+        from app.models.recruiter import Company
+
+        profile = CandidateProfileRepository.get_profile_by_user_id(db, user_id)
+        if not profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+        invitations = JobInvitationService.get_candidate_invitations(db, profile.id)
+
+        result = []
+        for inv in invitations:
+            company = db.query(Company).filter(Company.id == inv.company_id).first()
+            result.append({
+                "id": inv.id,
+                "job_title": inv.job_title,
+                "message": inv.message,
+                "status": inv.status.value if hasattr(inv.status, "value") else inv.status,
+                "created_at": inv.created_at.isoformat() if inv.created_at else None,
+                "updated_at": inv.updated_at.isoformat() if inv.updated_at else None,
+                "company": {
+                    "id": company.id if company else None,
+                    "name": company.company_name if company else "Không rõ",
+                    "logo_url": company.logo_url if company else None,
+                    "website": company.website if company else None,
+                } if company else None,
+            })
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.put("/invitations/{invitation_id}/respond")
+async def respond_to_invitation(
+    invitation_id: int,
+    status_value: str,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Candidate responds to a job invitation: interested | rejected (UC5)."""
+    allowed = {"interested", "rejected"}
+    if status_value not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"status_value must be one of: {', '.join(allowed)}"
+        )
+    try:
+        from app.services.recruiter import JobInvitationService
+        from app.repositories.candidate import CandidateProfileRepository
+        from app.models.recruiter import JobInvitation
+
+        profile = CandidateProfileRepository.get_profile_by_user_id(db, user_id)
+        if not profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+        inv = db.query(JobInvitation).filter(
+            JobInvitation.id == invitation_id,
+            JobInvitation.candidate_id == profile.id,
+        ).first()
+        if not inv:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+
+        updated = JobInvitationService.update_status(db, invitation_id, status_value)
+        return {
+            "id": updated.id,
+            "status": updated.status.value if hasattr(updated.status, "value") else updated.status,
+            "message": "Đã cập nhật trạng thái lời mời",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 # Skills endpoints
 @router.post("/skills", response_model=SkillResponse)
 async def add_skill(

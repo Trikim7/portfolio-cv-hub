@@ -10,6 +10,7 @@ import CompanyProfile from '@/components/recruiter/CompanyProfile'
 import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
 import JobRequirementList from '@/components/recruiter/JobRequirementList'
 import JobRequirementForm from '@/components/recruiter/JobRequirementForm'
+import RecruiterInvitationsPanel from '@/components/recruiter/RecruiterInvitationsPanel'
 
 import DashboardShell, {
   DashboardNavItem,
@@ -18,22 +19,24 @@ import DashboardShell, {
 } from '@/components/layout/DashboardShell'
 import { Company, JobInvitation } from '@/types'
 
-type RecruiterSection = 'overview' | 'company' | 'actions' | 'job-requirements' | 'social'
+type RecruiterSection = 'overview' | 'company' | 'actions' | 'job-requirements' | 'invitations' | 'social'
 
 const NAV: (DashboardNavItem & { id: RecruiterSection })[] = [
-  { id: 'overview', label: 'Tổng quan' },
-  { id: 'company', label: 'Hồ sơ công ty' },
-  { id: 'actions', label: 'Tuyển dụng' },
-  { id: 'job-requirements', label: 'Yêu cầu công việc' },
-  { id: 'social', label: 'Tài khoản liên kết' },
+  { id: 'overview',          label: 'Tổng quan' },
+  { id: 'company',           label: 'Hồ sơ công ty' },
+  { id: 'actions',           label: 'Tuyển dụng' },
+  { id: 'job-requirements',  label: 'Yêu cầu công việc' },
+  { id: 'invitations',       label: 'Lời mời đã gửi' },
+  { id: 'social',            label: 'Tài khoản liên kết' },
 ]
 
 const RECRUITER_SECTION_LABELS: Record<RecruiterSection, string> = {
-  overview: 'Tổng quan',
-  company: 'Hồ sơ công ty',
-  actions: 'Tuyển dụng',
+  overview:          'Tổng quan',
+  company:           'Hồ sơ công ty',
+  actions:           'Tuyển dụng',
   'job-requirements': 'Yêu cầu công việc',
-  social: 'Tài khoản liên kết',
+  invitations:       'Lời mời đã gửi',
+  social:            'Tài khoản liên kết',
 }
 
 export default function RecruiterDashboardPage() {
@@ -203,6 +206,19 @@ export default function RecruiterDashboardPage() {
             />
           </div>
 
+          {/* Quick link to invitations detail */}
+          {invitations.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSection('invitations')}
+                className="text-sm font-semibold text-purple-700 hover:text-purple-900 hover:underline transition-colors"
+              >
+                Xem chi tiết lời mời →
+              </button>
+            </div>
+          )}
+
           <SectionCard
             title="Bắt đầu tuyển dụng"
             description="Chọn nhanh công cụ bạn cần để tiếp cận ứng viên."
@@ -354,6 +370,15 @@ export default function RecruiterDashboardPage() {
       )}
 
       {section === 'social' && <SocialAccountsManager />}
+
+      {section === 'invitations' && (
+        <SectionCard
+          title="Lời mời Tuyển dụng đã gửi"
+          description="Theo dõi trạng thái phản hồi từ ứng viên. Thu hồi hoặc xem hồ sơ trực tiếp."
+        >
+          <RecruiterInvitationsPanel />
+        </SectionCard>
+      )}
     </DashboardShell>
   )
 }

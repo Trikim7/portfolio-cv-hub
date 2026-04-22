@@ -127,6 +127,26 @@ class ApiClient {
     return response.data
   }
 
+  async getCandidateInvitations(): Promise<Array<{
+    id: number
+    job_title: string
+    message?: string
+    status: 'pending' | 'interested' | 'rejected' | 'withdrawn'
+    created_at: string
+    updated_at: string
+    company?: { id: number; name: string; logo_url?: string; website?: string } | null
+  }>> {
+    const response = await this.client.get('/api/candidate/invitations')
+    return response.data
+  }
+
+  async respondToInvitation(invitationId: number, statusValue: 'interested' | 'rejected') {
+    const response = await this.client.put(
+      `/api/candidate/invitations/${invitationId}/respond?status_value=${statusValue}`
+    )
+    return response.data
+  }
+
   // Skills endpoints
   async addSkill(name: string, level?: string): Promise<Skill> {
     const response = await this.client.post('/api/candidate/skills', { name, level })
@@ -310,6 +330,56 @@ class ApiClient {
   async deleteJobInvitation(invitationId: number) {
     const response = await this.client.delete(`/api/recruiter/invitations/${invitationId}`)
     return response.data
+  }
+
+  async getDetailedInvitations(): Promise<Array<{
+    id: number
+    job_title: string
+    message?: string
+    status: 'pending' | 'interested' | 'rejected' | 'withdrawn'
+    created_at: string
+    updated_at: string
+    candidate?: {
+      id: number
+      full_name?: string
+      headline?: string
+      avatar_url?: string
+      public_slug?: string
+      is_public: boolean
+    } | null
+  }>> {
+    const response = await this.client.get('/api/recruiter/invitations/detailed')
+    return response.data
+  }
+
+  // ─── Admin SMTP Settings ───────────────────────────────────
+  async getSmtpConfig() {
+    const response = await this.client.get('/api/admin/settings/smtp')
+    return response.data as {
+      smtp_host: string
+      smtp_port: number
+      smtp_username: string
+      smtp_password: string
+      smtp_from_address: string
+      smtp_enabled: boolean
+    }
+  }
+
+  async saveSmtpConfig(config: {
+    smtp_host: string
+    smtp_port: number
+    smtp_username: string
+    smtp_password: string
+    smtp_from_address: string
+    smtp_enabled: boolean
+  }) {
+    const response = await this.client.post('/api/admin/settings/smtp', config)
+    return response.data as { message: string; smtp_enabled: boolean }
+  }
+
+  async testSmtpConnection() {
+    const response = await this.client.post('/api/admin/settings/smtp/test')
+    return response.data as { success: boolean; message: string }
   }
 
   // ─── Admin endpoints ───────────────────────────────────────────

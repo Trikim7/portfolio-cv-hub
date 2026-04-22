@@ -86,13 +86,18 @@ class JobInvitationRepository:
         return db.query(JobInvitation).filter(JobInvitation.candidate_id == candidate_id).all()
 
     @staticmethod
-    def check_duplicate(db: Session, company_id: int, candidate_id: int) -> bool:
-        """Check if invitation already exists"""
-        existing = db.query(JobInvitation).filter(
+    def check_duplicate(db: Session, company_id: int, candidate_id: int, job_title: str = "") -> bool:
+        """Check if an active (pending) invitation already exists for this company+candidate+job."""
+        from app.models.recruiter import InvitationStatus
+        query = db.query(JobInvitation).filter(
             JobInvitation.company_id == company_id,
             JobInvitation.candidate_id == candidate_id,
-        ).first()
-        return existing is not None
+            JobInvitation.status == InvitationStatus.PENDING,
+        )
+        # If a job_title is provided, also check same position to avoid exact duplicates
+        if job_title:
+            query = query.filter(JobInvitation.job_title == job_title)
+        return query.first() is not None
 
     @staticmethod
     def update(db: Session, invitation_id: int, **kwargs) -> Optional[JobInvitation]:
