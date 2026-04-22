@@ -4,6 +4,34 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/services/api'
 import { DashboardStats, AdminCompany } from '@/types'
+import {
+  Users, Clock, FolderOpen, Handshake,
+  Activity, ClipboardList, Settings, Zap,
+  Info, Check, X, CheckCircle, AlertCircle,
+} from 'lucide-react'
+
+// ─── Lucide icon helper ───────────────────────────────────────────────────────────────────
+const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
+  users:         Users,
+  clock:         Clock,
+  folder:        FolderOpen,
+  handshake:     Handshake,
+  chart:         Activity,
+  list:          ClipboardList,
+  settings:      Settings,
+  lightning:     Zap,
+  info:          Info,
+  check:         Check,
+  x:             X,
+  'check-circle': CheckCircle,
+  error:         AlertCircle,
+}
+
+function AdminIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = ICON_MAP[name]
+  if (!Icon) return null
+  return <Icon className={className ?? 'w-5 h-5'} />
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -56,7 +84,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="animate-spin text-5xl mb-4">⚙️</div>
+          <div className="animate-spin w-10 h-10 border-2 border-slate-400 border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-gray-500 text-lg">Đang tải bảng điều khiển...</p>
         </div>
       </div>
@@ -67,7 +95,8 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md text-center">
-          <p className="text-red-600 text-lg font-medium">❌ {error}</p>
+          <AdminIcon name="error" className="w-8 h-8 text-red-500 mx-auto mb-2" />
+          <p className="text-red-600 text-lg font-medium">{error}</p>
         </div>
       </div>
     )
@@ -78,7 +107,7 @@ export default function AdminDashboardPage() {
       label: 'Tổng người dùng',
       value: stats?.total_users ?? 0,
       sub: `${stats?.total_candidates ?? 0} ứng viên · ${stats?.total_recruiters ?? 0} nhà tuyển dụng`,
-      icon: '👥',
+      icon: 'users',
       iconBg: 'bg-blue-100 text-blue-600',
       border: 'border-l-blue-500',
     },
@@ -86,7 +115,7 @@ export default function AdminDashboardPage() {
       label: 'Doanh nghiệp chờ duyệt',
       value: stats?.pending_companies ?? 0,
       sub: `${stats?.total_companies ?? 0} tổng doanh nghiệp`,
-      icon: '📋',
+      icon: 'clock',
       iconBg: 'bg-amber-100 text-amber-600',
       border: 'border-l-amber-500',
     },
@@ -96,7 +125,7 @@ export default function AdminDashboardPage() {
       sub: stats && stats.total_candidates > 0
         ? `${Math.round((stats.public_profiles / stats.total_candidates) * 100)}% ứng viên`
         : '0% ứng viên',
-      icon: '📂',
+      icon: 'folder',
       iconBg: 'bg-green-100 text-green-600',
       border: 'border-l-green-500',
     },
@@ -104,7 +133,7 @@ export default function AdminDashboardPage() {
       label: 'Kết nối thành công',
       value: stats?.total_invitations ?? 0,
       sub: 'Tổng lời mời gửi đi',
-      icon: '🤝',
+      icon: 'handshake',
       iconBg: 'bg-purple-100 text-purple-600',
       border: 'border-l-purple-500',
     },
@@ -114,9 +143,12 @@ export default function AdminDashboardPage() {
     <div className="p-6 lg:p-8 max-w-[1400px]">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          📊 Tổng quan Bảng điều khiển Admin
-        </h1>
+        <div className="flex items-center gap-2 mb-1">
+          <AdminIcon name="chart" className="w-5 h-5 text-gray-700" />
+          <h1 className="text-2xl font-bold text-gray-900">
+            Tổng quan Bảng điều khiển Admin
+          </h1>
+        </div>
         <p className="text-gray-500 text-sm capitalize">{today}</p>
       </div>
 
@@ -128,8 +160,8 @@ export default function AdminDashboardPage() {
             className={`bg-white rounded-xl border border-gray-200 border-l-4 ${card.border} p-5 shadow-sm hover:shadow-md transition-shadow`}
           >
             <div className="flex items-start justify-between mb-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${card.iconBg}`}>
-                {card.icon}
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${card.iconBg}`}>
+                <AdminIcon name={card.icon} className="w-5 h-5" />
               </div>
               <span className="text-3xl font-extrabold text-gray-900">{card.value.toLocaleString('vi-VN')}</span>
             </div>
@@ -143,8 +175,9 @@ export default function AdminDashboardPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              📋 Doanh nghiệp chờ phê duyệt
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <AdminIcon name="list" className="w-5 h-5 text-gray-700" />
+              Doanh nghiệp chờ phê duyệt
             </h2>
             <p className="text-sm text-gray-400 mt-0.5">
               {pendingCompanies.length > 0
@@ -162,7 +195,7 @@ export default function AdminDashboardPage() {
 
         {pendingCompanies.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-400">
-            <div className="text-4xl mb-3">✅</div>
+            <AdminIcon name="check-circle" className="w-10 h-10 mx-auto mb-3 text-green-400" />
             <p className="font-medium">Tất cả đã được xử lý</p>
             <p className="text-sm mt-1">Không có doanh nghiệp nào đang chờ phê duyệt</p>
           </div>
@@ -207,16 +240,16 @@ export default function AdminDashboardPage() {
                         <button
                           onClick={() => handleStatusChange(c.id, 'approved')}
                           disabled={actionLoading === c.id}
-                          className="px-3 py-1.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
                         >
-                          ✓ Duyệt
+                          <AdminIcon name="check" className="w-3.5 h-3.5" /> Duyệt
                         </button>
                         <button
                           onClick={() => handleStatusChange(c.id, 'rejected')}
                           disabled={actionLoading === c.id}
-                          className="px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
                         >
-                          ✕ Từ chối
+                          <AdminIcon name="x" className="w-3.5 h-3.5" /> Từ chối
                         </button>
                       </div>
                     </td>
@@ -232,7 +265,8 @@ export default function AdminDashboardPage() {
       <div className="grid md:grid-cols-2 gap-5 mt-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-            ⚡ Hành động nhanh
+            <AdminIcon name="lightning" className="w-4 h-4 text-gray-600" />
+            Hành động nhanh
           </h3>
           <div className="space-y-2">
             {[
@@ -254,7 +288,8 @@ export default function AdminDashboardPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-            ℹ️ Thông tin hệ thống
+            <AdminIcon name="info" className="w-4 h-4 text-gray-600" />
+            Thông tin hệ thống
           </h3>
           <div className="space-y-3">
             {[

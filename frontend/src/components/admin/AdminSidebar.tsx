@@ -4,12 +4,26 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { apiClient } from '@/services/api'
+import {
+  Activity, Users, Building2, Settings, Shield,
+  LogOut, Menu, X,
+} from 'lucide-react'
+
+// ─── Lucide icon map ───────────────────────────────────────────────────────────────────
+const ICON_CLS = 'w-[18px] h-[18px] shrink-0'
+
+const NAV_ICON_MAP: Record<string, React.ReactNode> = {
+  '/admin/dashboard': <Activity className={ICON_CLS} />,
+  '/admin/users':     <Users className={ICON_CLS} />,
+  '/admin/companies': <Building2 className={ICON_CLS} />,
+  '/admin/settings':  <Settings className={ICON_CLS} />,
+}
 
 const navItems = [
-  { label: 'Bảng điều khiển', href: '/admin/dashboard', icon: '📊' },
-  { label: 'Quản lý Ứng viên', href: '/admin/users', icon: '👤' },
-  { label: 'Quản lý Doanh nghiệp', href: '/admin/companies', icon: '🏢', showBadge: true },
-  { label: 'Cài đặt Hệ thống', href: '/admin/settings', icon: '⚙️' },
+  { label: 'Bảng điều khiển', href: '/admin/dashboard' },
+  { label: 'Quản lý Ứng viên', href: '/admin/users' },
+  { label: 'Quản lý Doanh nghiệp', href: '/admin/companies', showBadge: true },
+  { label: 'Cài đặt Hệ thống', href: '/admin/settings' },
 ]
 
 export default function AdminSidebar() {
@@ -39,8 +53,8 @@ export default function AdminSidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-blue-600/40">
         <Link href="/admin/dashboard" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
-          <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center text-lg">
-            🛡️
+          <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+            <Shield className="w-[18px] h-[18px] shrink-0" />
           </div>
           <span className="text-lg font-bold tracking-tight">Quản lý CV Hub</span>
         </Link>
@@ -62,7 +76,9 @@ export default function AdminSidebar() {
                   : 'text-blue-100 hover:bg-white/10 hover:text-white'}
               `}
             >
-              <span className="text-lg w-6 text-center">{item.icon}</span>
+              <span className="flex items-center justify-center w-[18px]">
+                {NAV_ICON_MAP[item.href]}
+              </span>
               <span className="flex-1">{item.label}</span>
               {item.showBadge && pendingCount > 0 && (
                 <span className="bg-red-500 text-white text-xs font-bold min-w-[20px] h-5 flex items-center justify-center rounded-full px-1.5">
@@ -89,7 +105,7 @@ export default function AdminSidebar() {
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
         >
-          ↪ Đăng xuất
+          <LogOut className="w-[18px] h-[18px] shrink-0" /> Đăng xuất
         </button>
       </div>
     </>
@@ -102,7 +118,7 @@ export default function AdminSidebar() {
         onClick={() => setMobileOpen(!mobileOpen)}
         className="lg:hidden fixed top-4 left-4 z-[60] w-10 h-10 bg-blue-700 text-white rounded-lg flex items-center justify-center shadow-lg"
       >
-        {mobileOpen ? '✕' : '☰'}
+        {mobileOpen ? <X className="w-[18px] h-[18px] shrink-0" /> : <Menu className="w-[18px] h-[18px] shrink-0" />}
       </button>
 
       {/* Mobile overlay */}

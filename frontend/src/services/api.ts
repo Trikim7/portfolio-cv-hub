@@ -39,6 +39,27 @@ class ApiClient {
     })
   }
 
+  // Generic HTTP methods (for dynamic endpoints)
+  async get(url: string, config?: any) {
+    const response = await this.client.get(url, config)
+    return response.data
+  }
+
+  async post(url: string, data?: any, config?: any) {
+    const response = await this.client.post(url, data, config)
+    return response.data
+  }
+
+  async put(url: string, data?: any, config?: any) {
+    const response = await this.client.put(url, data, config)
+    return response.data
+  }
+
+  async delete(url: string, config?: any) {
+    const response = await this.client.delete(url, config)
+    return response.data
+  }
+
   // Auth endpoints
   async register(email: string, password: string): Promise<TokenResponse> {
     const response = await this.client.post('/api/auth/register', {

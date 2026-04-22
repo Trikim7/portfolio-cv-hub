@@ -8,6 +8,9 @@ import { useRecruiter } from '@/hooks/useRecruiter'
 import { useAuth } from '@/hooks/AuthContext'
 import CompanyProfile from '@/components/recruiter/CompanyProfile'
 import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
+import JobRequirementList from '@/components/recruiter/JobRequirementList'
+import JobRequirementForm from '@/components/recruiter/JobRequirementForm'
+
 import DashboardShell, {
   DashboardNavItem,
   SectionCard,
@@ -15,12 +18,13 @@ import DashboardShell, {
 } from '@/components/layout/DashboardShell'
 import { Company, JobInvitation } from '@/types'
 
-type RecruiterSection = 'overview' | 'company' | 'actions' | 'social'
+type RecruiterSection = 'overview' | 'company' | 'actions' | 'job-requirements' | 'social'
 
 const NAV: (DashboardNavItem & { id: RecruiterSection })[] = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'company', label: 'Hồ sơ công ty' },
   { id: 'actions', label: 'Tuyển dụng' },
+  { id: 'job-requirements', label: 'Yêu cầu công việc' },
   { id: 'social', label: 'Tài khoản liên kết' },
 ]
 
@@ -28,6 +32,7 @@ const RECRUITER_SECTION_LABELS: Record<RecruiterSection, string> = {
   overview: 'Tổng quan',
   company: 'Hồ sơ công ty',
   actions: 'Tuyển dụng',
+  'job-requirements': 'Yêu cầu công việc',
   social: 'Tài khoản liên kết',
 }
 
@@ -41,6 +46,10 @@ export default function RecruiterDashboardPage() {
   const [logoUploading, setLogoUploading] = useState(false)
   const [invitations, setInvitations] = useState<JobInvitation[]>([])
   const [candidatesFound, setCandidatesFound] = useState<{ total: number; sessions: number } | null>(null)
+  const [jobRequirementsMode, setJobRequirementsMode] = useState<'list' | 'create' | 'edit'>('list')
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null)
+  const [jobRequirementsRefresh, setJobRequirementsRefresh] = useState(0)
+
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   const handleLogoClick = () => logoInputRef.current?.click()
@@ -299,6 +308,49 @@ export default function RecruiterDashboardPage() {
             </Link>
           </div>
         </SectionCard>
+      )}
+
+      {section === 'job-requirements' && (
+        <div className="space-y-5">
+          {jobRequirementsMode === 'list' && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setJobRequirementsMode('create')
+                  setSelectedJobId(null)
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white rounded-xl font-bold text-sm transition shadow-sm"
+              >
+                + Tạo yêu cầu công việc
+              </button>
+            </div>
+          )}
+
+          {jobRequirementsMode === 'list' && (
+            <JobRequirementList
+              refreshTrigger={jobRequirementsRefresh}
+              onEdit={(jobId) => {
+                setSelectedJobId(jobId)
+                setJobRequirementsMode('edit')
+              }}
+            />
+          )}
+
+          {(jobRequirementsMode === 'create' || jobRequirementsMode === 'edit') && (
+            <JobRequirementForm
+              jobId={selectedJobId || undefined}
+              onSuccess={() => {
+                setJobRequirementsMode('list')
+                setSelectedJobId(null)
+                setJobRequirementsRefresh(prev => prev + 1)
+              }}
+              onCancel={() => {
+                setJobRequirementsMode('list')
+                setSelectedJobId(null)
+              }}
+            />
+          )}
+        </div>
       )}
 
       {section === 'social' && <SocialAccountsManager />}
