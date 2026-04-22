@@ -35,7 +35,7 @@ const SECTION_LABELS: Record<CandidateSection, string> = {
   experience: 'Kinh nghiệm',
   projects: 'Dự án',
   cv: 'CV / Resume',
-  'generate-cv': '✨ Tạo CV tự động',
+  'generate-cv': 'Tạo CV tự động',
   social: 'Tài khoản liên kết',
 }
 

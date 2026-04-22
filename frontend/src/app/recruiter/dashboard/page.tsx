@@ -10,6 +10,7 @@ import CompanyProfile from '@/components/recruiter/CompanyProfile'
 import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
 import JobRequirementList from '@/components/recruiter/JobRequirementList'
 import JobRequirementForm from '@/components/recruiter/JobRequirementForm'
+
 import DashboardShell, {
   DashboardNavItem,
   SectionCard,
@@ -48,6 +49,7 @@ export default function RecruiterDashboardPage() {
   const [jobRequirementsMode, setJobRequirementsMode] = useState<'list' | 'create' | 'edit'>('list')
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null)
   const [jobRequirementsRefresh, setJobRequirementsRefresh] = useState(0)
+
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   const handleLogoClick = () => logoInputRef.current?.click()
@@ -289,14 +291,7 @@ export default function RecruiterDashboardPage() {
 
       {section === 'actions' && (
         <SectionCard title="Công cụ tuyển dụng">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/recruiter/job-requirements"
-              className="p-5 rounded-xl border border-gray-200 hover:border-green-400 hover:bg-green-50/50 transition"
-            >
-              <h3 className="font-semibold text-gray-900">Yêu cầu Công việc</h3>
-              <p className="text-sm text-gray-500 mt-1">Quản lý tiêu chí tuyển dụng</p>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
               href="/recruiter/search"
               className="p-5 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 transition"
@@ -316,7 +311,7 @@ export default function RecruiterDashboardPage() {
       )}
 
       {section === 'job-requirements' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {jobRequirementsMode === 'list' && (
             <div className="flex justify-end">
               <button
@@ -324,13 +319,13 @@ export default function RecruiterDashboardPage() {
                   setJobRequirementsMode('create')
                   setSelectedJobId(null)
                 }}
-                className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 font-medium transition"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white rounded-xl font-bold text-sm transition shadow-sm"
               >
                 + Tạo yêu cầu công việc
               </button>
             </div>
           )}
-          
+
           {jobRequirementsMode === 'list' && (
             <JobRequirementList
               refreshTrigger={jobRequirementsRefresh}

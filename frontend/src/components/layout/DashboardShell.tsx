@@ -3,6 +3,11 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ReactNode, useState } from 'react'
+import {
+  LayoutDashboard, User, Code2, Briefcase, FolderOpen,
+  FileText, Sparkles, Share2, Building2, Search,
+  ClipboardList, Camera, ChevronUp, ChevronDown,
+} from 'lucide-react'
 
 export interface DashboardNavItem {
   id: string
@@ -10,6 +15,26 @@ export interface DashboardNavItem {
   label: string
   /** Không hiển thị trong UI — giữ nếu cần metadata; sidebar chỉ dùng `label` */
   description?: string
+}
+
+// ─── Lucide nav icons (keyed by nav item id) ──────────────────────────────────
+
+const CLS = 'w-4 h-4 shrink-0'
+
+const NAV_ICONS: Record<string, React.ReactNode> = {
+  // Candidate
+  overview:           <LayoutDashboard className={CLS} />,
+  profile:            <User className={CLS} />,
+  skills:             <Code2 className={CLS} />,
+  experience:         <Briefcase className={CLS} />,
+  projects:           <FolderOpen className={CLS} />,
+  cv:                 <FileText className={CLS} />,
+  'generate-cv':      <Sparkles className={CLS} />,
+  social:             <Share2 className={CLS} />,
+  // Recruiter
+  company:            <Building2 className={CLS} />,
+  actions:            <Search className={CLS} />,
+  'job-requirements': <ClipboardList className={CLS} />,
 }
 
 function navTitleFromItem(item: DashboardNavItem): string {
@@ -141,10 +166,7 @@ export default function DashboardShell({
                     )}
                     {/* Camera overlay on hover */}
                     <span className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
-                      </svg>
+                      <Camera className="w-5 h-5 text-white" />
                     </span>
                   </button>
                 ) : (
@@ -202,7 +224,7 @@ export default function DashboardShell({
               activeNavLabel ?? nav.find((n) => n.id === activeId)?.label,
             ) || 'Điều hướng'}
           </span>
-          <span className="text-gray-400">{mobileNavOpen ? '▲' : '▼'}</span>
+          <span className="text-gray-400">{mobileNavOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
         </button>
       </div>
 
@@ -215,6 +237,7 @@ export default function DashboardShell({
             <nav className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2 lg:sticky lg:top-6">
               {nav.map((item) => {
                 const isActive = activeId === item.id
+                const icon = NAV_ICONS[item.id]
                 return (
                   <button
                     key={item.id}
@@ -229,8 +252,15 @@ export default function DashboardShell({
                         : 'border-transparent text-gray-700 hover:bg-gray-50'
                     }`}
                   >
-                    <span className="block text-sm font-semibold truncate">
-                      {navTitleFromItem(item)}
+                    <span className="flex items-center gap-2.5">
+                      {icon && (
+                        <span className={isActive ? 'opacity-80' : 'opacity-40'}>
+                          {icon}
+                        </span>
+                      )}
+                      <span className="text-sm font-semibold truncate">
+                        {navTitleFromItem(item)}
+                      </span>
                     </span>
                   </button>
                 )

@@ -4,6 +4,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/services/api'
 import { AdminUser } from '@/types'
+import { Users, Lock, LockOpen, RefreshCw } from 'lucide-react'
+
+// ─── Lucide icon aliases ───────────────────────────────────────────────────────────────────
+const IcUser    = () => <Users    className="w-5 h-5" />
+const IcLock    = () => <Lock     className="w-3.5 h-3.5" />
+const IcUnlock  = () => <LockOpen className="w-3.5 h-3.5" />
+const IcRefresh = () => <RefreshCw className="w-4 h-4" />
 
 export default function AdminCandidatesPage() {
   const router = useRouter()
@@ -60,7 +67,10 @@ export default function AdminCandidatesPage() {
     <div className="p-6 lg:p-8 max-w-[1400px]">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">👤 Quản lý Ứng viên</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <IcUser />
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý Ứng viên</h1>
+        </div>
         <p className="text-sm text-gray-500">Tổng cộng {total} ứng viên trong hệ thống</p>
       </div>
 
@@ -92,9 +102,9 @@ export default function AdminCandidatesPage() {
           <div className="flex items-end">
             <button
               onClick={() => { setActiveFilter(''); setSearch(''); setPage(1) }}
-              className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors"
             >
-              ↻ Xóa bộ lọc
+              <IcRefresh /> Xóa bộ lọc
             </button>
           </div>
         </div>
@@ -104,7 +114,7 @@ export default function AdminCandidatesPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-gray-400">
-            <div className="animate-spin text-3xl mb-3">⚙️</div>
+            <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-3" />
             <p>Đang tải...</p>
           </div>
         ) : users.length === 0 ? (
@@ -157,8 +167,8 @@ export default function AdminCandidatesPage() {
                         {actionLoading === user.id
                           ? '...'
                           : user.is_active
-                          ? '🔒 Khóa'
-                          : '🔓 Mở khóa'}
+                          ? <span className="inline-flex items-center gap-1.5"><IcLock /> Khóa</span>
+                          : <span className="inline-flex items-center gap-1.5"><IcUnlock /> Mở khóa</span>}
                       </button>
                     </td>
                   </tr>

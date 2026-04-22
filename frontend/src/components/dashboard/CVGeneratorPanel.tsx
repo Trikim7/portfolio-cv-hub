@@ -11,6 +11,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Toast, useToast } from '@/components/Toast'
+import {
+  Building2, Rocket, Paintbrush, AlignLeft,
+  Check, FileText, Code2, RefreshCw,
+} from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -30,6 +34,17 @@ interface TemplateInfo {
   bg: string
 }
 
+// ─── Lucide template icons ────────────────────────────────────────────────────
+
+function TemplateIcon({ id, className }: { id: string; className?: string }) {
+  const cls = className ?? 'w-5 h-5'
+  if (id === 'building') return <Building2 className={cls} />
+  if (id === 'rocket') return <Rocket className={cls} />
+  if (id === 'brush') return <Paintbrush className={cls} />
+  // minimal
+  return <AlignLeft className={cls} />
+}
+
 // ─── Template catalog ─────────────────────────────────────────────────────────
 
 const TEMPLATES: TemplateInfo[] = [
@@ -37,7 +52,7 @@ const TEMPLATES: TemplateInfo[] = [
     id: 'traditional',
     name: 'Traditional',
     description: 'Chuyên nghiệp, phù hợp ngành tài chính/luật',
-    icon: '🏛️',
+    icon: 'building',
     color: 'text-slate-800',
     border: 'border-slate-800',
     bg: 'bg-slate-50',
@@ -46,7 +61,7 @@ const TEMPLATES: TemplateInfo[] = [
     id: 'modern',
     name: 'Modern',
     description: 'Hiện đại, nổi bật cho IT & startup',
-    icon: '🚀',
+    icon: 'rocket',
     color: 'text-blue-600',
     border: 'border-blue-500',
     bg: 'bg-blue-50',
@@ -55,7 +70,7 @@ const TEMPLATES: TemplateInfo[] = [
     id: 'creative',
     name: 'Creative',
     description: 'Sáng tạo, dành cho design & marketing',
-    icon: '🎨',
+    icon: 'brush',
     color: 'text-purple-600',
     border: 'border-purple-500',
     bg: 'bg-purple-50',
@@ -64,7 +79,7 @@ const TEMPLATES: TemplateInfo[] = [
     id: 'minimal',
     name: 'Minimal',
     description: 'Tối giản, đọc nhanh cho mọi ngành',
-    icon: '⬜',
+    icon: 'minimal',
     color: 'text-gray-700',
     border: 'border-gray-400',
     bg: 'bg-gray-50',
@@ -198,7 +213,7 @@ export default function CVGeneratorPanel() {
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                 >
-                  <span className="text-2xl">{t.icon}</span>
+                  <TemplateIcon id={t.icon} className="w-5 h-5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className={`font-semibold text-sm ${template === t.id ? t.color : 'text-gray-800'}`}>
                       {t.name}
@@ -206,7 +221,7 @@ export default function CVGeneratorPanel() {
                     <p className="text-xs text-gray-500 mt-0.5 leading-snug">{t.description}</p>
                   </div>
                   {template === t.id && (
-                    <span className="text-green-500 text-lg flex-shrink-0">✓</span>
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                   )}
                 </button>
               ))}
@@ -229,7 +244,7 @@ export default function CVGeneratorPanel() {
                     : 'border-gray-200 text-gray-600 hover:border-gray-300'
                     }`}
                 >
-                  {l === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
+                  {l === 'vi' ? 'VI — Tiếng Việt' : 'EN — English'}
                 </button>
               ))}
             </div>
@@ -248,9 +263,9 @@ export default function CVGeneratorPanel() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-semibold text-sm transition-all shadow-sm"
               >
                 {downloading ? (
-                  <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4" />
+                  <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 inline-block" />
                 ) : (
-                  <span>📄</span>
+                  <FileText className="w-4 h-4" />
                 )}
                 Tải PDF
               </button>
@@ -260,7 +275,7 @@ export default function CVGeneratorPanel() {
                 disabled={downloading || loadingPreview}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 border border-gray-300 rounded-xl font-semibold text-sm transition-all"
               >
-                <span></span>
+                <Code2 className="w-4 h-4" />
                 Tải HTML
               </button>
             </div>
@@ -294,7 +309,7 @@ export default function CVGeneratorPanel() {
                   className="text-xs text-gray-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition"
                   title="Làm mới preview"
                 >
-                  🔄 Làm mới
+                  <RefreshCw className="w-3.5 h-3.5" /> Làm mới
                 </button>
               </div>
             </div>
@@ -320,7 +335,9 @@ export default function CVGeneratorPanel() {
               ) : (
                 <div className="flex items-center justify-center h-96 text-gray-400">
                   <div className="text-center">
-                    <p className="text-4xl mb-3">📄</p>
+                    <div className="flex justify-center mb-3">
+                      <FileText className="w-12 h-12 text-gray-300" />
+                    </div>
                     <p className="text-sm">Preview sẽ hiển thị ở đây</p>
                   </div>
                 </div>

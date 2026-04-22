@@ -103,7 +103,7 @@ export default function CandidateSearch() {
     const skillsText = selected.required_skills
       .map(s => s.name)
       .join(', ')
-    
+
     // Map years_experience to experience level
     const expLevel = mapYearsToExperienceLevel(selected.years_experience)
 
@@ -166,7 +166,7 @@ export default function CandidateSearch() {
           {jobRequirements.length > 0 && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                💡 Điền nhanh từ Yêu cầu công việc
+                Điền nhanh từ Yêu cầu công việc
               </label>
               <select
                 onChange={(e) => handleSelectJobRequirement(e.target.value)}
@@ -274,11 +274,10 @@ export default function CandidateSearch() {
               return (
                 <div
                   key={candidate.id}
-                  className={`p-4 border rounded-xl transition ${
-                    selected
+                  className={`p-4 border rounded-xl transition ${selected
                       ? 'border-purple-400 bg-purple-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
@@ -291,11 +290,10 @@ export default function CandidateSearch() {
                     </div>
                     <button
                       onClick={() => toggleSelect(candidate)}
-                      className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                        selected
+                      className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold transition ${selected
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       {selected ? 'Đã chọn' : 'Chọn'}
                     </button>
