@@ -98,6 +98,49 @@ class JobInvitationResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
+# Job Requirements Schemas (Phase 2)
+class SkillRequirement(BaseModel):
+    name: str
+    level: Optional[str] = None  # entry, junior, mid, senior, lead
+
+
+class JobRequirementBase(BaseModel):
+    title: str
+    required_skills: List[SkillRequirement] = []
+    years_experience: Optional[int] = None
+    required_role: Optional[str] = None
+    customer_facing: bool = False
+    tech_stack: Optional[List[str]] = None
+    is_management_role: bool = False
+    weights_config: Optional[Dict] = None  # {"technical": 0.25, ...}
+    is_active: bool = True
+
+
+class JobRequirementCreate(JobRequirementBase):
+    pass
+
+
+class JobRequirementUpdate(BaseModel):
+    title: Optional[str] = None
+    required_skills: Optional[List[SkillRequirement]] = None
+    years_experience: Optional[int] = None
+    required_role: Optional[str] = None
+    customer_facing: Optional[bool] = None
+    tech_stack: Optional[List[str]] = None
+    is_management_role: Optional[bool] = None
+    weights_config: Optional[Dict] = None
+    is_active: Optional[bool] = None
+
+
+class JobRequirementResponse(JobRequirementBase):
+    id: int
+    company_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
     model_config = ConfigDict(from_attributes=True)
 
 

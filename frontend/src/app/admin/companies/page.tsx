@@ -4,6 +4,15 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/api'
 import { AdminCompany } from '@/types'
+import { Check, X, Lock, LockOpen, Building2, RefreshCw } from 'lucide-react'
+
+// ─── Lucide icon aliases ───────────────────────────────────────────────────────────────────
+const IcCheck    = () => <Check    className="w-3.5 h-3.5" />
+const IcX        = () => <X        className="w-3.5 h-3.5" />
+const IcLock     = () => <Lock     className="w-3.5 h-3.5" />
+const IcUnlock   = () => <LockOpen className="w-3.5 h-3.5" />
+const IcBuilding = () => <Building2 className="w-5 h-5" />
+const IcRefresh  = () => <RefreshCw className="w-4 h-4" />
 
 export default function AdminCompaniesPage() {
   const router = useRouter()
@@ -81,34 +90,34 @@ export default function AdminCompaniesPage() {
         return (
           <>
             <button onClick={() => handleStatusChange(company.id, 'approved')} disabled={disabled}
-              className={`${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
-              ✓ Duyệt
+              className={`inline-flex items-center gap-1.5 ${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
+              <IcCheck /> Duyệt
             </button>
             <button onClick={() => handleStatusChange(company.id, 'rejected')} disabled={disabled}
-              className={`${btnBase} bg-red-50 text-red-700 border-red-200 hover:bg-red-100`}>
-              ✕ Từ chối
+              className={`inline-flex items-center gap-1.5 ${btnBase} bg-red-50 text-red-700 border-red-200 hover:bg-red-100`}>
+              <IcX /> Từ chối
             </button>
           </>
         )
       case 'approved':
         return (
           <button onClick={() => handleStatusChange(company.id, 'suspended')} disabled={disabled}
-            className={`${btnBase} bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100`}>
-            🚫 Tạm khóa
+            className={`inline-flex items-center gap-1.5 ${btnBase} bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100`}>
+            <IcLock /> Tạm khóa
           </button>
         )
       case 'rejected':
         return (
           <button onClick={() => handleStatusChange(company.id, 'approved')} disabled={disabled}
-            className={`${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
-            ✓ Duyệt lại
+            className={`inline-flex items-center gap-1.5 ${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
+            <IcCheck /> Duyệt lại
           </button>
         )
       case 'suspended':
         return (
           <button onClick={() => handleStatusChange(company.id, 'approved')} disabled={disabled}
-            className={`${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
-            🔓 Mở khóa
+            className={`inline-flex items-center gap-1.5 ${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
+            <IcUnlock /> Mở khóa
           </button>
         )
       default:
@@ -120,7 +129,10 @@ export default function AdminCompaniesPage() {
     <div className="p-6 lg:p-8 max-w-[1400px]">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">🏢 Quản lý Doanh nghiệp</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <IcBuilding />
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý Doanh nghiệp</h1>
+        </div>
         <p className="text-sm text-gray-500">Tổng cộng {total} doanh nghiệp trong hệ thống</p>
       </div>
 
@@ -154,9 +166,9 @@ export default function AdminCompaniesPage() {
           <div className="flex items-end">
             <button
               onClick={() => { setStatusFilter(''); setSearch(''); setPage(1) }}
-              className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors"
             >
-              ↻ Xóa bộ lọc
+              <IcRefresh /> Xóa bộ lọc
             </button>
           </div>
         </div>
@@ -166,7 +178,7 @@ export default function AdminCompaniesPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-gray-400">
-            <div className="animate-spin text-3xl mb-3">⚙️</div>
+            <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-3" />
             <p>Đang tải...</p>
           </div>
         ) : companies.length === 0 ? (

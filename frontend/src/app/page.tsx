@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/services/api'
+import { Code2, Globe, Palette, Send, Users, Eye, Search } from 'lucide-react'
 
 // Unified display type — views is optional (real API doesn't return it)
 interface DisplayCandidate {
@@ -27,38 +28,19 @@ const FALLBACK_CANDIDATES: DisplayCandidate[] = [
 
 const HOW_STEPS: { icon: React.ReactNode; label: string; desc: string }[] = [
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-        <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-      </svg>
-    ),
+    icon: <Code2 className="w-6 h-6" />,
     label: 'Tạo Portfolio', desc: 'Điền thông tin cá nhân, kỹ năng và dự án',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-        <circle cx={12} cy={12} r={10} />
-        <line x1={2} y1={12} x2={22} y2={12} />
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
-    ),
+    icon: <Globe className="w-6 h-6" />,
     label: 'Chia sẻ Link', desc: 'Portfolio public với đường dẫn riêng',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-        <circle cx={13.5} cy={6.5} r={1} /><circle cx={17.5} cy={10.5} r={1} /><circle cx={8.5} cy={7.5} r={1} /><circle cx={6.5} cy={12.5} r={1} />
-        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-      </svg>
-    ),
+    icon: <Palette className="w-6 h-6" />,
     label: 'Thu hút DN', desc: 'Doanh nghiệp tìm kiếm và xem hồ sơ',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-        <line x1={22} y1={2} x2={11} y2={13} /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-      </svg>
-    ),
+    icon: <Send className="w-6 h-6" />,
     label: 'Nhận lời mời', desc: 'Kết nối trực tiếp với nhà tuyển dụng',
   },
 ]
@@ -146,9 +128,7 @@ export default function HomePage() {
           {/* Search bar */}
           <form onSubmit={handleSearch} className="mt-10 flex items-center max-w-xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden ring-2 ring-white/20">
             <span className="pl-5 text-gray-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
-              </svg>
+              <Search className="w-5 h-5" />
             </span>
             <input
               type="text"
@@ -186,35 +166,18 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
           {[
             {
-              icon: (
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx={9} cy={7} r={4} />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              ),
               value: platformStats ? `${platformStats.total_candidates.toLocaleString('vi-VN')}+` : '—',
+              icon: <Users className="w-6 h-6 text-blue-600" />,
               label: 'Ứng viên',
             },
             {
-              icon: (
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx={12} cy={12} r={3} />
-                </svg>
-              ),
               value: platformStats ? `${platformStats.total_views.toLocaleString('vi-VN')}+` : '—',
+              icon: <Eye className="w-6 h-6 text-blue-600" />,
               label: 'Lượt xem Portfolio',
             },
             {
-              icon: (
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <line x1={22} y1={2} x2={11} y2={13} />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              ),
               value: platformStats ? `${platformStats.total_invitations.toLocaleString('vi-VN')}+` : '—',
+              icon: <Send className="w-6 h-6 text-blue-600" />,
               label: 'Lời mời tuyển dụng',
             },
           ].map(stat => (
@@ -274,9 +237,7 @@ export default function HomePage() {
                   </div>
                   {views !== undefined && (
                     <p className="mt-4 text-xs text-gray-400 flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx={12} cy={12} r={3} />
-                      </svg>
+                      <Eye className="w-3.5 h-3.5" />
                       {views} lượt xem
                     </p>
                   )}

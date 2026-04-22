@@ -8,6 +8,18 @@ import {
   RankingResponse,
 } from '@/types'
 import SearchHistoryList from './SearchHistoryList'
+import { Scale, Zap, FolderOpen, Search } from 'lucide-react'
+
+// ─── Job Requirement Interface ────────────────────────────────────────────────
+interface JobRequirement {
+  id: number
+  title: string
+  required_skills: Array<{ name: string; level?: string }>
+  years_experience?: number
+  required_role?: string
+  tech_stack?: string[]
+  is_active: boolean
+}
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 /** All 6 weights fully required — avoids fighting with Partial<> from ScoringCriteria */
@@ -21,6 +33,15 @@ type WeightsConfig = {
 }
 
 type RadarKey = keyof WeightsConfig
+
+// ─── Preset icons (Lucide) ───────────────────────────────────────────────────────────────────
+function PresetIcon({ id, className }: { id: PresetKey; className?: string }) {
+  const cls = className ?? 'w-5 h-5'
+  if (id === 'balanced')  return <Scale      className={cls} />
+  if (id === 'tech')      return <Zap        className={cls} />
+  // portfolio
+  return <FolderOpen className={cls} />
+}
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
 type PresetKey = 'balanced' | 'tech' | 'portfolio'
@@ -36,13 +57,13 @@ const PRESETS: Record<PresetKey, Preset> = {
   balanced: {
     label: 'Cân bằng',
     desc: 'Đánh giá đều tất cả tiêu chí',
-    icon: '⚖️',
+    icon: 'balanced',
     weights: { technical_skills: 0.25, experience: 0.25, portfolio: 0.2, soft_skills: 0.1, leadership: 0.1, readiness_signals: 0.1 },
   },
   tech: {
     label: 'Ưu tiên kỹ thuật',
     desc: 'Chú trọng kỹ năng & kinh nghiệm thực chiến',
-    icon: '⚡',
+    icon: 'tech',
     weights: { technical_skills: 0.4, experience: 0.3, portfolio: 0.15, soft_skills: 0.05, leadership: 0.05, readiness_signals: 0.05 },
   },
   portfolio: {
@@ -266,6 +287,10 @@ export default function CandidateRanking() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<RankingResponse | null>(null)
 
+  // Job requirements state
+  const [jobRequirements, setJobRequirements] = useState<JobRequirement[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(true)
+
   // Incremented after each successful run to auto-refresh history list
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
 
@@ -283,7 +308,7 @@ export default function CandidateRanking() {
   const [hoveredId, setHoveredId] = useState<number | null>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const openTooltip  = (id: number) => {
+  const openTooltip = (id: number) => {
     if (closeTimer.current) clearTimeout(closeTimer.current)
     setHoveredId(id)
   }
@@ -303,6 +328,71 @@ export default function CandidateRanking() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobTitle])
+
+  // Fetch job requirements on mount
+  useEffect(() => {
+    const fetchJobRequirements = async () => {
+      try {
+        const data = await apiClient.get('/api/recruiter/job-requirements', {
+          params: { active_only: true },
+        })
+        setJobRequirements(data)
+      } catch (err) {
+        console.error('Lỗi tải yêu cầu công việc:', err)
+      } finally {
+        setLoadingJobs(false)
+      }
+    }
+    fetchJobRequirements()
+  }, [])
+
+  const handleSelectJobRequirement = (jobId: string) => {
+    if (!jobId) {
+      setJobTitle('')
+      setSkills([])
+      setTechStack([])
+      setYearsExp(2)
+      setRoleType('')
+      return
+    }
+
+    const selected = jobRequirements.find(j => j.id.toString() === jobId)
+    if (!selected) return
+
+    // Fill title
+    setJobTitle(selected.title)
+
+    // Fill role - map from required_role to available role types
+    const roleMapping: Record<string, string> = {
+      'backend': 'Backend',
+      'frontend': 'Frontend',
+      'fullstack': 'Fullstack',
+      'data': 'Data',
+      'devops': 'DevOps',
+      'mobile': 'Mobile',
+    }
+
+    if (selected.required_role) {
+      const mappedRole = roleMapping[selected.required_role.toLowerCase()] || selected.required_role
+      setRoleType(mappedRole)
+    }
+
+    // Fill years experience
+    if (selected.years_experience) {
+      setYearsExp(selected.years_experience)
+    }
+
+    // Fill skills
+    const skillsText = selected.required_skills
+      .map(s => s.name)
+      .filter(Boolean)
+    setSkills(skillsText)
+
+    // Fill tech stack
+    if (selected.tech_stack && selected.tech_stack.length > 0) {
+      setTechStack(selected.tech_stack)
+    }
+  }
 
   const applyPreset = (key: PresetKey) => {
     setPreset(key)
@@ -458,6 +548,26 @@ export default function CandidateRanking() {
 
       {/* ── Section 1: Job Overview ── */}
       <Section step={1} title="Thông tin vị trí tuyển dụng" desc="Mô tả công việc để AI hiểu bạn đang tìm kiếm ai">
+        {jobRequirements.length > 0 && (
+          <div className="mb-5 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Điền nhanh từ Yêu cầu công việc
+            </label>
+            <select
+              onChange={(e) => handleSelectJobRequirement(e.target.value)}
+              disabled={loadingJobs}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+            >
+              <option value="">-- Chọn yêu cầu công việc --</option>
+              {jobRequirements.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-600 mt-1.5">Chọn một yêu cầu để tự động điền tiêu chí tuyển dụng</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-1">
             <FieldLabel tooltip="Tên công việc giúp AI gợi ý kỹ năng phù hợp tự động">Tên vị trí</FieldLabel>
@@ -517,7 +627,7 @@ export default function CandidateRanking() {
             />
             {skills.length === 0 && (
               <p className="text-xs text-gray-400 mt-1.5">
-                💡 Thêm ít nhất 1 kỹ năng để có kết quả tốt hơn
+                Thêm ít nhất 1 kỹ năng để có kết quả tốt hơn
               </p>
             )}
           </div>
@@ -552,7 +662,7 @@ export default function CandidateRanking() {
                   : 'border-gray-200 hover:border-violet-300 hover:bg-gray-50'
                   }`}
               >
-                <span className="text-2xl">{p.icon}</span>
+                <PresetIcon id={key} className="w-5 h-5" />
                 <p className={`text-sm font-bold mt-1 ${active ? 'text-violet-700' : 'text-gray-800'}`}>
                   {p.label}
                 </p>
@@ -678,7 +788,9 @@ export default function CandidateRanking() {
 
           {filteredCandidates.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-4xl mb-3">🔍</p>
+              <div className="flex justify-center mb-3">
+                <Search className="w-10 h-10 text-gray-300" />
+              </div>
               <p className="text-gray-500 font-medium">Không tìm thấy ứng viên phù hợp</p>
               <p className="text-sm text-gray-400 mt-1">
                 Thử giảm Điểm tối thiểu hoặc bỏ bớt kỹ năng yêu cầu
@@ -756,11 +868,10 @@ export default function CandidateRanking() {
                                 setInviteJobTitle(jobTitle)
                                 setInviteTarget({ id: c.candidate_id, name })
                               }}
-                              className={`text-xs px-2.5 py-1 rounded-full font-semibold transition ${
-                                invitedIds.has(c.candidate_id)
-                                  ? 'bg-emerald-100 text-emerald-700 cursor-default'
-                                  : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
-                              }`}
+                              className={`text-xs px-2.5 py-1 rounded-full font-semibold transition ${invitedIds.has(c.candidate_id)
+                                ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                                : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                                }`}
                             >
                               {invitedIds.has(c.candidate_id) ? '✔ Đã gửi' : 'Gửi lời mời'}
                             </button>
@@ -793,11 +904,10 @@ export default function CandidateRanking() {
                     <div
                       onMouseEnter={() => openTooltip(c.candidate_id)}
                       onMouseLeave={closeTooltip}
-                      className={`absolute left-0 top-full pt-2 z-50 w-72 transition-all duration-200 ${
-                        hoveredId === c.candidate_id
-                          ? 'opacity-100 translate-y-0 pointer-events-auto'
-                          : 'opacity-0 translate-y-1 pointer-events-none'
-                      }`}
+                      className={`absolute left-0 top-full pt-2 z-50 w-72 transition-all duration-200 ${hoveredId === c.candidate_id
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 translate-y-1 pointer-events-none'
+                        }`}
                     >
                       <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-4 space-y-3">
                         {/* Header */}

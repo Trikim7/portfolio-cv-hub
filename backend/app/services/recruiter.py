@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional, List
 import uuid
-from app.repositories.recruiter import CompanyRepository, JobInvitationRepository
+from app.repositories.recruiter import CompanyRepository, JobInvitationRepository, JobRequirementRepository
 from app.repositories.candidate import CandidateProfileRepository
 from app.models.recruiter import CompanyStatus
 from app.schemas.recruiter import CompanyRegister, CompanyUpdate, CandidateSearchResult
@@ -201,3 +201,68 @@ class JobInvitationService:
     def delete(db: Session, invitation_id: int) -> bool:
         """Delete invitation"""
         return JobInvitationRepository.delete(db, invitation_id)
+
+
+class JobRequirementService:
+    """Job requirement (hiring criteria) management"""
+
+    @staticmethod
+    def create_requirement(
+        db: Session,
+        company_id: int,
+        title: str,
+        required_skills: list,
+        **kwargs
+    ):
+        """Create new job requirement"""
+        company = CompanyRepository.get_by_id(db, company_id)
+        if not company:
+            raise ValueError("Company not found")
+        
+        return JobRequirementRepository.create(
+            db, company_id, title, required_skills, **kwargs
+        )
+
+    @staticmethod
+    def get_requirement(db: Session, job_requirement_id: int):
+        """Get job requirement by ID"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        return requirement
+
+    @staticmethod
+    def get_company_requirements(db: Session, company_id: int, active_only: bool = False):
+        """Get all job requirements for a company"""
+        company = CompanyRepository.get_by_id(db, company_id)
+        if not company:
+            raise ValueError("Company not found")
+        
+        return JobRequirementRepository.get_by_company(db, company_id, active_only)
+
+    @staticmethod
+    def update_requirement(db: Session, job_requirement_id: int, **kwargs):
+        """Update job requirement"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        
+        return JobRequirementRepository.update(db, job_requirement_id, **kwargs)
+
+    @staticmethod
+    def delete_requirement(db: Session, job_requirement_id: int) -> bool:
+        """Delete job requirement"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        
+        return JobRequirementRepository.delete(db, job_requirement_id)
+
+    @staticmethod
+    def deactivate_requirement(db: Session, job_requirement_id: int):
+        """Soft delete: mark as inactive"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        
+        return JobRequirementRepository.deactivate(db, job_requirement_id)

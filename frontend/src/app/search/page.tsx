@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/api'
+import { ChevronLeft, Search, X } from 'lucide-react'
 
 interface CandidateCard {
   id: number
@@ -104,9 +105,7 @@ function SearchPageInner() {
       <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white py-12 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-blue-200 hover:text-white text-sm mb-6 transition">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <ChevronLeft className="w-4 h-4" />
             Trang chủ
           </Link>
           <h1 className="text-3xl sm:text-4xl font-extrabold">Tìm kiếm ứng viên</h1>
@@ -115,9 +114,7 @@ function SearchPageInner() {
           {/* Search form */}
           <form onSubmit={handleSubmit} className="mt-8 flex gap-2">
             <div className="relative flex-1">
-              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
-              </svg>
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={query}
@@ -132,9 +129,7 @@ function SearchPageInner() {
                   onClick={() => setQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
-                  </svg>
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -184,9 +179,7 @@ function SearchPageInner() {
           </div>
         ) : !searched ? (
           <div className="text-center py-20">
-            <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24">
-              <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
-            </svg>
+            <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nhập từ khóa hoặc chọn tag để tìm kiếm ứng viên</p>
           </div>
         ) : candidates.length === 0 ? (
