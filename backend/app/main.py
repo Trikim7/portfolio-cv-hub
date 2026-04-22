@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from alembic.config import Config
 from alembic import command
-from app.api import auth, candidate, recruiter, admin, scoring, oauth, public
+from app.api import auth, candidate, recruiter, admin, scoring, oauth, public, cv_generator
 
 # Run Alembic migrations on startup (creates/updates tables automatically).
 _alembic_cfg = Config("alembic.ini")
@@ -76,6 +76,7 @@ app.include_router(admin.router)
 app.include_router(scoring.router)
 app.include_router(oauth.router)
 app.include_router(public.router)
+app.include_router(cv_generator.router)
 
 
 @app.get("/health")

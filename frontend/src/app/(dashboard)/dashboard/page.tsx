@@ -9,6 +9,7 @@ import SkillsManager from '@/components/dashboard/SkillsManager'
 import ExperiencesManager from '@/components/dashboard/ExperiencesManager'
 import ProjectsManager from '@/components/dashboard/ProjectsManager'
 import CVManager from '@/components/dashboard/CVManager'
+import CVGeneratorPanel from '@/components/dashboard/CVGeneratorPanel'
 import CandidateStatsCard from '@/components/dashboard/CandidateStatsCard'
 import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
 import DashboardShell, {
@@ -24,6 +25,7 @@ type CandidateSection =
   | 'experience'
   | 'projects'
   | 'cv'
+  | 'generate-cv'
   | 'social'
 
 const SECTION_LABELS: Record<CandidateSection, string> = {
@@ -33,6 +35,7 @@ const SECTION_LABELS: Record<CandidateSection, string> = {
   experience: 'Kinh nghiệm',
   projects: 'Dự án',
   cv: 'CV / Resume',
+  'generate-cv': '✨ Tạo CV tự động',
   social: 'Tài khoản liên kết',
 }
 
@@ -43,6 +46,7 @@ const SECTION_ORDER: CandidateSection[] = [
   'experience',
   'projects',
   'cv',
+  'generate-cv',
   'social',
 ]
 
@@ -208,6 +212,7 @@ function DashboardContent() {
       {section === 'experience' && <ExperiencesManager />}
       {section === 'projects' && <ProjectsManager />}
       {section === 'cv' && <CVManager />}
+      {section === 'generate-cv' && <CVGeneratorPanel />}
       {section === 'social' && <SocialAccountsManager />}
     </DashboardShell>
   )
