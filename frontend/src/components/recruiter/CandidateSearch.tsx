@@ -12,6 +12,24 @@ const i18nToText = (value: I18nText): string => {
   return value.vi || value.en || Object.values(value)[0] || ''
 }
 
+interface JobRequirement {
+  id: number
+  title: string
+  required_skills: Array<{ name: string; level?: string }>
+  years_experience?: number
+  required_role?: string
+  tech_stack?: string[]
+  is_active: boolean
+}
+
+const mapYearsToExperienceLevel = (years?: number): string => {
+  if (!years) return ''
+  if (years < 1) return 'fresher'
+  if (years < 3) return 'junior'
+  if (years < 5) return 'mid'
+  return 'senior'
+}
+
 export default function CandidateSearch() {
   const [keyword, setKeyword] = useState('')
   const [skill, setSkill] = useState('')
@@ -22,6 +40,25 @@ export default function CandidateSearch() {
   const [selectedCandidates, setSelectedCandidates] = useState<CandidateSearchResult[]>([])
   const [showComparison, setShowComparison] = useState(false)
   const { showToast } = useToast()
+  const [jobRequirements, setJobRequirements] = useState<JobRequirement[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(true)
+
+  useEffect(() => {
+    // Load job requirements when component mounts
+    const fetchJobRequirements = async () => {
+      try {
+        const data = await apiClient.get('/api/recruiter/job-requirements', {
+          params: { active_only: true },
+        })
+        setJobRequirements(data)
+      } catch (err) {
+        console.error('Lỗi tải yêu cầu công việc:', err)
+      } finally {
+        setLoadingJobs(false)
+      }
+    }
+    fetchJobRequirements()
+  }, [])
 
   useEffect(() => {
     if (!keyword && !skill && !experienceLevel && !location) {
@@ -48,6 +85,32 @@ export default function CandidateSearch() {
 
     return () => clearTimeout(timer)
   }, [keyword, skill, experienceLevel, location])
+
+  const handleSelectJobRequirement = (jobId: string) => {
+    if (!jobId) {
+      setSkill('')
+      setExperienceLevel('')
+      return
+    }
+
+    const selected = jobRequirements.find(j => j.id.toString() === jobId)
+    if (!selected) return
+
+    // Auto-fill keyword with job title
+    setKeyword(selected.title)
+
+    // Map required_skills to comma-separated string
+    const skillsText = selected.required_skills
+      .map(s => s.name)
+      .join(', ')
+    
+    // Map years_experience to experience level
+    const expLevel = mapYearsToExperienceLevel(selected.years_experience)
+
+    setSkill(skillsText || '')
+    setExperienceLevel(expLevel)
+    setLocation(selected.required_role || '')
+  }
 
   const handleSearch = async () => {
     if (!keyword && !skill && !experienceLevel && !location) {
@@ -100,6 +163,27 @@ export default function CandidateSearch() {
         <h2 className="text-lg font-bold text-gray-900 mb-5">Bộ lọc tìm kiếm</h2>
 
         <div className="space-y-4">
+          {jobRequirements.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                💡 Điền nhanh từ Yêu cầu công việc
+              </label>
+              <select
+                onChange={(e) => handleSelectJobRequirement(e.target.value)}
+                disabled={loadingJobs}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+              >
+                <option value="">-- Chọn yêu cầu công việc --</option>
+                {jobRequirements.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {job.title}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Chọn một yêu cầu để tự động điền tiêu chí tìm kiếm</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"

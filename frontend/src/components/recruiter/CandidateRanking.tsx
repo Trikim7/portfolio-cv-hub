@@ -9,6 +9,17 @@ import {
 } from '@/types'
 import SearchHistoryList from './SearchHistoryList'
 
+// ─── Job Requirement Interface ────────────────────────────────────────────────
+interface JobRequirement {
+  id: number
+  title: string
+  required_skills: Array<{ name: string; level?: string }>
+  years_experience?: number
+  required_role?: string
+  tech_stack?: string[]
+  is_active: boolean
+}
+
 // ─── Local types ──────────────────────────────────────────────────────────────
 /** All 6 weights fully required — avoids fighting with Partial<> from ScoringCriteria */
 type WeightsConfig = {
@@ -266,6 +277,10 @@ export default function CandidateRanking() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<RankingResponse | null>(null)
 
+  // Job requirements state
+  const [jobRequirements, setJobRequirements] = useState<JobRequirement[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(true)
+
   // Incremented after each successful run to auto-refresh history list
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
 
@@ -303,6 +318,71 @@ export default function CandidateRanking() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobTitle])
+
+  // Fetch job requirements on mount
+  useEffect(() => {
+    const fetchJobRequirements = async () => {
+      try {
+        const data = await apiClient.get('/api/recruiter/job-requirements', {
+          params: { active_only: true },
+        })
+        setJobRequirements(data)
+      } catch (err) {
+        console.error('Lỗi tải yêu cầu công việc:', err)
+      } finally {
+        setLoadingJobs(false)
+      }
+    }
+    fetchJobRequirements()
+  }, [])
+
+  const handleSelectJobRequirement = (jobId: string) => {
+    if (!jobId) {
+      setJobTitle('')
+      setSkills([])
+      setTechStack([])
+      setYearsExp(2)
+      setRoleType('')
+      return
+    }
+
+    const selected = jobRequirements.find(j => j.id.toString() === jobId)
+    if (!selected) return
+
+    // Fill title
+    setJobTitle(selected.title)
+
+    // Fill role - map from required_role to available role types
+    const roleMapping: Record<string, string> = {
+      'backend': 'Backend',
+      'frontend': 'Frontend',
+      'fullstack': 'Fullstack',
+      'data': 'Data',
+      'devops': 'DevOps',
+      'mobile': 'Mobile',
+    }
+    
+    if (selected.required_role) {
+      const mappedRole = roleMapping[selected.required_role.toLowerCase()] || selected.required_role
+      setRoleType(mappedRole)
+    }
+
+    // Fill years experience
+    if (selected.years_experience) {
+      setYearsExp(selected.years_experience)
+    }
+
+    // Fill skills
+    const skillsText = selected.required_skills
+      .map(s => s.name)
+      .filter(Boolean)
+    setSkills(skillsText)
+
+    // Fill tech stack
+    if (selected.tech_stack && selected.tech_stack.length > 0) {
+      setTechStack(selected.tech_stack)
+    }
+  }
 
   const applyPreset = (key: PresetKey) => {
     setPreset(key)
@@ -458,6 +538,26 @@ export default function CandidateRanking() {
 
       {/* ── Section 1: Job Overview ── */}
       <Section step={1} title="Thông tin vị trí tuyển dụng" desc="Mô tả công việc để AI hiểu bạn đang tìm kiếm ai">
+        {jobRequirements.length > 0 && (
+          <div className="mb-5 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              💡 Điền nhanh từ Yêu cầu công việc
+            </label>
+            <select
+              onChange={(e) => handleSelectJobRequirement(e.target.value)}
+              disabled={loadingJobs}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+            >
+              <option value="">-- Chọn yêu cầu công việc --</option>
+              {jobRequirements.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-600 mt-1.5">Chọn một yêu cầu để tự động điền tiêu chí tuyển dụng</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-1">
             <FieldLabel tooltip="Tên công việc giúp AI gợi ý kỹ năng phù hợp tự động">Tên vị trí</FieldLabel>

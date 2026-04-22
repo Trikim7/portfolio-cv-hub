@@ -67,6 +67,9 @@ export default function Navbar() {
           <Link href="/recruiter/dashboard" className={linkClass}>
             Dashboard
           </Link>
+          <Link href="/recruiter/job-requirements" className={linkClass}>
+            Yêu cầu công việc
+          </Link>
           <Link href="/recruiter/search" className={linkClass}>
             Tìm kiếm
           </Link>
