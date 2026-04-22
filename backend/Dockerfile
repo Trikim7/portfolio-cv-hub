@@ -9,8 +9,8 @@ COPY . .
 
 RUN mkdir -p /app/uploads /app/data
 
-# Cấp quyền thực thi cho entrypoint
-RUN chmod +x /app/entrypoint.sh
+# Strip CRLF (Windows git autocrlf) rồi cấp quyền thực thi
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 
