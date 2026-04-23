@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
+    # ─── SMTP Email ─────────────────────────────────────────────
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from_address: str = "noreply@portfoliocvhub.com"
+    smtp_enabled: bool = False   # stays False until Admin saves valid SMTP config
+
     model_config = ConfigDict(
         env_file=".env",
         case_sensitive=False,

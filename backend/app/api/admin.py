@@ -119,12 +119,100 @@ async def update_company_status(
     authorization: str = Header(None),
     db: Session = Depends(get_db),
 ):
-    """Approve / reject / suspend a company"""
+    """Approve / reject / suspend a company — also triggers email notification."""
     user = _get_admin_user(authorization, db)
     try:
         updated = AdminService.update_company_status(db, user, company_id, body.status)
+
+        # ── Email notification ──────────────────────────────────
+        try:
+            from app.services.email import EmailService
+            from app.models.user import User as UserModel
+
+            recruiter_user = db.query(UserModel).filter(
+                UserModel.id == updated.user_id
+            ).first()
+            if recruiter_user and recruiter_user.email:
+                if body.status == "approved":
+                    EmailService.notify_company_approved(
+                        company_email=recruiter_user.email,
+                        company_name=updated.company_name,
+                    )
+                elif body.status == "rejected":
+                    EmailService.notify_company_rejected(
+                        company_email=recruiter_user.email,
+                        company_name=updated.company_name,
+                    )
+        except Exception as email_err:
+            import logging
+            logging.getLogger(__name__).warning("Email notification failed: %s", email_err)
+        # ───────────────────────────────────────────────────────
+
         return updated
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# ─── SMTP Settings ────────────────────────────────────────────
+from pydantic import BaseModel
+
+class SmtpConfig(BaseModel):
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str
+    smtp_password: str
+    smtp_from_address: str = "noreply@portfoliocvhub.com"
+    smtp_enabled: bool = True
+
+
+@router.post("/settings/smtp")
+async def save_smtp_config(
+    config: SmtpConfig,
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Save SMTP configuration at runtime (updates in-memory settings singleton)."""
+    _get_admin_user(authorization, db)  # auth check only
+    from app.core.config import settings
+    settings.smtp_host = config.smtp_host
+    settings.smtp_port = config.smtp_port
+    settings.smtp_username = config.smtp_username
+    settings.smtp_password = config.smtp_password
+    settings.smtp_from_address = config.smtp_from_address
+    settings.smtp_enabled = config.smtp_enabled
+    return {"message": "Đã lưu cấu hình SMTP thành công", "smtp_enabled": settings.smtp_enabled}
+
+
+@router.get("/settings/smtp")
+async def get_smtp_config(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Return current SMTP configuration (password masked)."""
+    _get_admin_user(authorization, db)
+    from app.core.config import settings
+    return {
+        "smtp_host": settings.smtp_host,
+        "smtp_port": settings.smtp_port,
+        "smtp_username": settings.smtp_username or "",
+        "smtp_password": "••••••••" if settings.smtp_password else "",
+        "smtp_from_address": settings.smtp_from_address,
+        "smtp_enabled": settings.smtp_enabled,
+    }
+
+
+@router.post("/settings/smtp/test")
+async def test_smtp_connection(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Test current SMTP connection."""
+    _get_admin_user(authorization, db)
+    from app.services.email import EmailService
+    result = await EmailService.test_connection()
+    if result["success"]:
+        return result
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"])
+

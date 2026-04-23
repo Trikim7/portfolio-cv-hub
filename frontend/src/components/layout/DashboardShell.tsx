@@ -7,6 +7,7 @@ import {
   LayoutDashboard, User, Code2, Briefcase, FolderOpen,
   FileText, Sparkles, Share2, Building2, Search,
   ClipboardList, Camera, ChevronUp, ChevronDown,
+  BarChart2, Mail,
 } from 'lucide-react'
 
 export interface DashboardNavItem {
@@ -31,6 +32,8 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
   cv:                 <FileText className={CLS} />,
   'generate-cv':      <Sparkles className={CLS} />,
   social:             <Share2 className={CLS} />,
+  analytics:          <BarChart2 className={CLS} />,
+  invitations:        <Mail className={CLS} />,
   // Recruiter
   company:            <Building2 className={CLS} />,
   actions:            <Search className={CLS} />,
