@@ -1,20 +1,30 @@
-"""User repository"""
+"""User repository (Phase 2)."""
+from typing import Optional
 from sqlalchemy.orm import Session
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, UserStatus
 from app.core.security import get_password_hash
 
 
 class UserRepository:
-    """User data access layer"""
+    """User data-access layer."""
 
     @staticmethod
-    def create_user(db: Session, email: str, password: str, role: UserRole = UserRole.CANDIDATE) -> User:
-        """Create new user"""
-        hashed_password = get_password_hash(password)
+    def create_user(
+        db: Session,
+        email: str,
+        password: Optional[str] = None,
+        role: UserRole = UserRole.CANDIDATE,
+        full_name: Optional[str] = None,
+        status: UserStatus = UserStatus.ACTIVE,
+    ) -> User:
+        """Create a user. Password may be None for social-only accounts."""
+        password_hash = get_password_hash(password) if password else None
         user = User(
             email=email,
-            hashed_password=hashed_password,
-            role=role
+            password_hash=password_hash,
+            full_name=full_name,
+            role=role,
+            status=status,
         )
         db.add(user)
         db.commit()
@@ -22,23 +32,25 @@ class UserRepository:
         return user
 
     @staticmethod
-    def get_user_by_email(db: Session, email: str) -> User | None:
-        """Get user by email"""
+    def get_user_by_email(db: Session, email: str) -> Optional[User]:
         return db.query(User).filter(User.email == email).first()
 
     @staticmethod
-    def get_user_by_id(db: Session, user_id: int) -> User | None:
-        """Get user by ID"""
+    def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
         return db.query(User).filter(User.id == user_id).first()
 
     @staticmethod
-    def get_all_users(db: Session, skip: int = 0, limit: int = 100):
-        """Get all users with pagination"""
-        return db.query(User).offset(skip).limit(limit).all()
+    def set_status(db: Session, user_id: int, status: UserStatus) -> Optional[User]:
+        user = UserRepository.get_user_by_id(db, user_id)
+        if not user:
+            return None
+        user.status = status
+        db.commit()
+        db.refresh(user)
+        return user
 
     @staticmethod
-    def update_user(db: Session, user_id: int, **kwargs) -> User | None:
-        """Update user"""
+    def update_user(db: Session, user_id: int, **kwargs) -> Optional[User]:
         user = UserRepository.get_user_by_id(db, user_id)
         if not user:
             return None
@@ -51,7 +63,6 @@ class UserRepository:
 
     @staticmethod
     def delete_user(db: Session, user_id: int) -> bool:
-        """Delete user"""
         user = UserRepository.get_user_by_id(db, user_id)
         if not user:
             return False

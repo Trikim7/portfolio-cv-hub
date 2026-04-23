@@ -1,7 +1,7 @@
 """Recruiter data access layer"""
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from app.models.recruiter import Company, JobInvitation, CompanyStatus
+from app.models.recruiter import Company, JobInvitation, JobRequirement, CompanyStatus
 
 
 class CompanyRepository:
@@ -86,13 +86,18 @@ class JobInvitationRepository:
         return db.query(JobInvitation).filter(JobInvitation.candidate_id == candidate_id).all()
 
     @staticmethod
-    def check_duplicate(db: Session, company_id: int, candidate_id: int) -> bool:
-        """Check if invitation already exists"""
-        existing = db.query(JobInvitation).filter(
+    def check_duplicate(db: Session, company_id: int, candidate_id: int, job_title: str = "") -> bool:
+        """Check if an active (pending) invitation already exists for this company+candidate+job."""
+        from app.models.recruiter import InvitationStatus
+        query = db.query(JobInvitation).filter(
             JobInvitation.company_id == company_id,
             JobInvitation.candidate_id == candidate_id,
-        ).first()
-        return existing is not None
+            JobInvitation.status == InvitationStatus.PENDING,
+        )
+        # If a job_title is provided, also check same position to avoid exact duplicates
+        if job_title:
+            query = query.filter(JobInvitation.job_title == job_title)
+        return query.first() is not None
 
     @staticmethod
     def update(db: Session, invitation_id: int, **kwargs) -> Optional[JobInvitation]:
@@ -116,3 +121,76 @@ class JobInvitationRepository:
         db.delete(invitation)
         db.commit()
         return True
+
+
+class JobRequirementRepository:
+    """Job requirement (hiring criteria) data access layer"""
+
+    @staticmethod
+    def create(
+        db: Session,
+        company_id: int,
+        title: str,
+        required_skills: list,
+        **kwargs
+    ) -> JobRequirement:
+        """Create new job requirement"""
+        job_req = JobRequirement(
+            company_id=company_id,
+            title=title,
+            required_skills=required_skills,
+            **kwargs
+        )
+        db.add(job_req)
+        db.commit()
+        db.refresh(job_req)
+        return job_req
+
+    @staticmethod
+    def get_by_id(db: Session, job_requirement_id: int) -> Optional[JobRequirement]:
+        """Get job requirement by ID"""
+        return db.query(JobRequirement).filter(JobRequirement.id == job_requirement_id).first()
+
+    @staticmethod
+    def get_by_company(db: Session, company_id: int, active_only: bool = False) -> List[JobRequirement]:
+        """Get all job requirements for a company"""
+        query = db.query(JobRequirement).filter(JobRequirement.company_id == company_id)
+        if active_only:
+            query = query.filter(JobRequirement.is_active == True)
+        return query.order_by(JobRequirement.created_at.desc()).all()
+
+    @staticmethod
+    def list_all(db: Session, active_only: bool = True, limit: int = 100, offset: int = 0) -> List[JobRequirement]:
+        """List all job requirements (for admin/public view)"""
+        query = db.query(JobRequirement)
+        if active_only:
+            query = query.filter(JobRequirement.is_active == True)
+        return query.order_by(JobRequirement.created_at.desc()).limit(limit).offset(offset).all()
+
+    @staticmethod
+    def update(db: Session, job_requirement_id: int, **kwargs) -> Optional[JobRequirement]:
+        """Update job requirement"""
+        job_req = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not job_req:
+            return None
+        for key, value in kwargs.items():
+            if hasattr(job_req, key) and value is not None:
+                setattr(job_req, key, value)
+        db.commit()
+        db.refresh(job_req)
+        return job_req
+
+    @staticmethod
+    def delete(db: Session, job_requirement_id: int) -> bool:
+        """Delete job requirement"""
+        job_req = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not job_req:
+            return False
+        db.delete(job_req)
+        db.commit()
+        return True
+
+    @staticmethod
+    def deactivate(db: Session, job_requirement_id: int) -> Optional[JobRequirement]:
+        """Soft delete: mark as inactive instead of hard delete"""
+        return JobRequirementRepository.update(db, job_requirement_id, is_active=False)

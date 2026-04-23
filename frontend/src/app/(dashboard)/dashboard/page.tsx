@@ -1,65 +1,275 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { apiClient } from '@/services/api'
 import { ProfileProvider, useProfileContext } from '@/hooks/ProfileContext'
 import ProfileForm from '@/components/dashboard/ProfileForm'
 import SkillsManager from '@/components/dashboard/SkillsManager'
 import ExperiencesManager from '@/components/dashboard/ExperiencesManager'
 import ProjectsManager from '@/components/dashboard/ProjectsManager'
 import CVManager from '@/components/dashboard/CVManager'
+import CVGeneratorPanel from '@/components/dashboard/CVGeneratorPanel'
+import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
+import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard'
+import InvitationsManager from '@/components/dashboard/InvitationsManager'
+import DashboardShell, {
+  DashboardNavItem,
+  SectionCard,
+  StatCard,
+} from '@/components/layout/DashboardShell'
+
+type CandidateSection =
+  | 'overview'
+  | 'profile'
+  | 'skills'
+  | 'experience'
+  | 'projects'
+  | 'cv'
+  | 'generate-cv'
+  | 'invitations'
+  | 'social'
+
+const SECTION_LABELS: Record<CandidateSection, string> = {
+  overview:      'Tổng quan',
+  profile:       'Thông tin cá nhân',
+  skills:        'Kỹ năng',
+  experience:    'Kinh nghiệm',
+  projects:      'Dự án',
+  cv:            'CV / Resume',
+  'generate-cv': 'Tạo CV tự động',
+  invitations:   'Lời mời tuyển dụng',
+  social:        'Tài khoản liên kết',
+}
+
+const SECTION_ORDER: CandidateSection[] = [
+  'overview',
+  'profile',
+  'skills',
+  'experience',
+  'projects',
+  'cv',
+  'generate-cv',
+  'invitations',
+  'social',        // always last
+]
+
+const SIDEBAR_NAV: (DashboardNavItem & { id: CandidateSection })[] = SECTION_ORDER.map(
+  (id) => ({ id, label: SECTION_LABELS[id] }),
+)
 
 function DashboardContent() {
-  const { profile } = useProfileContext()
+  const { profile, loading, error, refreshProfile } = useProfileContext()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [section, setSection] = useState<CandidateSection>(() => {
+    const tab = searchParams.get('tab')
+    if (tab && SECTION_ORDER.includes(tab as CandidateSection)) return tab as CandidateSection
+    return 'overview'
+  })
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    router.push('/login')
+  const handleAvatarClick = () => avatarInputRef.current?.click()
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    try {
+      await apiClient.uploadAvatar(file)
+      await refreshProfile()
+    } catch {
+      // silent — user can retry
+    } finally {
+      setAvatarUploading(false)
+      e.target.value = ''
+    }
   }
 
-  if (!profile) {
+  const completion = useMemo(() => {
+    if (!profile) return 0
+    const checks = [
+      !!profile.full_name,
+      !!profile.headline,
+      !!profile.bio,
+      (profile.skills || []).length > 0,
+      (profile.experiences || []).length > 0,
+      (profile.projects || []).length > 0,
+    ]
+    const done = checks.filter(Boolean).length
+    return Math.round((done / checks.length) * 100)
+  }, [profile])
+
+  // Redirect to login if not authenticated (profile fetch failed)
+  useEffect(() => {
+    if (!loading && !profile && error) {
+      router.push('/?redirect=dashboard')
+    }
+  }, [loading, profile, error, router])
+
+  if (loading || (!profile && !error)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">Đang tải dữ liệu...</p>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
       </div>
     )
   }
 
+  if (!profile) {
+    // Auth failed — redirect is in progress
+    return null
+  }
+
+  const missing: { id: CandidateSection; label: string }[] = []
+  if (!profile.full_name || !profile.headline)
+    missing.push({ id: 'profile', label: 'Bổ sung thông tin cá nhân' })
+  if (!(profile.skills || []).length)
+    missing.push({ id: 'skills', label: 'Thêm kỹ năng đầu tiên' })
+  if (!(profile.experiences || []).length)
+    missing.push({ id: 'experience', label: 'Thêm kinh nghiệm làm việc' })
+  if (!(profile.projects || []).length)
+    missing.push({ id: 'projects', label: 'Thêm dự án vào portfolio' })
+
   return (
-    <>
-      {/* Top greeting bar */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">👋</span>
-            <span className="font-semibold text-lg">
-              Hi, chào {profile.full_name || 'Ứng viên'}!
-            </span>
+    <DashboardShell
+      accent="blue"
+      title={profile.full_name || 'Ứng viên'}
+      subtitle="Xin chào"
+      userName={profile.full_name || undefined}
+      userAvatarUrl={profile.avatar_url || null}
+      onAvatarClick={handleAvatarClick}
+      badge={avatarUploading ? 'Đang tải ảnh…' : (profile.is_public ? 'Công khai' : 'Chưa công khai')}
+      nav={SIDEBAR_NAV}
+      activeId={section}
+      onSelect={(id) => setSection(id as CandidateSection)}
+      headerAction={
+        <Link
+          href={profile.public_slug ? `/portfolio/${profile.public_slug}` : '/portfolio'}
+          className="bg-white text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm w-full sm:w-auto text-center"
+        >
+          Xem portfolio công khai
+        </Link>
+      }
+    >
+      {/* Hidden file input for avatar upload */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        onChange={handleAvatarChange}
+      />
+      {section === 'overview' && (
+        <>
+          <SectionCard
+            title="Tiến độ hoàn thiện hồ sơ"
+            description="Hoàn thiện càng nhiều, doanh nghiệp càng dễ tìm thấy bạn."
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all"
+                    style={{ width: `${completion}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Bạn đã hoàn thành{' '}
+                  <span className="font-semibold text-gray-800">{completion}%</span> hồ sơ.
+                </p>
+              </div>
+              <div className="text-3xl font-extrabold text-blue-600 min-w-[70px] text-right">
+                {completion}%
+              </div>
+            </div>
+
+            {missing.length > 0 && (
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {missing.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setSection(m.id)}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition text-left"
+                  >
+                    <span className="text-sm font-medium text-gray-700">{m.label}</span>
+                    <span className="text-blue-500 text-sm">→</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+
+          {/* Analytics merged into overview — replaces old CandidateStatsCard */}
+          <SectionCard
+            title="Thống kê &amp; Hoạt động"
+            description="Lượt xem portfolio và lời mời tuyển dụng bạn đã nhận."
+          >
+            <AnalyticsDashboard />
+          </SectionCard>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard
+              label="Kỹ năng"
+              value={(profile.skills || []).length}
+              hint="Số kỹ năng đã khai báo"
+              tone="blue"
+            />
+            <StatCard
+              label="Kinh nghiệm"
+              value={(profile.experiences || []).length}
+              hint="Vị trí đã trải qua"
+              tone="emerald"
+            />
+            <StatCard
+              label="Dự án"
+              value={(profile.projects || []).length}
+              hint="Mục trong portfolio"
+              tone="purple"
+            />
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
-      <div className="max-w-7xl mx-auto py-8 px-4 space-y-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">DASHBOARD ỨNG VIÊN</h1>
-          <p className="text-gray-600">Quản lý hồ sơ và portfolio của bạn</p>
-        </div>
-
-        <ProfileForm />
-        <SkillsManager />
-        <ExperiencesManager />
-        <ProjectsManager />
-        <CVManager />
-      </div>
-    </>
+      {section === 'profile' && <ProfileForm />}
+      {section === 'skills' && <SkillsManager />}
+      {section === 'experience' && <ExperiencesManager />}
+      {section === 'projects' && <ProjectsManager />}
+      {section === 'cv' && <CVManager />}
+      {section === 'generate-cv' && <CVGeneratorPanel />}
+      {section === 'invitations' && (
+        <SectionCard
+          title="Lời mời Tuyển dụng"
+          description="Danh sách lời mời từ doanh nghiệp. Bạn có thể đánh dấu Quan tâm hoặc Từ chối."
+        >
+          <InvitationsManager />
+        </SectionCard>
+      )}
+      {section === 'social' && <SocialAccountsManager />}
+    </DashboardShell>
   )
 }
 
 export default function DashboardPage() {
   return (
     <ProfileProvider>
-      <DashboardContent />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen bg-slate-50">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
+              <p className="text-gray-600">Đang tải dữ liệu...</p>
+            </div>
+          </div>
+        }
+      >
+        <DashboardContent />
+      </Suspense>
     </ProfileProvider>
   )
 }
-

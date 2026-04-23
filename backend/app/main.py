@@ -1,11 +1,56 @@
-"""FastAPI application factory"""
+"""FastAPI application factory (Phase 2 — PostgreSQL)."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, candidate, recruiter
-from app.db.database import Base, engine
+from alembic.config import Config
+from alembic import command
+from app.api import auth, candidate, recruiter, admin, scoring, oauth, public, cv_generator
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Run Alembic migrations on startup (creates/updates tables automatically).
+_alembic_cfg = Config("alembic.ini")
+command.upgrade(_alembic_cfg, "head")
+
+
+# ─── Auto-seed default admin account ──────────────────────────
+def _seed_admin():
+    """Create admin account on first launch if it doesn't exist yet."""
+    from app.db.database import SessionLocal
+    from app.models.user import User, UserRole, UserStatus
+    from app.core.security import get_password_hash
+
+    ADMIN_EMAIL = "admin@portfoliocvhub.com"
+    ADMIN_PASSWORD = "admin123"
+
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.email == ADMIN_EMAIL).first()
+        if not existing:
+            admin_user = User(
+                email=ADMIN_EMAIL,
+                password_hash=get_password_hash(ADMIN_PASSWORD),
+                full_name="System Administrator",
+                role=UserRole.ADMIN,
+                status=UserStatus.ACTIVE,
+            )
+            db.add(admin_user)
+            db.commit()
+            print(f"Default admin created: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
+        else:
+            changed = False
+            if existing.role != UserRole.ADMIN:
+                existing.role = UserRole.ADMIN
+                changed = True
+            if existing.status != UserStatus.ACTIVE:
+                existing.status = UserStatus.ACTIVE
+                changed = True
+            if changed:
+                db.commit()
+            print(f"Admin account ready: {ADMIN_EMAIL}")
+    finally:
+        db.close()
+
+
+_seed_admin()
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -27,6 +72,11 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(candidate.router)
 app.include_router(recruiter.router)
+app.include_router(admin.router)
+app.include_router(scoring.router)
+app.include_router(oauth.router)
+app.include_router(public.router)
+app.include_router(cv_generator.router)
 
 
 @app.get("/health")

@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Lệnh chạy dự án (macOS + Windows)
 
 ## Ưu tiên Docker Compose (mọi OS)
@@ -51,3 +55,4 @@ cd frontend
 npm install
 npm run dev
 ```
+

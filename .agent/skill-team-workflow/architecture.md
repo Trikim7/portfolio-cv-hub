@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Kiến trúc hệ thống
 
 ## Mục đích
@@ -18,7 +22,7 @@ Luồng tổng quát:
 Browser (Candidate/Recruiter/Admin)
   -> Frontend (React/Next)
   -> Backend API (FastAPI)
-  -> Database (MySQL/PostgreSQL)
+  -> Database (PostgreSQL - Neon DB / Supabase)
 ```
 
 ## Request flow chuẩn
@@ -50,7 +54,7 @@ Nguyên tắc:
   - Tìm kiếm/lọc ứng viên theo skill, kinh nghiệm, từ khóa.
 - **Comparison**
   - So sánh tối đa 2-3 ứng viên.
-  - MVP: chỉ bảng thông tin; Radar Chart và tính điểm phù hợp để phase sau (xem `mvp-scope.md`).
+  - Phase 2: bắt buộc có Radar Chart + scoring engine dùng chung cho single score/compare.
 - **Invitation**
   - Gửi và theo dõi lời mời tuyển dụng.
 - **Analytics**
@@ -60,9 +64,9 @@ Nguyên tắc:
 
 ## Data ownership (tránh sửa chéo)
 
-- Auth/User: `users`
-- Candidate Portfolio: `candidate_profiles`, `skills`, `experiences`, `projects`, `cvs`
-- Recruiter: `companies`
+- Auth/User: `users`, `social_accounts` (Phase 2 - OAuth)
+- Candidate Portfolio: `candidate_profiles`, `skills`, `experiences`, `projects`, `cvs` (Lưu ý: dùng JSONB cho đa ngôn ngữ)
+- Recruiter Search/Settings: `companies`, `job_requirements` (Tiêu chí tuyển dụng để chấm Radar Chart)
 - Invitation: `invitations`
 - Analytics: `profile_views`
 - Comparison: `comparisons`, `comparison_candidates`

@@ -1,76 +1,108 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import LoginForm from '@/components/auth/LoginForm'
-import RecruiterLoginForm from '@/components/auth/RecruiterLoginForm'
+import { useAuth } from '@/hooks/useAuth'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 export default function LoginPage() {
-  const [role, setRole] = useState<'candidate' | 'recruiter' | null>(null)
+  const { login, loading, error } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [oauthError, setOauthError] = useState<{ error: string; provider: string } | null>(null)
 
-  if (role === null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white p-12 rounded-lg shadow-xl max-w-2xl w-full text-center space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">🔐 Đăng nhập</h1>
-            <p className="text-gray-600 text-lg">Bạn là ai?</p>
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (!err) return
+    setOauthError({ error: err, provider: params.get('provider') || '' })
+    const url = new URL(window.location.href)
+    url.searchParams.delete('error')
+    url.searchParams.delete('provider')
+    window.history.replaceState(null, '', url.pathname + url.search)
+  }, [])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    login(email, password)
+  }
+
+  return (
+    <div className="bg-slate-50 py-8 sm:py-10">
+      {/* Điều hướng: Navbar trong app/layout.tsx — không thêm header thứ hai */}
+      <div className="flex flex-col items-center px-4 sm:px-6">
+        <div className="w-full max-w-md">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1 tracking-tight">
+              Đăng nhập tài khoản
+            </h1>
+            <p className="text-sm text-gray-600 mt-2">
+              Hệ thống sẽ tự động điều hướng theo vai trò của bạn.
+            </p>
           </div>
+          {oauthError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
+              <strong className="block mb-1">
+                Đăng nhập {oauthError.provider || 'bằng mạng xã hội'} thất bại
+              </strong>
+              <span className="break-words">{oauthError.error}</span>
+            </div>
+          )}
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Candidate Option */}
-            <button
-              onClick={() => setRole('candidate')}
-              className="p-8 border-2 border-blue-300 rounded-lg hover:bg-blue-50 transition group"
-            >
-              <div className="text-5xl mb-4">👤</div>
-              <h2 className="text-2xl font-bold text-blue-600 mb-2 group-hover:text-blue-700">
-                Ứng viên
-              </h2>
-              <p className="text-gray-600">
-                Đăng nhập để quản lý hồ sơ, portfolio và xem lời mời tuyển dụng
-              </p>
-            </button>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            {error && (
+              <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
 
-            {/* Recruiter Option */}
-            <button
-              onClick={() => setRole('recruiter')}
-              className="p-8 border-2 border-green-300 rounded-lg hover:bg-green-50 transition group"
-            >
-              <div className="text-5xl mb-4">🏢</div>
-              <h2 className="text-2xl font-bold text-green-600 mb-2 group-hover:text-green-700">
-                Doanh nghiệp
-              </h2>
-              <p className="text-gray-600">
-                Đăng nhập để tìm kiếm ứng viên và gửi lời mời tuyển dụng
-              </p>
-            </button>
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoFocus
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="your@email.com"
+                />
+              </div>
 
-          <div className="pt-8 border-t border-gray-200">
-            <p className="text-gray-600">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Mật khẩu</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-60 transition shadow-sm"
+              >
+                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              </button>
+            </form>
+
+            <SocialLoginButtons disabled={loading} />
+
+            <p className="text-center text-sm text-gray-500 mt-6">
               Chưa có tài khoản?{' '}
               <Link href="/register" className="text-blue-600 font-semibold hover:underline">
                 Đăng ký ngay
               </Link>
             </p>
           </div>
+
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <button
-          onClick={() => setRole(null)}
-          className="mb-6 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
-        >
-          ← Quay lại chọn vai trò
-        </button>
-
-        {role === 'candidate' ? <LoginForm /> : <RecruiterLoginForm />}
       </div>
     </div>
   )

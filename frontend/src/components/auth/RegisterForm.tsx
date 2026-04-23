@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 export default function RegisterForm() {
   const { register, loading, error } = useAuth()
@@ -98,6 +99,8 @@ export default function RegisterForm() {
           {loading ? 'Đang đăng ký...' : 'Đăng ký'}
         </button>
       </form>
+
+      <SocialLoginButtons label="Hoặc đăng ký với" disabled={loading} />
 
       <p className="text-center text-sm text-gray-600 mt-4">
         Đã có tài khoản?{' '}

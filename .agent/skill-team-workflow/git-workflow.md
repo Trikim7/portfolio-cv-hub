@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Quy trình Git theo nhóm
 
 ## Nhánh

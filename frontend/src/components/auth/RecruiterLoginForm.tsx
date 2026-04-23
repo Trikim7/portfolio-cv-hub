@@ -25,11 +25,14 @@ export default function RecruiterLoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    
     if (!email || !password) {
-      showToast('Vui lòng điền đầy đủ thông tin', 'error')
+      setError('Vui lòng điền đầy đủ thông tin')
       return
     }
 
@@ -54,7 +57,7 @@ export default function RecruiterLoginForm() {
       }, 100)
     } catch (err: any) {
       console.error('✗ Login error:', err)
-      showToast(err.response?.data?.detail || 'Đăng nhập thất bại', 'error')
+      setError(err.response?.data?.detail || 'Đăng nhập thất bại')
     } finally {
       setLoading(false)
     }
@@ -63,6 +66,12 @@ export default function RecruiterLoginForm() {
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-6 text-center">Đăng nhập Doanh nghiệp</h1>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded text-sm">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
