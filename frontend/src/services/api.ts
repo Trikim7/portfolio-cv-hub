@@ -14,6 +14,7 @@ import {
   ComparisonDetailResponse,
   SocialAccount,
   OAuthProvider,
+  PortfolioTemplate,
 } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -497,6 +498,37 @@ class ApiClient {
 
   async unlinkSocialAccount(provider: OAuthProvider): Promise<{ status: string; provider: string }> {
     const response = await this.client.delete(`/api/auth/oauth/${provider}`)
+    return response.data
+  }
+
+  // ─── Portfolio Templates ─────────────────────────────────────
+  async getPublicTemplates(): Promise<PortfolioTemplate[]> {
+    const response = await this.client.get('/api/admin/templates/public')
+    return response.data
+  }
+
+  async getAdminTemplates(): Promise<PortfolioTemplate[]> {
+    const response = await this.client.get('/api/admin/templates')
+    return response.data
+  }
+
+  async createTemplate(data: { name: string; description: string; config_json: Record<string, unknown> }): Promise<PortfolioTemplate> {
+    const response = await this.client.post('/api/admin/templates', data)
+    return response.data
+  }
+
+  async updateTemplate(id: number, data: Partial<{ name: string; description: string; config_json: Record<string, unknown>; status: string }>): Promise<PortfolioTemplate> {
+    const response = await this.client.put(`/api/admin/templates/${id}`, data)
+    return response.data
+  }
+
+  async deleteTemplate(id: number): Promise<{ message: string }> {
+    const response = await this.client.delete(`/api/admin/templates/${id}`)
+    return response.data
+  }
+
+  async setMyTemplate(templateId: number | null): Promise<{ message: string; template_id: number | null }> {
+    const response = await this.client.patch('/api/candidate/profile/template', { template_id: templateId })
     return response.data
   }
 }

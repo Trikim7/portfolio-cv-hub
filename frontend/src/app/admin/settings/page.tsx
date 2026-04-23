@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { apiClient } from '@/services/api'
 import {
   Settings, Globe, BarChart2, Layers,
   Database, RefreshCw, AlertTriangle, Check, ChevronRight,
   Save, Zap, Users,
-  Pencil, X, Mail, Eye,
+  Pencil, Plus, Trash2, X, Mail, Eye,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -383,6 +384,14 @@ function TabAlgorithm() {
 
 // ─── Tab: Templates ───────────────────────────────────────────────────────────
 function TabTemplates() {
+  // ── Portfolio templates state ────────────────────────────────
+  const [portfolioTemplates, setPortfolioTemplates] = useState<import('@/types').PortfolioTemplate[]>([])
+  const [tplLoading, setTplLoading] = useState(true)
+  const [editingTplId, setEditingTplId] = useState<number | null>(null)
+  const [editTplForm, setEditTplForm] = useState({ name: '', description: '', primaryColor: '#3b5bdb' })
+  const [showAddTpl, setShowAddTpl] = useState(false)
+  const [newTpl, setNewTpl] = useState({ name: '', description: '', primaryColor: '#6366f1' })
+
   // ── Email templates state ────────────────────────────────────
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(DEFAULT_EMAIL_TEMPLATES)
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null)
@@ -394,13 +403,84 @@ function TabTemplates() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  // ── Load portfolio templates from API ───────────────────────
+  useEffect(() => {
+    apiClient.getAdminTemplates()
+      .then(data => setPortfolioTemplates(data))
+      .catch(() => showToast('Không thể tải danh sách template', 'error'))
+      .finally(() => setTplLoading(false))
+  }, [])
+
+  // ── Portfolio template actions ────────────────────────────────
+  const toggleTplStatus = async (tpl: import('@/types').PortfolioTemplate) => {
+    const newStatus = tpl.status === 'active' ? 'inactive' : 'active'
+    try {
+      await apiClient.updateTemplate(tpl.id, { status: newStatus })
+      setPortfolioTemplates(ts => ts.map(t => t.id === tpl.id ? { ...t, status: newStatus } : t))
+      showToast(`Đã ${newStatus === 'active' ? 'bật' : 'tắt'} template "${tpl.name}"`)
+    } catch {
+      showToast('Cập nhật thất bại', 'error')
+    }
+  }
+
+  const startEditTpl = (tpl: import('@/types').PortfolioTemplate) => {
+    setEditingTplId(tpl.id)
+    setEditTplForm({
+      name: tpl.name,
+      description: tpl.description,
+      primaryColor: tpl.config_json?.primaryColor || '#3b5bdb',
+    })
+  }
+
+  const saveEditTpl = async () => {
+    if (!editTplForm.name.trim()) { showToast('Tên template không được trống', 'error'); return }
+    try {
+      const updated = await apiClient.updateTemplate(editingTplId!, {
+        name: editTplForm.name,
+        description: editTplForm.description,
+        config_json: { ...portfolioTemplates.find(t => t.id === editingTplId)?.config_json, primaryColor: editTplForm.primaryColor },
+      })
+      setPortfolioTemplates(ts => ts.map(t => t.id === editingTplId ? { ...t, ...updated } : t))
+      setEditingTplId(null)
+      showToast('Đã cập nhật template!')
+    } catch {
+      showToast('Lưu thất bại', 'error')
+    }
+  }
+
+  const deleteTpl = async (tpl: import('@/types').PortfolioTemplate) => {
+    if (!confirm(`Xóa template "${tpl.name}"? Các ứng viên đang dùng sẽ về mặc định.`)) return
+    try {
+      await apiClient.deleteTemplate(tpl.id)
+      setPortfolioTemplates(ts => ts.filter(t => t.id !== tpl.id))
+      showToast('Đã xóa template.')
+    } catch {
+      showToast('Xóa thất bại', 'error')
+    }
+  }
+
+  const addTpl = async () => {
+    if (!newTpl.name.trim()) { showToast('Vui lòng nhập tên template', 'error'); return }
+    try {
+      const created = await apiClient.createTemplate({
+        name: newTpl.name,
+        description: newTpl.description,
+        config_json: { theme: 'light', primaryColor: newTpl.primaryColor, layout: 'single-column', sections: ['bio', 'skills', 'experience', 'projects'] },
+      })
+      setPortfolioTemplates(ts => [...ts, created])
+      setNewTpl({ name: '', description: '', primaryColor: '#6366f1' })
+      setShowAddTpl(false)
+      showToast(`Đã thêm template "${created.name}"!`)
+    } catch {
+      showToast('Thêm template thất bại', 'error')
+    }
+  }
+
   // ── Email template actions ────────────────────────────────────
   const startEditEmail = (id: string) => setEditingEmailId(id === editingEmailId ? null : id)
-
   const updateEmail = (id: string, field: 'subject' | 'body', value: string) => {
     setEmailTemplates(ts => ts.map(t => t.id === id ? { ...t, [field]: value } : t))
   }
-
   const saveEmail = (_id: string) => {
     setEditingEmailId(null)
     showToast('Đã lưu template email!')
@@ -409,6 +489,169 @@ function TabTemplates() {
   return (
     <>
       {toast && <Toast msg={toast.msg} type={toast.type} />}
+
+      {/* ── Portfolio Themes ── */}
+      <Section
+        title="Template Portfolio Công khai"
+        desc="Quản lý các theme hiển thị portfolio của ứng viên. Ứng viên chọn theme từ danh sách đang bật."
+      >
+        {tplLoading ? (
+          <div className="flex items-center justify-center py-8 text-gray-400 gap-2">
+            <RefreshCw className="w-5 h-5 animate-spin" />
+            <span className="text-sm">Đang tải...</span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {portfolioTemplates.map(tpl => (
+              <div key={tpl.id}>
+                {editingTplId === tpl.id ? (
+                  <div className="py-4 space-y-3 border border-blue-200 rounded-xl p-4 bg-blue-50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Tên template *</label>
+                        <input
+                          value={editTplForm.name}
+                          onChange={e => setEditTplForm(f => ({ ...f, name: e.target.value }))}
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Màu chủ đạo</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={editTplForm.primaryColor}
+                            onChange={e => setEditTplForm(f => ({ ...f, primaryColor: e.target.value }))}
+                            className="w-10 h-9 rounded border border-gray-300 cursor-pointer p-0.5"
+                          />
+                          <input
+                            value={editTplForm.primaryColor}
+                            onChange={e => setEditTplForm(f => ({ ...f, primaryColor: e.target.value }))}
+                            className="flex-1 border border-blue-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Mô tả</label>
+                      <input
+                        value={editTplForm.description}
+                        onChange={e => setEditTplForm(f => ({ ...f, description: e.target.value }))}
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={saveEditTpl}
+                        className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
+                        <Check className="w-3.5 h-3.5" /> Lưu
+                      </button>
+                      <button onClick={() => setEditingTplId(null)}
+                        className="flex items-center gap-1.5 px-4 py-1.5 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
+                        <X className="w-3.5 h-3.5" /> Hủy
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between py-3 px-1 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl shadow-md shrink-0 border-2 border-white ring-1 ring-gray-200"
+                        style={{ background: tpl.config_json?.primaryColor || '#3b5bdb' }}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{tpl.name}</p>
+                        <p className="text-xs text-gray-500">{tpl.description || 'Chưa có mô tả'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        tpl.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {tpl.status === 'active' ? 'Bật' : 'Tắt'}
+                      </span>
+                      <button onClick={() => startEditTpl(tpl)} title="Sửa"
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => toggleTplStatus(tpl)}
+                        title={tpl.status === 'active' ? 'Tắt' : 'Bật'}
+                        className={`relative w-10 h-5 rounded-full transition-colors ${tpl.status === 'active' ? 'bg-blue-500' : 'bg-gray-300'}`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${tpl.status === 'active' ? 'left-5' : 'left-0.5'}`} />
+                      </button>
+                      <button onClick={() => deleteTpl(tpl)} title="Xóa"
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Add form */}
+            {showAddTpl ? (
+              <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
+                <p className="text-sm font-semibold text-blue-800">Thêm template mới</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Tên template *</label>
+                    <input
+                      value={newTpl.name}
+                      onChange={e => setNewTpl(f => ({ ...f, name: e.target.value }))}
+                      placeholder="VD: Vibrant Creative"
+                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Màu chủ đạo</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={newTpl.primaryColor}
+                        onChange={e => setNewTpl(f => ({ ...f, primaryColor: e.target.value }))}
+                        className="w-10 h-9 rounded border border-gray-300 cursor-pointer p-0.5"
+                      />
+                      <input
+                        value={newTpl.primaryColor}
+                        onChange={e => setNewTpl(f => ({ ...f, primaryColor: e.target.value }))}
+                        className="flex-1 border border-blue-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Mô tả</label>
+                  <input
+                    value={newTpl.description}
+                    onChange={e => setNewTpl(f => ({ ...f, description: e.target.value }))}
+                    placeholder="VD: Phù hợp cho designer, artist"
+                    className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={addTpl}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
+                    <Plus className="w-3.5 h-3.5" /> Thêm
+                  </button>
+                  <button onClick={() => { setShowAddTpl(false); setNewTpl({ name: '', description: '', primaryColor: '#6366f1' }) }}
+                    className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
+                    <X className="w-3.5 h-3.5" /> Hủy
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddTpl(true)}
+                className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 rounded-xl py-3 text-sm font-semibold text-gray-500 hover:text-blue-700 transition"
+              >
+                <Plus className="w-4 h-4" /> Thêm template mới
+              </button>
+            )}
+          </div>
+        )}
+      </Section>
 
       {/* ── Email Templates ── */}
       <Section
