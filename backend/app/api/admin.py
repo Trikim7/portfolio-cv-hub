@@ -216,3 +216,102 @@ async def test_smtp_connection(
         return result
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"])
 
+
+# ─── Template Management ────────────────────────────────────────────────────
+
+@router.get("/templates")
+def list_templates(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """List all portfolio templates (admin view)."""
+    _get_admin_user(authorization, db)
+    from app.models.admin_config import Template
+    templates = db.query(Template).order_by(Template.created_at).all()
+    return [
+        {
+            "id": t.id,
+            "name": t.name,
+            "description": t.description,
+            "config_json": t.config_json,
+            "status": t.status,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        }
+        for t in templates
+    ]
+
+
+@router.get("/templates/public")
+def list_active_templates(db: Session = Depends(get_db)):
+    """List only ACTIVE templates — used by candidate theme picker & portfolio page."""
+    from app.models.admin_config import Template, TemplateStatus
+    templates = db.query(Template).filter(
+        Template.status == TemplateStatus.ACTIVE
+    ).order_by(Template.created_at).all()
+    return [
+        {"id": t.id, "name": t.name, "description": t.description, "config_json": t.config_json}
+        for t in templates
+    ]
+
+
+@router.post("/templates", status_code=201)
+def create_template(
+    body: dict,
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Create a new portfolio template."""
+    _get_admin_user(authorization, db)
+    from app.models.admin_config import Template, TemplateStatus
+    from datetime import datetime
+    tpl = Template(
+        name=body.get("name", "New Template"),
+        description=body.get("description", ""),
+        config_json=body.get("config_json", {"theme": "light", "primaryColor": "#3b5bdb"}),
+        status=TemplateStatus.ACTIVE,
+        created_at=datetime.utcnow(),
+    )
+    db.add(tpl)
+    db.commit()
+    db.refresh(tpl)
+    return {"id": tpl.id, "name": tpl.name, "description": tpl.description,
+            "config_json": tpl.config_json, "status": tpl.status}
+
+
+@router.put("/templates/{template_id}")
+def update_template(
+    template_id: int,
+    body: dict,
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Update template fields."""
+    _get_admin_user(authorization, db)
+    from app.models.admin_config import Template
+    tpl = db.query(Template).filter(Template.id == template_id).first()
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Template không tồn tại")
+    for field in ("name", "description", "config_json", "status"):
+        if field in body:
+            setattr(tpl, field, body[field])
+    db.commit()
+    db.refresh(tpl)
+    return {"id": tpl.id, "name": tpl.name, "description": tpl.description,
+            "config_json": tpl.config_json, "status": tpl.status}
+
+
+@router.delete("/templates/{template_id}")
+def delete_template(
+    template_id: int,
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Delete a portfolio template."""
+    _get_admin_user(authorization, db)
+    from app.models.admin_config import Template
+    tpl = db.query(Template).filter(Template.id == template_id).first()
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Template không tồn tại")
+    db.delete(tpl)
+    db.commit()
+    return {"message": f"Đã xóa template '{tpl.name}'"}

@@ -260,3 +260,22 @@ export interface AdminCompanyListResponse {
   page: number
   page_size: number
 }
+
+// ─── Portfolio Templates ──────────────────────────────────────────────────
+export interface TemplateConfig {
+  theme: 'light' | 'dark'
+  primaryColor: string
+  accentColor?: string
+  fontFamily?: string
+  layout?: 'single-column' | 'sidebar' | 'grid'
+  sections?: string[]
+}
+
+export interface PortfolioTemplate {
+  id: number
+  name: string
+  description: string
+  config_json: TemplateConfig
+  status?: 'active' | 'inactive'
+  created_at?: string
+}

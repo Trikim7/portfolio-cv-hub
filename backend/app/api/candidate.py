@@ -94,14 +94,30 @@ async def toggle_public_profile(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get("/public/{profile_slug}", response_model=CandidateProfileResponse)
+@router.get("/public/{profile_slug}")
 async def get_public_profile(profile_slug: str, db: Session = Depends(get_db)):
     """Get public profile by slug (increments view count automatically)"""
     try:
         profile = CandidateService.get_public_profile(db, profile_slug)
         if not profile:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
-        return profile
+
+        # Build response manually to include template config_json
+        from app.schemas.candidate import CandidateProfileResponse
+        resp = CandidateProfileResponse.model_validate(profile)
+        data = resp.model_dump()
+
+        # Attach template config for theme rendering
+        if profile.template:
+            data["template"] = {
+                "id": profile.template.id,
+                "name": profile.template.name,
+                "config_json": profile.template.config_json,
+            }
+        else:
+            data["template"] = None
+
+        return data
     except HTTPException:
         raise
     except Exception as e:
@@ -545,3 +561,35 @@ async def view_cv(cv_id: int, db: Session = Depends(get_db)):
 
     return Response(content=path.read_bytes(), headers=inline_headers)
 
+
+# ─── Portfolio Template Selection ───────────────────────────────────────────
+
+@router.patch("/profile/template")
+def set_portfolio_template(
+    body: dict,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Set the portfolio template for the current candidate."""
+    from app.models.candidate import CandidateProfile
+    from app.models.admin_config import Template, TemplateStatus
+
+    template_id = body.get("template_id")
+
+    profile = db.query(CandidateProfile).filter(
+        CandidateProfile.user_id == user_id
+    ).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    if template_id is not None:
+        tpl = db.query(Template).filter(
+            Template.id == template_id,
+            Template.status == TemplateStatus.ACTIVE,
+        ).first()
+        if not tpl:
+            raise HTTPException(status_code=404, detail="Template không tồn tại hoặc đã bị vô hiệu hóa")
+
+    profile.template_id = template_id
+    db.commit()
+    return {"message": "Đã cập nhật template portfolio", "template_id": template_id}
