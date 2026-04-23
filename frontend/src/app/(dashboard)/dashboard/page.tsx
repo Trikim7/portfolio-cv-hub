@@ -14,6 +14,7 @@ import CVGeneratorPanel from '@/components/dashboard/CVGeneratorPanel'
 import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
 import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard'
 import InvitationsManager from '@/components/dashboard/InvitationsManager'
+import ThemePicker from '@/components/dashboard/ThemePicker'
 import DashboardShell, {
   DashboardNavItem,
   SectionCard,
@@ -29,18 +30,20 @@ type CandidateSection =
   | 'cv'
   | 'generate-cv'
   | 'invitations'
+  | 'theme'
   | 'social'
 
 const SECTION_LABELS: Record<CandidateSection, string> = {
-  overview:      'Tổng quan',
-  profile:       'Thông tin cá nhân',
-  skills:        'Kỹ năng',
-  experience:    'Kinh nghiệm',
-  projects:      'Dự án',
-  cv:            'CV / Resume',
+  overview: 'Tổng quan',
+  profile: 'Thông tin cá nhân',
+  skills: 'Kỹ năng',
+  experience: 'Kinh nghiệm',
+  projects: 'Dự án',
+  cv: 'CV / Resume',
   'generate-cv': 'Tạo CV tự động',
-  invitations:   'Lời mời tuyển dụng',
-  social:        'Tài khoản liên kết',
+  invitations: 'Lời mời tuyển dụng',
+  theme: 'Giao diện Portfolio',
+  social: 'Tài khoản liên kết',
 }
 
 const SECTION_ORDER: CandidateSection[] = [
@@ -52,6 +55,7 @@ const SECTION_ORDER: CandidateSection[] = [
   'cv',
   'generate-cv',
   'invitations',
+  'theme',
   'social',        // always last
 ]
 
@@ -248,6 +252,14 @@ function DashboardContent() {
           description="Danh sách lời mời từ doanh nghiệp. Bạn có thể đánh dấu Quan tâm hoặc Từ chối."
         >
           <InvitationsManager />
+        </SectionCard>
+      )}
+      {section === 'theme' && (
+        <SectionCard title="Giao diện Portfolio">
+          <ThemePicker
+            currentTemplateId={profile.template_id}
+            onSaved={() => refreshProfile()}
+          />
         </SectionCard>
       )}
       {section === 'social' && <SocialAccountsManager />}
