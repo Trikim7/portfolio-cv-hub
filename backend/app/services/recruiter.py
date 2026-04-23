@@ -175,8 +175,8 @@ class JobInvitationService:
         if not candidate:
             raise ValueError("Candidate not found")
 
-        if JobInvitationRepository.check_duplicate(db, company_id, candidate_id):
-            raise ValueError("Invitation already sent")
+        if JobInvitationRepository.check_duplicate(db, company_id, candidate_id, job_title):
+            raise ValueError(f"Bạn đã gửi lời mời vị trí '{job_title}' cho ứng viên này và đang chờ phản hồi. Vui lòng đợi hoặc thu hồi lời mời cũ trước.")
 
         return JobInvitationRepository.create(
             db, company_id, candidate_id, job_title, message

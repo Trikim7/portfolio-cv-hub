@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/api'
 import { ProfileProvider, useProfileContext } from '@/hooks/ProfileContext'
 import ProfileForm from '@/components/dashboard/ProfileForm'
@@ -10,8 +11,10 @@ import ExperiencesManager from '@/components/dashboard/ExperiencesManager'
 import ProjectsManager from '@/components/dashboard/ProjectsManager'
 import CVManager from '@/components/dashboard/CVManager'
 import CVGeneratorPanel from '@/components/dashboard/CVGeneratorPanel'
-import CandidateStatsCard from '@/components/dashboard/CandidateStatsCard'
 import SocialAccountsManager from '@/components/dashboard/SocialAccountsManager'
+import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard'
+import InvitationsManager from '@/components/dashboard/InvitationsManager'
+import ThemePicker from '@/components/dashboard/ThemePicker'
 import DashboardShell, {
   DashboardNavItem,
   SectionCard,
@@ -26,6 +29,8 @@ type CandidateSection =
   | 'projects'
   | 'cv'
   | 'generate-cv'
+  | 'invitations'
+  | 'theme'
   | 'social'
 
 const SECTION_LABELS: Record<CandidateSection, string> = {
@@ -36,6 +41,8 @@ const SECTION_LABELS: Record<CandidateSection, string> = {
   projects: 'Dự án',
   cv: 'CV / Resume',
   'generate-cv': 'Tạo CV tự động',
+  invitations: 'Lời mời tuyển dụng',
+  theme: 'Giao diện Portfolio',
   social: 'Tài khoản liên kết',
 }
 
@@ -47,7 +54,9 @@ const SECTION_ORDER: CandidateSection[] = [
   'projects',
   'cv',
   'generate-cv',
-  'social',
+  'invitations',
+  'theme',
+  'social',        // always last
 ]
 
 const SIDEBAR_NAV: (DashboardNavItem & { id: CandidateSection })[] = SECTION_ORDER.map(
@@ -55,8 +64,14 @@ const SIDEBAR_NAV: (DashboardNavItem & { id: CandidateSection })[] = SECTION_ORD
 )
 
 function DashboardContent() {
-  const { profile, refreshProfile } = useProfileContext()
-  const [section, setSection] = useState<CandidateSection>('overview')
+  const { profile, loading, error, refreshProfile } = useProfileContext()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [section, setSection] = useState<CandidateSection>(() => {
+    const tab = searchParams.get('tab')
+    if (tab && SECTION_ORDER.includes(tab as CandidateSection)) return tab as CandidateSection
+    return 'overview'
+  })
   const [avatarUploading, setAvatarUploading] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
@@ -91,7 +106,14 @@ function DashboardContent() {
     return Math.round((done / checks.length) * 100)
   }, [profile])
 
-  if (!profile) {
+  // Redirect to login if not authenticated (profile fetch failed)
+  useEffect(() => {
+    if (!loading && !profile && error) {
+      router.push('/?redirect=dashboard')
+    }
+  }, [loading, profile, error, router])
+
+  if (loading || (!profile && !error)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="text-center">
@@ -100,6 +122,11 @@ function DashboardContent() {
         </div>
       </div>
     )
+  }
+
+  if (!profile) {
+    // Auth failed — redirect is in progress
+    return null
   }
 
   const missing: { id: CandidateSection; label: string }[] = []
@@ -182,7 +209,13 @@ function DashboardContent() {
             )}
           </SectionCard>
 
-          <CandidateStatsCard />
+          {/* Analytics merged into overview — replaces old CandidateStatsCard */}
+          <SectionCard
+            title="Thống kê &amp; Hoạt động"
+            description="Lượt xem portfolio và lời mời tuyển dụng bạn đã nhận."
+          >
+            <AnalyticsDashboard />
+          </SectionCard>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
@@ -213,6 +246,22 @@ function DashboardContent() {
       {section === 'projects' && <ProjectsManager />}
       {section === 'cv' && <CVManager />}
       {section === 'generate-cv' && <CVGeneratorPanel />}
+      {section === 'invitations' && (
+        <SectionCard
+          title="Lời mời Tuyển dụng"
+          description="Danh sách lời mời từ doanh nghiệp. Bạn có thể đánh dấu Quan tâm hoặc Từ chối."
+        >
+          <InvitationsManager />
+        </SectionCard>
+      )}
+      {section === 'theme' && (
+        <SectionCard title="Giao diện Portfolio">
+          <ThemePicker
+            currentTemplateId={profile.template_id}
+            onSaved={() => refreshProfile()}
+          />
+        </SectionCard>
+      )}
       {section === 'social' && <SocialAccountsManager />}
     </DashboardShell>
   )
@@ -221,7 +270,18 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <ProfileProvider>
-      <DashboardContent />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen bg-slate-50">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
+              <p className="text-gray-600">Đang tải dữ liệu...</p>
+            </div>
+          </div>
+        }
+      >
+        <DashboardContent />
+      </Suspense>
     </ProfileProvider>
   )
 }

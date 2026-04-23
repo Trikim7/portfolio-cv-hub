@@ -74,9 +74,16 @@ export default function PublicPortfolioPage() {
   const primaryCv = profile.cvs.find((cv) => cv.is_primary) || profile.cvs[0]
   const contactEmail = profile.contact_email?.trim() || ''
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profileAny = profile as any
+  const primaryColor = (profileAny.template?.config_json?.primaryColor) || '#1e40af'
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="bg-[#1e40af] text-white pt-16 pb-16 px-4 md:px-8 shadow-inner relative overflow-hidden">
+      <div
+        className="text-white pt-16 pb-16 px-4 md:px-8 shadow-inner relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${primaryColor}dd, ${primaryColor})` }}
+      >
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
 

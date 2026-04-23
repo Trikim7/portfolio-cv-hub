@@ -14,6 +14,7 @@ import {
   ComparisonDetailResponse,
   SocialAccount,
   OAuthProvider,
+  PortfolioTemplate,
 } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -124,6 +125,26 @@ class ApiClient {
 
   async getCandidateAnalytics(): Promise<CandidateAnalytics> {
     const response = await this.client.get('/api/candidate/analytics/stats')
+    return response.data
+  }
+
+  async getCandidateInvitations(): Promise<Array<{
+    id: number
+    job_title: string
+    message?: string
+    status: 'pending' | 'interested' | 'rejected' | 'withdrawn'
+    created_at: string
+    updated_at: string
+    company?: { id: number; name: string; logo_url?: string; website?: string } | null
+  }>> {
+    const response = await this.client.get('/api/candidate/invitations')
+    return response.data
+  }
+
+  async respondToInvitation(invitationId: number, statusValue: 'interested' | 'rejected') {
+    const response = await this.client.put(
+      `/api/candidate/invitations/${invitationId}/respond?status_value=${statusValue}`
+    )
     return response.data
   }
 
@@ -312,6 +333,56 @@ class ApiClient {
     return response.data
   }
 
+  async getDetailedInvitations(): Promise<Array<{
+    id: number
+    job_title: string
+    message?: string
+    status: 'pending' | 'interested' | 'rejected' | 'withdrawn'
+    created_at: string
+    updated_at: string
+    candidate?: {
+      id: number
+      full_name?: string
+      headline?: string
+      avatar_url?: string
+      public_slug?: string
+      is_public: boolean
+    } | null
+  }>> {
+    const response = await this.client.get('/api/recruiter/invitations/detailed')
+    return response.data
+  }
+
+  // ─── Admin SMTP Settings ───────────────────────────────────
+  async getSmtpConfig() {
+    const response = await this.client.get('/api/admin/settings/smtp')
+    return response.data as {
+      smtp_host: string
+      smtp_port: number
+      smtp_username: string
+      smtp_password: string
+      smtp_from_address: string
+      smtp_enabled: boolean
+    }
+  }
+
+  async saveSmtpConfig(config: {
+    smtp_host: string
+    smtp_port: number
+    smtp_username: string
+    smtp_password: string
+    smtp_from_address: string
+    smtp_enabled: boolean
+  }) {
+    const response = await this.client.post('/api/admin/settings/smtp', config)
+    return response.data as { message: string; smtp_enabled: boolean }
+  }
+
+  async testSmtpConnection() {
+    const response = await this.client.post('/api/admin/settings/smtp/test')
+    return response.data as { success: boolean; message: string }
+  }
+
   // ─── Admin endpoints ───────────────────────────────────────────
   async getAdminStats() {
     const response = await this.client.get('/api/admin/stats')
@@ -427,6 +498,37 @@ class ApiClient {
 
   async unlinkSocialAccount(provider: OAuthProvider): Promise<{ status: string; provider: string }> {
     const response = await this.client.delete(`/api/auth/oauth/${provider}`)
+    return response.data
+  }
+
+  // ─── Portfolio Templates ─────────────────────────────────────
+  async getPublicTemplates(): Promise<PortfolioTemplate[]> {
+    const response = await this.client.get('/api/admin/templates/public')
+    return response.data
+  }
+
+  async getAdminTemplates(): Promise<PortfolioTemplate[]> {
+    const response = await this.client.get('/api/admin/templates')
+    return response.data
+  }
+
+  async createTemplate(data: { name: string; description: string; config_json: Record<string, unknown> }): Promise<PortfolioTemplate> {
+    const response = await this.client.post('/api/admin/templates', data)
+    return response.data
+  }
+
+  async updateTemplate(id: number, data: Partial<{ name: string; description: string; config_json: Record<string, unknown>; status: string }>): Promise<PortfolioTemplate> {
+    const response = await this.client.put(`/api/admin/templates/${id}`, data)
+    return response.data
+  }
+
+  async deleteTemplate(id: number): Promise<{ message: string }> {
+    const response = await this.client.delete(`/api/admin/templates/${id}`)
+    return response.data
+  }
+
+  async setMyTemplate(templateId: number | null): Promise<{ message: string; template_id: number | null }> {
+    const response = await this.client.patch('/api/candidate/profile/template', { template_id: templateId })
     return response.data
   }
 }

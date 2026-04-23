@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import Link from 'next/link'
 import { apiClient } from '@/services/api'
 import { useToast } from '@/components/Toast'
+import { ExternalLink } from 'lucide-react'
 import { CandidateSearchResult, I18nText } from '@/types'
 import ComparisonTable from './ComparisonTable'
 
@@ -271,33 +273,53 @@ export default function CandidateSearch() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {results.map((candidate) => {
               const selected = selectedCandidates.some((c) => c.id === candidate.id)
+              const portfolioHref = candidate.public_slug
+                ? `/portfolio/${candidate.public_slug}`
+                : null
+
               return (
                 <div
                   key={candidate.id}
-                  className={`p-4 border rounded-xl transition ${selected
-                      ? 'border-purple-400 bg-purple-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                  className={`p-4 border rounded-xl transition-shadow ${selected
+                    ? 'border-purple-400 bg-purple-50 shadow-sm'
+                    : 'border-gray-200 hover:border-purple-200 hover:shadow-sm'
+                  }`}
                 >
+                  {/* Top row: info + actions */}
                   <div className="flex justify-between items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-gray-900 truncate">
-                        {candidate.full_name || 'Ứng viên'}
-                      </h4>
+                      {/* Clickable name → portfolio */}
+                      {portfolioHref ? (
+                        <Link
+                          href={portfolioHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-bold text-gray-900 hover:text-purple-700 hover:underline truncate block transition-colors"
+                        >
+                          {candidate.full_name || 'Ứng viên'}
+                        </Link>
+                      ) : (
+                        <h4 className="font-bold text-gray-900 truncate">
+                          {candidate.full_name || 'Ứng viên'}
+                        </h4>
+                      )}
                       <p className="text-sm text-gray-600 truncate">
                         {candidate.headline || 'Chưa cập nhật'}
                       </p>
                     </div>
+
+                    {/* Select for comparison */}
                     <button
                       onClick={() => toggleSelect(candidate)}
                       className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold transition ${selected
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
                       {selected ? 'Đã chọn' : 'Chọn'}
                     </button>
                   </div>
+
                   <p className="text-sm text-gray-500 line-clamp-2">{i18nToText(candidate.bio)}</p>
 
                   {candidate.skills.length > 0 && (
@@ -312,10 +334,28 @@ export default function CandidateSearch() {
                       ))}
                     </div>
                   )}
+
+                  {/* View portfolio button */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    {portfolioHref ? (
+                      <Link
+                        href={portfolioHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 hover:underline transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Xem hồ sơ công khai
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Hồ sơ chưa công khai</span>
+                    )}
+                  </div>
                 </div>
               )
             })}
           </div>
+
 
           {selectedCandidates.length > 0 && (
             <div className="mt-5 p-4 bg-purple-50 border border-purple-200 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
