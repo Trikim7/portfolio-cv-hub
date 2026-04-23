@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import {
   Settings, Globe, BarChart2, Layers,
   Database, RefreshCw, AlertTriangle, Check, ChevronRight,
-  ToggleLeft, ToggleRight, Save, Zap, Users,
-  Plus, Pencil, Trash2, X, Mail, Eye,
+  Save, Zap, Users,
+  Pencil, X, Mail, Eye,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -16,13 +16,6 @@ interface WeightConfig {
   soft_skills: number
   leadership: number
   readiness_signals: number
-}
-
-interface TemplateItem {
-  id: string
-  name: string
-  description: string
-  active: boolean
 }
 
 interface EmailTemplate {
@@ -43,12 +36,6 @@ const DEFAULT_WEIGHTS: WeightConfig = {
   readiness_signals: 10,
 }
 
-const DEFAULT_TEMPLATES: TemplateItem[] = [
-  { id: 'traditional', name: 'Traditional', description: 'Chuyên nghiệp, phù hợp tài chính/luật', active: true },
-  { id: 'modern', name: 'Modern', description: 'Hiện đại, phù hợp startup/tech', active: true },
-  { id: 'creative', name: 'Creative', description: 'Sáng tạo, phù hợp designer/artist', active: true },
-  { id: 'minimal', name: 'Minimal', description: 'Tối giản, nội dung trọng tâm', active: false },
-]
 
 const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
   {
@@ -396,13 +383,6 @@ function TabAlgorithm() {
 
 // ─── Tab: Templates ───────────────────────────────────────────────────────────
 function TabTemplates() {
-  // ── CV/Portfolio templates state ────────────────────────────
-  const [templates, setTemplates] = useState<TemplateItem[]>(DEFAULT_TEMPLATES)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', description: '' })
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newTpl, setNewTpl] = useState({ name: '', description: '' })
-
   // ── Email templates state ────────────────────────────────────
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(DEFAULT_EMAIL_TEMPLATES)
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null)
@@ -412,39 +392,6 @@ function TabTemplates() {
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
-  }
-
-  // ── CV template actions ──────────────────────────────────────
-  const toggleActive = (id: string) => {
-    setTemplates(ts => ts.map(t => t.id === id ? { ...t, active: !t.active } : t))
-    showToast('Đã cập nhật trạng thái template!')
-  }
-
-  const startEdit = (t: TemplateItem) => {
-    setEditingId(t.id)
-    setEditForm({ name: t.name, description: t.description })
-  }
-
-  const saveEdit = () => {
-    if (!editForm.name.trim()) { showToast('Tên template không được để trống', 'error'); return }
-    setTemplates(ts => ts.map(t => t.id === editingId ? { ...t, ...editForm } : t))
-    setEditingId(null)
-    showToast('Đã cập nhật template!')
-  }
-
-  const deleteTemplate = (id: string) => {
-    if (!confirm('Xóa template này?')) return
-    setTemplates(ts => ts.filter(t => t.id !== id))
-    showToast('Đã xóa template.')
-  }
-
-  const addTemplate = () => {
-    if (!newTpl.name.trim()) { showToast('Vui lòng nhập tên template', 'error'); return }
-    const id = newTpl.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now()
-    setTemplates(ts => [...ts, { id, name: newTpl.name, description: newTpl.description, active: true }])
-    setNewTpl({ name: '', description: '' })
-    setShowAddForm(false)
-    showToast(`Đã thêm template "${newTpl.name}"!`)
   }
 
   // ── Email template actions ────────────────────────────────────
@@ -462,132 +409,6 @@ function TabTemplates() {
   return (
     <>
       {toast && <Toast msg={toast.msg} type={toast.type} />}
-
-      {/* ── CV/Portfolio Templates ── */}
-      <Section
-        title="Template Portfolio & CV"
-        desc="Bật/tắt, sửa tên & mô tả, hoặc thêm template mới."
-      >
-        <div className="divide-y divide-gray-100">
-          {templates.map(t => (
-            <div key={t.id}>
-              {editingId === t.id ? (
-                // ── Inline Edit Form ────────────────────────────
-                <div className="py-4 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Tên template</label>
-                      <input
-                        value={editForm.name}
-                        onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Mô tả</label>
-                      <input
-                        value={editForm.description}
-                        onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={saveEdit}
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
-                      <Check className="w-3.5 h-3.5" /> Lưu
-                    </button>
-                    <button onClick={() => setEditingId(null)}
-                      className="flex items-center gap-1.5 px-4 py-1.5 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
-                      <X className="w-3.5 h-3.5" /> Hủy
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                // ── Normal row ──────────────────────────────────
-                <div className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0 ${
-                      t.active ? 'bg-blue-600' : 'bg-gray-300'
-                    }`}>
-                      {t.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">{t.name}</p>
-                      <p className="text-xs text-gray-500">{t.description || 'Chưa có mô tả'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      t.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {t.active ? 'Bật' : 'Tắt'}
-                    </span>
-                    <button onClick={() => startEdit(t)} title="Sửa"
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => toggleActive(t.id)} title={t.active ? 'Tắt' : 'Bật'}
-                      className="focus:outline-none">
-                      {t.active
-                        ? <ToggleRight className="w-8 h-8 text-blue-600" />
-                        : <ToggleLeft className="w-8 h-8 text-gray-400" />}
-                    </button>
-                    <button onClick={() => deleteTemplate(t.id)} title="Xóa"
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Add Template Form ── */}
-        {showAddForm ? (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
-            <p className="text-sm font-semibold text-blue-800">Thêm template mới</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">Tên template *</label>
-                <input
-                  value={newTpl.name}
-                  onChange={e => setNewTpl(f => ({ ...f, name: e.target.value }))}
-                  placeholder="VD: Executive"
-                  className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">Mô tả</label>
-                <input
-                  value={newTpl.description}
-                  onChange={e => setNewTpl(f => ({ ...f, description: e.target.value }))}
-                  placeholder="VD: Phù hợp cấp quản lý"
-                  className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={addTemplate}
-                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
-                <Plus className="w-3.5 h-3.5" /> Thêm
-              </button>
-              <button onClick={() => { setShowAddForm(false); setNewTpl({ name: '', description: '' }) }}
-                className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
-                <X className="w-3.5 h-3.5" /> Hủy
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 rounded-xl py-3 text-sm font-semibold text-gray-500 hover:text-blue-700 transition"
-          >
-            <Plus className="w-4 h-4" /> Thêm template mới
-          </button>
-        )}
-      </Section>
 
       {/* ── Email Templates ── */}
       <Section
