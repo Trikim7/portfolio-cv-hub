@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
 import { PortfolioTemplate } from '@/types'
 
@@ -10,6 +11,7 @@ interface ThemePickerProps {
 }
 
 export default function ThemePicker({ currentTemplateId, onSaved }: ThemePickerProps) {
+  const { t } = useTranslation()
   const [templates, setTemplates] = useState<PortfolioTemplate[]>([])
   const [selected, setSelected] = useState<number | null>(currentTemplateId ?? null)
   const [saving, setSaving] = useState(false)
@@ -32,10 +34,10 @@ export default function ThemePicker({ currentTemplateId, onSaved }: ThemePickerP
     setSaving(true)
     try {
       await apiClient.setMyTemplate(selected)
-      showToast('Đã cập nhật theme portfolio!')
+      showToast(t('themePicker.saveSuccess'))
       onSaved?.(selected)
     } catch {
-      showToast('Lưu thất bại, vui lòng thử lại', false)
+      showToast(t('themePicker.saveFailed'), false)
     } finally {
       setSaving(false)
     }
@@ -53,12 +55,10 @@ export default function ThemePicker({ currentTemplateId, onSaved }: ThemePickerP
         </div>
       )}
 
-      <p className="text-sm text-gray-500">
-        Chọn giao diện hiển thị trang portfolio công khai của bạn. Doanh nghiệp sẽ thấy giao diện này.
-      </p>
+      <p className="text-sm text-gray-500">{t('themePicker.subtitle')}</p>
 
       {templates.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">Đang tải danh sách theme...</div>
+        <div className="text-center py-8 text-gray-400 text-sm">{t('themePicker.loading')}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {templates.map(tpl => {
@@ -69,50 +69,33 @@ export default function ThemePicker({ currentTemplateId, onSaved }: ThemePickerP
                 key={tpl.id}
                 onClick={() => setSelected(tpl.id)}
                 className={`relative text-left rounded-2xl border-2 overflow-hidden transition-all duration-200 hover:shadow-lg ${
-                  isSelected
-                    ? 'border-blue-500 shadow-md ring-2 ring-blue-200'
-                    : 'border-gray-200 hover:border-gray-300'
+                  isSelected ? 'border-blue-500 shadow-md ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {/* Preview header */}
-                <div
-                  className="h-16 flex items-center px-4 gap-3"
-                  style={{ background: color }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white font-bold text-xs">
-                    AV
-                  </div>
+                <div className="h-16 flex items-center px-4 gap-3" style={{ background: color }}>
+                  <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white font-bold text-xs">AV</div>
                   <div>
                     <div className="w-20 h-2 bg-white/70 rounded-full mb-1" />
                     <div className="w-14 h-1.5 bg-white/40 rounded-full" />
                   </div>
                 </div>
-                {/* Preview body */}
                 <div className="p-3 bg-gray-50 space-y-1.5">
                   <div className="w-full h-1.5 bg-gray-200 rounded-full" />
                   <div className="w-3/4 h-1.5 bg-gray-200 rounded-full" />
                   <div className="flex gap-1 mt-2">
                     {[...Array(3)].map((_, i) => (
                       <div key={i} className="h-4 px-2 rounded-full text-[9px] flex items-center text-white font-bold"
-                        style={{ background: color, opacity: 0.8 - i * 0.15 }}>
-                        skill
-                      </div>
+                        style={{ background: color, opacity: 0.8 - i * 0.15 }}>skill</div>
                     ))}
                   </div>
                 </div>
-                {/* Info */}
                 <div className="px-3 pb-3 bg-gray-50">
                   <p className="text-xs font-semibold text-gray-800">{tpl.name}</p>
                   <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{tpl.description}</p>
                 </div>
-                {/* Selected badge */}
                 {isSelected && (
-                  <div
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md"
-                    style={{ background: color }}
-                  >
-                    ✓
-                  </div>
+                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md"
+                    style={{ background: color }}>✓</div>
                 )}
               </button>
             )
@@ -132,7 +115,7 @@ export default function ThemePicker({ currentTemplateId, onSaved }: ThemePickerP
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
             </svg>
           ) : '💾'}
-          {saving ? 'Đang lưu...' : 'Lưu theme'}
+          {saving ? t('themePicker.saving') : t('themePicker.save')}
         </button>
       )}
     </div>

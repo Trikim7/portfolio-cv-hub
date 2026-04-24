@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/api'
 import { AdminCompany } from '@/types'
+import { useTranslation } from 'react-i18next'
 import { Check, X, Lock, LockOpen, Building2, RefreshCw } from 'lucide-react'
 
 // ─── Lucide icon aliases ───────────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ const IcRefresh  = () => <RefreshCw className="w-4 h-4" />
 
 export default function AdminCompaniesPage() {
   const router = useRouter()
+  const { t, i18n } = useTranslation()
   const searchParams = useSearchParams()
 
   const [companies, setCompanies] = useState<AdminCompany[]>([])
@@ -57,7 +59,7 @@ export default function AdminCompaniesPage() {
       await apiClient.updateCompanyStatus(companyId, newStatus)
       await fetchCompanies()
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Thao tác thất bại')
+      alert(err.response?.data?.detail || t('common.error'))
     } finally {
       setActionLoading(null)
     }
@@ -67,10 +69,10 @@ export default function AdminCompaniesPage() {
 
   const statusBadge = (status: string) => {
     const cfg: Record<string, { bg: string; dot: string; label: string }> = {
-      pending:   { bg: 'bg-amber-50 text-amber-700 border-amber-200',  dot: 'bg-amber-500',  label: 'Chờ duyệt' },
-      approved:  { bg: 'bg-green-50 text-green-700 border-green-200',  dot: 'bg-green-500',  label: 'Đã duyệt' },
-      rejected:  { bg: 'bg-red-50 text-red-700 border-red-200',        dot: 'bg-red-500',    label: 'Từ chối' },
-      suspended: { bg: 'bg-gray-100 text-gray-600 border-gray-300',    dot: 'bg-gray-400',   label: 'Tạm khóa' },
+      pending:   { bg: 'bg-amber-50 text-amber-700 border-amber-200',  dot: 'bg-amber-500',  label: t('admin.pending') },
+      approved:  { bg: 'bg-green-50 text-green-700 border-green-200',  dot: 'bg-green-500',  label: t('admin.approved') },
+      rejected:  { bg: 'bg-red-50 text-red-700 border-red-200',        dot: 'bg-red-500',    label: t('admin.rejected') },
+      suspended: { bg: 'bg-gray-100 text-gray-600 border-gray-300',    dot: 'bg-gray-400',   label: t('admin.suspended') },
     }
     const c = cfg[status] || cfg.pending
     return (
@@ -91,11 +93,11 @@ export default function AdminCompaniesPage() {
           <>
             <button onClick={() => handleStatusChange(company.id, 'approved')} disabled={disabled}
               className={`inline-flex items-center gap-1.5 ${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
-              <IcCheck /> Duyệt
+              <IcCheck /> {t('admin.approve')}
             </button>
             <button onClick={() => handleStatusChange(company.id, 'rejected')} disabled={disabled}
               className={`inline-flex items-center gap-1.5 ${btnBase} bg-red-50 text-red-700 border-red-200 hover:bg-red-100`}>
-              <IcX /> Từ chối
+              <IcX /> {t('admin.reject')}
             </button>
           </>
         )
@@ -103,21 +105,21 @@ export default function AdminCompaniesPage() {
         return (
           <button onClick={() => handleStatusChange(company.id, 'suspended')} disabled={disabled}
             className={`inline-flex items-center gap-1.5 ${btnBase} bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100`}>
-            <IcLock /> Tạm khóa
+            <IcLock /> {t('admin.suspend')}
           </button>
         )
       case 'rejected':
         return (
           <button onClick={() => handleStatusChange(company.id, 'approved')} disabled={disabled}
             className={`inline-flex items-center gap-1.5 ${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
-            <IcCheck /> Duyệt lại
+            <IcCheck /> {t('admin.approveAgain')}
           </button>
         )
       case 'suspended':
         return (
           <button onClick={() => handleStatusChange(company.id, 'approved')} disabled={disabled}
             className={`inline-flex items-center gap-1.5 ${btnBase} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
-            <IcUnlock /> Mở khóa
+            <IcUnlock /> {t('admin.unlock')}
           </button>
         )
       default:
@@ -131,36 +133,36 @@ export default function AdminCompaniesPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <IcBuilding />
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý Doanh nghiệp</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.manageCompaniesTitle')}</h1>
         </div>
-        <p className="text-sm text-gray-500">Tổng cộng {total} doanh nghiệp trong hệ thống</p>
+        <p className="text-sm text-gray-500">{t('admin.totalCompaniesInSystem').replace('{total}', String(total))}</p>
       </div>
 
       {/* Filters */}
       <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Tìm kiếm</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5">{t('admin.search')}</label>
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              placeholder="Tìm theo tên công ty..."
+              placeholder={t('admin.searchByCompany')}
               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5">{t('admin.statusLabel')}</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             >
-              <option value="">Tất cả</option>
-              <option value="pending">Chờ duyệt</option>
-              <option value="approved">Đã duyệt</option>
-              <option value="rejected">Từ chối</option>
-              <option value="suspended">Tạm khóa</option>
+              <option value="">{t('admin.all')}</option>
+              <option value="pending">{t('admin.pending')}</option>
+              <option value="approved">{t('admin.approved')}</option>
+              <option value="rejected">{t('admin.rejected')}</option>
+              <option value="suspended">{t('admin.suspended')}</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -168,7 +170,7 @@ export default function AdminCompaniesPage() {
               onClick={() => { setStatusFilter(''); setSearch(''); setPage(1) }}
               className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors"
             >
-              <IcRefresh /> Xóa bộ lọc
+              <IcRefresh /> {t('admin.clearFilter')}
             </button>
           </div>
         </div>
@@ -179,22 +181,22 @@ export default function AdminCompaniesPage() {
         {loading ? (
           <div className="p-12 text-center text-gray-400">
             <div className="animate-spin w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-3" />
-            <p>Đang tải...</p>
+            <p>{t('admin.loading')}</p>
           </div>
         ) : companies.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
-            <p className="font-medium">Không tìm thấy doanh nghiệp nào</p>
+            <p className="font-medium">{t('admin.noCompaniesFound')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên Công ty</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Website</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày đăng ký</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Hành động</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('admin.companyName')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('admin.website')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('admin.registeredDate')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('admin.status')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('admin.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -226,7 +228,7 @@ export default function AdminCompaniesPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(company.created_at).toLocaleDateString('vi-VN')}
+                      {new Date(company.created_at).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}
                     </td>
                     <td className="px-6 py-4">{statusBadge(company.status)}</td>
                     <td className="px-6 py-4">
@@ -245,7 +247,7 @@ export default function AdminCompaniesPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-gray-50/50">
             <p className="text-sm text-gray-500">
-              Trang {page} / {totalPages} ({total} kết quả)
+              {t('admin.page')} {page} {t('admin.of')} {totalPages} ({total} {t('admin.results')})
             </p>
             <div className="flex gap-1">
               <button
@@ -253,7 +255,7 @@ export default function AdminCompaniesPage() {
                 disabled={page <= 1}
                 className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium disabled:opacity-40 transition-colors"
               >
-                ‹ Trước
+                                {t('admin.prev')}
               </button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const start = Math.max(1, Math.min(page - 2, totalPages - 4))
@@ -278,7 +280,7 @@ export default function AdminCompaniesPage() {
                 disabled={page >= totalPages}
                 className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium disabled:opacity-40 transition-colors"
               >
-                Sau ›
+                                {t('admin.next')}
               </button>
             </div>
           </div>

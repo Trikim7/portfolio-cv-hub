@@ -2,20 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CandidateProfile, I18nText } from '@/types'
+import { useTranslation } from 'react-i18next'
+import { CandidateProfile } from '@/types'
 import { apiClient } from '@/services/api'
 import { useAuth } from '@/hooks/AuthContext'
+import { useI18nText } from '@/hooks/useI18nText'
 import Link from 'next/link'
-
-const i18nToText = (value: I18nText): string => {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.vi || value.en || Object.values(value)[0] || ''
-}
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
 export default function CandidatePortfolioPreviewPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const { isLoggedIn, loading: authLoading } = useAuth()
+  const resolveText = useI18nText()
 
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
   const [user, setUser] = useState<any>(null)
@@ -37,21 +36,21 @@ export default function CandidatePortfolioPreviewPage() {
         setProfile(profileData)
         setUser(userData)
       } catch (err: any) {
-        setError(err.response?.data?.detail || 'Không thể tải portfolio')
+        setError(err.response?.data?.detail || t('portfolio.cannotLoad'))
       } finally {
         setLoading(false)
       }
     }
 
     if (isLoggedIn) fetchData()
-  }, [isLoggedIn, authLoading, router])
+  }, [isLoggedIn, authLoading, router, t])
 
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-gray-600">Đang tải portfolio của bạn...</p>
+          <p className="text-gray-600">{t('common.loadingPortfolio')}</p>
         </div>
       </div>
     )
@@ -61,13 +60,13 @@ export default function CandidatePortfolioPreviewPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4">
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center max-w-md w-full">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Chưa có dữ liệu</h2>
-          <p className="text-gray-600 mb-6">{error || 'Bạn chưa cập nhật thông tin hồ sơ.'}</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.noData')}</h2>
+          <p className="text-gray-600 mb-6">{error || t('portfolio.updateProfile')}</p>
           <Link
             href="/dashboard"
             className="inline-flex px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
           >
-            Quay lại Hồ sơ
+            {t('portfolio.goBack')}
           </Link>
         </div>
       </div>
@@ -90,11 +89,12 @@ export default function CandidatePortfolioPreviewPage() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-2 text-sm">
             <span className="bg-blue-600 px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider">
-              Xem trước
+              {t('portfolio.preview')}
             </span>
-            <span className="text-gray-300">Đây là cách nhà tuyển dụng nhìn thấy hồ sơ của bạn</span>
+            <span className="text-gray-300">{t('portfolio.previewDesc')}</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <LanguageToggle />
             {profile.public_slug && profile.is_public && (
               <a
                 href={`/portfolio/${profile.public_slug}`}
@@ -102,14 +102,14 @@ export default function CandidatePortfolioPreviewPage() {
                 rel="noopener noreferrer"
                 className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
               >
-                Xem trang public
+                {t('portfolio.viewPublicPage')}
               </a>
             )}
             <Link
               href="/dashboard"
               className="px-4 py-1.5 bg-white text-gray-900 hover:bg-gray-100 rounded-lg text-sm font-medium transition"
             >
-              Chỉnh sửa
+              {t('portfolio.edit')}
             </Link>
           </div>
         </div>
@@ -136,16 +136,16 @@ export default function CandidatePortfolioPreviewPage() {
 
             <div className="flex-1 min-w-0 text-center md:text-left">
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                {profile.full_name || 'Cập nhật tên ở Hồ sơ'}
+                {profile.full_name || t('portfolio.updateName')}
               </h1>
               <p className="mt-2 text-lg md:text-xl text-white/85 font-medium">
-                {profile.headline || 'Cập nhật vị trí ứng tuyển'}
+                {profile.headline || t('portfolio.updatePosition')}
               </p>
 
               <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-x-5 gap-y-2 text-sm text-white/80">
-                <span>Việt Nam</span>
+                <span>{t('common.vietnam')}</span>
                 <span>{user?.email || 'email@example.com'}</span>
-                <span>{profile.views || 0} lượt xem</span>
+                <span>{profile.views || 0} {t('common.views')}</span>
               </div>
 
               <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-3">
@@ -153,21 +153,21 @@ export default function CandidatePortfolioPreviewPage() {
                   href={`mailto:${user?.email}`}
                   className="bg-white text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow"
                 >
-                  Liên hệ
+                  {t('common.contact')}
                 </a>
                 {primaryCv ? (
                   <a
                     href={`/api/candidate/cvs/download/${primaryCv.id}`}
                     className="bg-white/10 hover:bg-white/20 backdrop-blur ring-1 ring-white/30 px-5 py-2.5 rounded-xl text-sm font-semibold transition"
                   >
-                    Tải CV
+                    {t('common.downloadCV')}
                   </a>
                 ) : (
                   <button
                     disabled
                     className="bg-white/10 text-white/60 ring-1 ring-white/20 px-5 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed"
                   >
-                    Chưa cập nhật CV
+                    {t('common.noCVYet')}
                   </button>
                 )}
               </div>
@@ -180,22 +180,22 @@ export default function CandidatePortfolioPreviewPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 space-y-6">
         <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <header className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900">Giới thiệu</h2>
+            <h2 className="text-lg font-bold text-gray-900">{t('portfolio.about')}</h2>
           </header>
           <div className="p-6">
-            {i18nToText(profile.bio) ? (
+            {resolveText(profile.bio) ? (
               <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {i18nToText(profile.bio)}
+                {resolveText(profile.bio)}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Ứng viên chưa cập nhật phần giới thiệu.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noBio')}</p>
             )}
           </div>
         </section>
 
         <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <header className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900">Kỹ năng</h2>
+            <h2 className="text-lg font-bold text-gray-900">{t('portfolio.skills')}</h2>
           </header>
           <div className="p-6">
             {profile.skills && profile.skills.length > 0 ? (
@@ -213,7 +213,7 @@ export default function CandidatePortfolioPreviewPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Chưa có kỹ năng nào được thêm.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noSkills')}</p>
             )}
           </div>
         </section>
@@ -222,7 +222,7 @@ export default function CandidatePortfolioPreviewPage() {
           {profile.experiences && profile.experiences.length > 0 && (
             <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <header className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900">Kinh nghiệm làm việc</h2>
+                <h2 className="text-lg font-bold text-gray-900">{t('portfolio.workExperience')}</h2>
               </header>
               <div className="p-6 space-y-6">
                 {profile.experiences.map((exp) => (
@@ -237,15 +237,15 @@ export default function CandidatePortfolioPreviewPage() {
                       })}{' '}
                       -{' '}
                       {exp.is_current
-                        ? 'Hiện tại'
+                        ? t('common.present')
                         : new Date(exp.end_date!).toLocaleDateString('vi-VN', {
                             month: '2-digit',
                             year: 'numeric',
                           })}
                     </div>
-                    {i18nToText(exp.description) && (
+                    {resolveText(exp.description) && (
                       <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
-                        {i18nToText(exp.description)}
+                        {resolveText(exp.description)}
                       </p>
                     )}
                   </div>
@@ -257,11 +257,11 @@ export default function CandidatePortfolioPreviewPage() {
           {profile.projects && profile.projects.length > 0 && (
             <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <header className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900">Dự án tiêu biểu</h2>
+                <h2 className="text-lg font-bold text-gray-900">{t('portfolio.featuredProjects')}</h2>
               </header>
               <div className="p-6 space-y-5">
                 {profile.projects.map((proj) => {
-                  const description = i18nToText(proj.description)
+                  const description = resolveText(proj.description)
                   const projectUrl = proj.project_url || proj.github_url
                   return (
                     <div
@@ -300,7 +300,7 @@ export default function CandidatePortfolioPreviewPage() {
                             rel="noopener noreferrer"
                             className="text-blue-700 hover:text-blue-900 text-sm font-semibold w-fit"
                           >
-                            Xem dự án →
+                            {t('common.viewProject')}
                           </a>
                         )}
                       </div>

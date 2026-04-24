@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const { login, loading, error } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,21 +32,21 @@ export default function LoginPage() {
 
   return (
     <div className="bg-slate-50 py-8 sm:py-10">
-      {/* Điều hướng: Navbar trong app/layout.tsx — không thêm header thứ hai */}
+      {/* Navigation: Navbar is in app/layout.tsx — do not add second header */}
       <div className="flex flex-col items-center px-4 sm:px-6">
         <div className="w-full max-w-md">
           <div className="mb-6 text-center">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1 tracking-tight">
-              Đăng nhập tài khoản
+              {t('auth.loginPageTitle')}
             </h1>
             <p className="text-sm text-gray-600 mt-2">
-              Hệ thống sẽ tự động điều hướng theo vai trò của bạn.
+              {t('auth.loginPageSubtitle')}
             </p>
           </div>
           {oauthError && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
               <strong className="block mb-1">
-                Đăng nhập {oauthError.provider || 'bằng mạng xã hội'} thất bại
+                {t('auth.oauthLoginFailed', { provider: oauthError.provider || t('auth.viaOAuth') })}
               </strong>
               <span className="break-words">{oauthError.error}</span>
             </div>
@@ -59,7 +61,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.email')}</label>
                 <input
                   type="email"
                   value={email}
@@ -72,7 +74,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Mật khẩu</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.password')}</label>
                 <input
                   type="password"
                   value={password}
@@ -88,16 +90,16 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-60 transition shadow-sm"
               >
-                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {loading ? t('auth.loggingIn') : t('auth.doLogin')}
               </button>
             </form>
 
             <SocialLoginButtons disabled={loading} />
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Chưa có tài khoản?{' '}
+              {t('auth.noAccountYet')}{' '}
               <Link href="/register" className="text-blue-600 font-semibold hover:underline">
-                Đăng ký ngay
+                {t('auth.registerNow')}
               </Link>
             </p>
           </div>

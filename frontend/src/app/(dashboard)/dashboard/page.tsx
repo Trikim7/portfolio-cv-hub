@@ -20,6 +20,7 @@ import DashboardShell, {
   SectionCard,
   StatCard,
 } from '@/components/layout/DashboardShell'
+import { useTranslation } from 'react-i18next'
 
 type CandidateSection =
   | 'overview'
@@ -33,17 +34,17 @@ type CandidateSection =
   | 'theme'
   | 'social'
 
-const SECTION_LABELS: Record<CandidateSection, string> = {
-  overview: 'Tổng quan',
-  profile: 'Thông tin cá nhân',
-  skills: 'Kỹ năng',
-  experience: 'Kinh nghiệm',
-  projects: 'Dự án',
-  cv: 'CV / Resume',
-  'generate-cv': 'Tạo CV tự động',
-  invitations: 'Lời mời tuyển dụng',
-  theme: 'Giao diện Portfolio',
-  social: 'Tài khoản liên kết',
+const SECTION_LABEL_KEYS: Record<CandidateSection, string> = {
+  overview:       'dashboard.overview',
+  profile:        'dashboard.profile',
+  skills:         'dashboard.skills',
+  experience:     'dashboard.experience',
+  projects:       'dashboard.projects',
+  cv:             'dashboard.cv',
+  'generate-cv':  'dashboard.generateCv',
+  invitations:    'dashboard.invitations',
+  theme:          'dashboard.theme',
+  social:         'dashboard.social',
 }
 
 const SECTION_ORDER: CandidateSection[] = [
@@ -59,12 +60,9 @@ const SECTION_ORDER: CandidateSection[] = [
   'social',        // always last
 ]
 
-const SIDEBAR_NAV: (DashboardNavItem & { id: CandidateSection })[] = SECTION_ORDER.map(
-  (id) => ({ id, label: SECTION_LABELS[id] }),
-)
-
 function DashboardContent() {
   const { profile, loading, error, refreshProfile } = useProfileContext()
+  const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [section, setSection] = useState<CandidateSection>(() => {
@@ -74,6 +72,11 @@ function DashboardContent() {
   })
   const [avatarUploading, setAvatarUploading] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  // Build nav labels dynamically per language
+  const SIDEBAR_NAV: (DashboardNavItem & { id: CandidateSection })[] = SECTION_ORDER.map(
+    (id) => ({ id, label: t(SECTION_LABEL_KEYS[id]) }),
+  )
 
   const handleAvatarClick = () => avatarInputRef.current?.click()
 
@@ -118,7 +121,7 @@ function DashboardContent() {
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
+          <p className="text-gray-600">{t('common.loadingData')}</p>
         </div>
       </div>
     )
@@ -131,23 +134,23 @@ function DashboardContent() {
 
   const missing: { id: CandidateSection; label: string }[] = []
   if (!profile.full_name || !profile.headline)
-    missing.push({ id: 'profile', label: 'Bổ sung thông tin cá nhân' })
+    missing.push({ id: 'profile', label: t('dashboard.addPersonalInfo') })
   if (!(profile.skills || []).length)
-    missing.push({ id: 'skills', label: 'Thêm kỹ năng đầu tiên' })
+    missing.push({ id: 'skills', label: t('dashboard.addFirstSkill') })
   if (!(profile.experiences || []).length)
-    missing.push({ id: 'experience', label: 'Thêm kinh nghiệm làm việc' })
+    missing.push({ id: 'experience', label: t('dashboard.addWorkExperience') })
   if (!(profile.projects || []).length)
-    missing.push({ id: 'projects', label: 'Thêm dự án vào portfolio' })
+    missing.push({ id: 'projects', label: t('dashboard.addProjectPortfolio') })
 
   return (
     <DashboardShell
       accent="blue"
-      title={profile.full_name || 'Ứng viên'}
-      subtitle="Xin chào"
+      title={profile.full_name || t('dashboard.title')}
+      subtitle={t('dashboard.hello')}
       userName={profile.full_name || undefined}
       userAvatarUrl={profile.avatar_url || null}
       onAvatarClick={handleAvatarClick}
-      badge={avatarUploading ? 'Đang tải ảnh…' : (profile.is_public ? 'Công khai' : 'Chưa công khai')}
+      badge={avatarUploading ? t('dashboard.uploading') : (profile.is_public ? t('dashboard.public') : t('dashboard.notPublic'))}
       nav={SIDEBAR_NAV}
       activeId={section}
       onSelect={(id) => setSection(id as CandidateSection)}
@@ -156,7 +159,7 @@ function DashboardContent() {
           href={profile.public_slug ? `/portfolio/${profile.public_slug}` : '/portfolio'}
           className="bg-white text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm w-full sm:w-auto text-center"
         >
-          Xem portfolio công khai
+          {t('dashboard.viewPublicPortfolio')}
         </Link>
       }
     >
@@ -171,8 +174,8 @@ function DashboardContent() {
       {section === 'overview' && (
         <>
           <SectionCard
-            title="Tiến độ hoàn thiện hồ sơ"
-            description="Hoàn thiện càng nhiều, doanh nghiệp càng dễ tìm thấy bạn."
+            title={t('dashboard.profileCompletion')}
+            description={t('dashboard.completionHint')}
           >
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -183,8 +186,8 @@ function DashboardContent() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Bạn đã hoàn thành{' '}
-                  <span className="font-semibold text-gray-800">{completion}%</span> hồ sơ.
+                  {t('dashboard.completionText')}{' '}
+                  <span className="font-semibold text-gray-800">{completion}%</span> {t('dashboard.completionProfile')}
                 </p>
               </div>
               <div className="text-3xl font-extrabold text-blue-600 min-w-[70px] text-right">
@@ -211,29 +214,29 @@ function DashboardContent() {
 
           {/* Analytics merged into overview — replaces old CandidateStatsCard */}
           <SectionCard
-            title="Thống kê &amp; Hoạt động"
-            description="Lượt xem portfolio và lời mời tuyển dụng bạn đã nhận."
+            title={t('dashboard.statsAndActivity')}
+            description={t('dashboard.statsHint')}
           >
             <AnalyticsDashboard />
           </SectionCard>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
-              label="Kỹ năng"
+              label={t('dashboard.skills')}
               value={(profile.skills || []).length}
-              hint="Số kỹ năng đã khai báo"
+              hint={t('dashboard.skillsCount')}
               tone="blue"
             />
             <StatCard
-              label="Kinh nghiệm"
+              label={t('dashboard.experience')}
               value={(profile.experiences || []).length}
-              hint="Vị trí đã trải qua"
+              hint={t('dashboard.positionCount')}
               tone="emerald"
             />
             <StatCard
-              label="Dự án"
+              label={t('dashboard.projects')}
               value={(profile.projects || []).length}
-              hint="Mục trong portfolio"
+              hint={t('dashboard.projectCount')}
               tone="purple"
             />
           </div>
@@ -248,14 +251,14 @@ function DashboardContent() {
       {section === 'generate-cv' && <CVGeneratorPanel />}
       {section === 'invitations' && (
         <SectionCard
-          title="Lời mời Tuyển dụng"
-          description="Danh sách lời mời từ doanh nghiệp. Bạn có thể đánh dấu Quan tâm hoặc Từ chối."
+          title={t('dashboard.invitationsTitle')}
+          description={t('dashboard.invitationsHint')}
         >
           <InvitationsManager />
         </SectionCard>
       )}
       {section === 'theme' && (
-        <SectionCard title="Giao diện Portfolio">
+        <SectionCard title={t('dashboard.themeTitle')}>
           <ThemePicker
             currentTemplateId={profile.template_id}
             onSaved={() => refreshProfile()}
@@ -275,7 +278,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center min-h-screen bg-slate-50">
             <div className="text-center">
               <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-gray-600">Đang tải dữ liệu...</p>
+              <p className="text-gray-600">...</p>
             </div>
           </div>
         }

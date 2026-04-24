@@ -211,21 +211,21 @@ TECH_COMPANIES = [
 GRADUATION_YEARS = list(range(2015, 2026))
 
 HEADLINE_POOL = [
-    "Backend Engineer chuyên Python & FastAPI",
-    "Full-Stack Developer | React · Node.js · PostgreSQL",
-    "DevOps Engineer — Cloud-Native & Kubernetes",
-    "Machine Learning Engineer | PyTorch · Transformers",
-    "Frontend Developer đam mê UI/UX và hiệu năng web",
-    "Senior Java Developer · Spring Boot · Microservices",
-    "Data Engineer | Apache Spark · dbt · Airflow",
-    "Mobile Developer — Flutter & React Native",
-    "Solution Architect với 6+ năm kinh nghiệm doanh nghiệp",
-    "QA Automation Engineer | Selenium · Playwright · CI",
-    "Tech Lead — Mentor, Agile Coach, Architect",
-    "Go Developer | gRPC · Kafka · High-Performance Systems",
-    "AI/NLP Researcher chuyên mô hình ngôn ngữ lớn",
-    "Product Engineer — từ ý tưởng đến production",
-    "Embedded Systems Developer | C/C++ · RTOS · IoT",
+    {"vi": "Backend Engineer chuyên Python & FastAPI", "en": "Backend Engineer specialized in Python & FastAPI"},
+    {"vi": "Full-Stack Developer | React · Node.js · PostgreSQL", "en": "Full-Stack Developer | React · Node.js · PostgreSQL"},
+    {"vi": "DevOps Engineer — Cloud-Native & Kubernetes", "en": "DevOps Engineer — Cloud-Native & Kubernetes"},
+    {"vi": "Machine Learning Engineer | PyTorch · Transformers", "en": "Machine Learning Engineer | PyTorch · Transformers"},
+    {"vi": "Frontend Developer đam mê UI/UX và hiệu năng web", "en": "Frontend Developer passionate about UI/UX and web performance"},
+    {"vi": "Senior Java Developer · Spring Boot · Microservices", "en": "Senior Java Developer · Spring Boot · Microservices"},
+    {"vi": "Data Engineer | Apache Spark · dbt · Airflow", "en": "Data Engineer | Apache Spark · dbt · Airflow"},
+    {"vi": "Mobile Developer — Flutter & React Native", "en": "Mobile Developer — Flutter & React Native"},
+    {"vi": "Solution Architect với 6+ năm kinh nghiệm doanh nghiệp", "en": "Solution Architect with 6+ years of enterprise experience"},
+    {"vi": "QA Automation Engineer | Selenium · Playwright · CI", "en": "QA Automation Engineer | Selenium · Playwright · CI"},
+    {"vi": "Tech Lead — Mentor, Agile Coach, Architect", "en": "Tech Lead — Mentor, Agile Coach, Architect"},
+    {"vi": "Go Developer | gRPC · Kafka · High-Performance Systems", "en": "Go Developer | gRPC · Kafka · High-Performance Systems"},
+    {"vi": "AI/NLP Researcher chuyên mô hình ngôn ngữ lớn", "en": "AI/NLP Researcher specialized in Large Language Models"},
+    {"vi": "Product Engineer — từ ý tưởng đến production", "en": "Product Engineer — from idea to production"},
+    {"vi": "Embedded Systems Developer | C/C++ · RTOS · IoT", "en": "Embedded Systems Developer | C/C++ · RTOS · IoT"},
 ]
 
 JOB_REQ_TEMPLATES = [

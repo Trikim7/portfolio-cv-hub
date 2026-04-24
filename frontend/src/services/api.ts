@@ -531,6 +531,17 @@ class ApiClient {
     const response = await this.client.patch('/api/candidate/profile/template', { template_id: templateId })
     return response.data
   }
+
+  // ─── Data Tools (Seed/Reset) ──────────────────────────────
+  async seedDemoData() {
+    const response = await this.client.post('/api/admin/tools/seed-demo')
+    return response.data
+  }
+
+  async resetDemoData() {
+    const response = await this.client.post('/api/admin/tools/reset-db')
+    return response.data
+  }
 }
 
 export const apiClient = new ApiClient()
