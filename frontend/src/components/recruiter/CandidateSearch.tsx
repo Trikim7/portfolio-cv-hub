@@ -6,14 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
 import { useToast } from '@/components/Toast'
 import { ExternalLink } from 'lucide-react'
-import { CandidateSearchResult, I18nText } from '@/types'
+import { CandidateSearchResult } from '@/types'
 import ComparisonTable from './ComparisonTable'
-
-const i18nToText = (value: I18nText): string => {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.vi || value.en || Object.values(value)[0] || ''
-}
+import { useI18nText } from '@/hooks/useI18nText'
 
 interface JobRequirement {
   id: number
@@ -35,6 +30,7 @@ const mapYearsToExperienceLevel = (years?: number): string => {
 
 export default function CandidateSearch() {
   const { t } = useTranslation()
+  const resolveText = useI18nText()
   const [keyword, setKeyword] = useState('')
   const [skill, setSkill] = useState('')
   const [experienceLevel, setExperienceLevel] = useState('')
@@ -189,6 +185,8 @@ export default function CandidateSearch() {
             {results.map((candidate) => {
               const selected = selectedCandidates.some((c) => c.id === candidate.id)
               const portfolioHref = candidate.public_slug ? `/portfolio/${candidate.public_slug}` : null
+              const displayName = resolveText(candidate.full_name) || t('candidateSearch.noResult')
+              const displayHeadline = resolveText(candidate.headline) || t('candidateSearch.noResult')
               return (
                 <div key={candidate.id} className={`p-4 border rounded-xl transition-shadow ${selected ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-gray-200 hover:border-purple-200 hover:shadow-sm'}`}>
                   <div className="flex justify-between items-start gap-2 mb-2">
@@ -196,19 +194,19 @@ export default function CandidateSearch() {
                       {portfolioHref ? (
                         <Link href={portfolioHref} target="_blank" rel="noreferrer"
                           className="font-bold text-gray-900 hover:text-purple-700 hover:underline truncate block transition-colors">
-                          {candidate.full_name || t('candidateSearch.noResult')}
+                          {displayName}
                         </Link>
                       ) : (
-                        <h4 className="font-bold text-gray-900 truncate">{candidate.full_name || t('candidateSearch.noResult')}</h4>
+                        <h4 className="font-bold text-gray-900 truncate">{displayName}</h4>
                       )}
-                      <p className="text-sm text-gray-600 truncate">{candidate.headline || t('candidateSearch.noResult')}</p>
+                      <p className="text-sm text-gray-600 truncate">{displayHeadline}</p>
                     </div>
                     <button onClick={() => toggleSelect(candidate)}
                       className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold transition ${selected ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {selected ? t('candidateSearch.selected') : t('candidateSearch.select')}
                     </button>
                   </div>
-                  <p className="text-sm text-gray-500 line-clamp-2">{i18nToText(candidate.bio)}</p>
+                  <p className="text-sm text-gray-500 line-clamp-2">{resolveText(candidate.bio)}</p>
                   {candidate.skills.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {candidate.skills.map((s) => (
