@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useProfileContext } from '@/hooks/ProfileContext'
 import { Experience, I18nText } from '@/types'
 import { Toast, useToast } from '@/components/Toast'
@@ -12,6 +13,7 @@ const i18nToText = (value: I18nText): string => {
 }
 
 export default function ExperiencesManager() {
+  const { t, i18n } = useTranslation()
   const { profile, addExperience, updateExperience, deleteExperience } = useProfileContext()
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -27,7 +29,6 @@ export default function ExperiencesManager() {
 
   const experiences = profile?.experiences || []
 
-  // Format dates for API: append T00:00:00 for backend datetime, null for empty end_date
   const formatPayload = (data: typeof formData) => ({
     job_title: data.job_title,
     company_name: data.company_name,
@@ -40,25 +41,18 @@ export default function ExperiencesManager() {
   const handleAddExperience = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.company_name.trim()) {
-      showToast('Vui lòng nhập tên công ty', 'error')
+      showToast(t('experience.companyRequired'), 'error')
       return
     }
     try {
       const companyName = formData.company_name
       const result = await addExperience(formatPayload(formData))
       if (!result) throw new Error('Failed')
-      setFormData({
-        job_title: '',
-        company_name: '',
-        description: '',
-        start_date: '',
-        end_date: '',
-        is_current: false,
-      })
+      setFormData({ job_title: '', company_name: '', description: '', start_date: '', end_date: '', is_current: false })
       setShowForm(false)
-      showToast(`Đã thêm kinh nghiệm tại ${companyName}`, 'success')
+      showToast(`${t('experience.addedSuccess')} ${companyName}`, 'success')
     } catch {
-      showToast('Thêm kinh nghiệm thất bại, vui lòng thử lại', 'error')
+      showToast(t('experience.addFailed'), 'error')
     }
   }
 
@@ -81,37 +75,30 @@ export default function ExperiencesManager() {
       if (!result) throw new Error('Failed')
       setEditingId(null)
       setShowForm(false)
-      setFormData({
-        job_title: '',
-        company_name: '',
-        description: '',
-        start_date: '',
-        end_date: '',
-        is_current: false,
-      })
-      showToast('Đã cập nhật kinh nghiệm', 'success')
+      setFormData({ job_title: '', company_name: '', description: '', start_date: '', end_date: '', is_current: false })
+      showToast(t('experience.updateSuccess'), 'success')
     } catch {
-      showToast('Cập nhật kinh nghiệm thất bại', 'error')
+      showToast(t('experience.updateFailed'), 'error')
     }
   }
 
   const handleDeleteExperience = async (expId: number) => {
-    if (confirm('Xóa kinh nghiệm này?')) {
+    if (confirm(t('experience.deleteConfirm'))) {
       await deleteExperience(expId)
-      showToast('Đã xóa kinh nghiệm', 'success')
+      showToast(t('experience.deleteSuccess'), 'success')
     }
   }
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900">Kinh nghiệm làm việc</h2>
+        <h2 className="text-lg font-bold text-gray-900">{t('experience.title')}</h2>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition"
           >
-            Thêm kinh nghiệm
+            {t('experience.addBtn')}
           </button>
         )}
       </div>
@@ -123,7 +110,7 @@ export default function ExperiencesManager() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Chức danh</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('experience.jobTitle')}</label>
               <input
                 type="text"
                 value={formData.job_title}
@@ -133,7 +120,7 @@ export default function ExperiencesManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Công ty</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('experience.company')}</label>
               <input
                 type="text"
                 value={formData.company_name}
@@ -146,19 +133,19 @@ export default function ExperiencesManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả công việc</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('experience.description')}</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Mô tả công việc..."
+              placeholder={t('experience.descPlaceholder')}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('experience.startDate')}</label>
               <input
                 type="date"
                 value={formData.start_date}
@@ -168,7 +155,7 @@ export default function ExperiencesManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('experience.endDate')}</label>
               <input
                 type="date"
                 value={formData.end_date}
@@ -186,40 +173,25 @@ export default function ExperiencesManager() {
               onChange={(e) => setFormData({ ...formData, is_current: e.target.checked, end_date: e.target.checked ? '' : formData.end_date })}
               className="h-4 w-4 text-blue-500"
             />
-            <label className="ml-2 text-sm font-medium text-gray-700">Hiện tại đang làm việc ở đây</label>
+            <label className="ml-2 text-sm font-medium text-gray-700">{t('experience.isCurrent')}</label>
           </div>
 
           <div className="flex gap-2">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
-            >
-              {editingId ? 'Cập nhật' : 'Thêm'}
+            <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold">
+              {editingId ? t('experience.update') : t('experience.add')}
             </button>
             <button
               type="button"
-              onClick={() => {
-                setShowForm(false)
-                setEditingId(null)
-                setFormData({
-                  job_title: '',
-                  company_name: '',
-                  description: '',
-                  start_date: '',
-                  end_date: '',
-                  is_current: false,
-                })
-              }}
+              onClick={() => { setShowForm(false); setEditingId(null); setFormData({ job_title: '', company_name: '', description: '', start_date: '', end_date: '', is_current: false }) }}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
             >
-              Hủy
+              {t('experience.cancel')}
             </button>
           </div>
 
-          {/* Existing experiences quick reference */}
           {experiences.length > 0 && (
             <div className="mt-2 pt-3 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 mb-2">Kinh nghiệm đã thêm:</p>
+              <p className="text-xs font-semibold text-gray-500 mb-2">{t('experience.added')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {experiences.map((exp) => (
                   <span
@@ -234,7 +206,7 @@ export default function ExperiencesManager() {
                     {exp.job_title} @ {exp.company_name}
                     {formData.company_name.trim().toLowerCase() === exp.company_name.toLowerCase() &&
                       formData.job_title.trim().toLowerCase() === exp.job_title.toLowerCase() && (
-                        <span className="text-red-600 font-bold">trùng</span>
+                        <span className="text-red-600 font-bold">{t('experience.duplicate')}</span>
                       )}
                   </span>
                 ))}
@@ -246,15 +218,12 @@ export default function ExperiencesManager() {
 
       <div className="space-y-3">
         {experiences.length === 0 ? (
-          <p className="text-gray-500 italic">Chưa có kinh nghiệm. Thêm kinh nghiệm đầu tiên!</p>
+          <p className="text-gray-500 italic">{t('experience.noExperience')}</p>
         ) : (
           <>
-            <p className="text-sm text-gray-600 mb-3">Tổng {experiences.length} kinh nghiệm</p>
+            <p className="text-sm text-gray-600 mb-3">{t('experience.total')} {experiences.length} {t('experience.totalExp')}</p>
             {experiences.map((exp) => (
-              <div
-                key={exp.id}
-                className="p-4 border border-gray-200 bg-gray-50 rounded-xl hover:shadow-sm transition"
-              >
+              <div key={exp.id} className="p-4 border border-gray-200 bg-gray-50 rounded-xl hover:shadow-sm transition">
                 <div className="flex justify-between items-start mb-3 gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900">{exp.job_title}</h3>
@@ -262,7 +231,7 @@ export default function ExperiencesManager() {
                   </div>
                   {exp.is_current && (
                     <span className="shrink-0 bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs font-semibold">
-                      Hiện tại
+                      {t('experience.current')}
                     </span>
                   )}
                 </div>
@@ -274,10 +243,10 @@ export default function ExperiencesManager() {
                 )}
 
                 <p className="text-xs text-gray-500 mb-3">
-                  {new Date(exp.start_date).toLocaleDateString('vi-VN')}
+                  {new Date(exp.start_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}
                   {exp.end_date && !exp.is_current
-                    ? ` — ${new Date(exp.end_date).toLocaleDateString('vi-VN')}`
-                    : ' — Hiện tại'}
+                    ? ` — ${new Date(exp.end_date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}`
+                    : ` — ${t('experience.current')}`}
                 </p>
 
                 <div className="flex gap-2">
@@ -285,13 +254,13 @@ export default function ExperiencesManager() {
                     onClick={() => handleEditExperience(exp)}
                     className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-semibold"
                   >
-                    Sửa
+                    {t('experience.edit')}
                   </button>
                   <button
                     onClick={() => handleDeleteExperience(exp.id)}
                     className="px-3 py-1.5 bg-red-50 border border-red-200 text-red-700 rounded-lg hover:bg-red-100 text-sm font-semibold"
                   >
-                    Xóa
+                    {t('experience.delete')}
                   </button>
                 </div>
               </div>

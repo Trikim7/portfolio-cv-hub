@@ -2,6 +2,7 @@
 
 import { apiClient } from '@/services/api'
 import { OAuthProvider } from '@/types'
+import { useTranslation } from 'react-i18next'
 
 interface SocialLoginButtonsProps {
   /** Appears above the buttons */
@@ -44,10 +45,12 @@ const PROVIDER_META: Record<OAuthProvider, { label: string; icon: React.ReactNod
 }
 
 export default function SocialLoginButtons({
-  label = 'Hoặc tiếp tục với',
+  label = '', // Will use default from t('auth.orContinueWith') if empty
   providers = ['google', 'github'],
   disabled = false,
 }: SocialLoginButtonsProps) {
+  const { t } = useTranslation()
+  const displayLabel = label || t('auth.orContinueWith') || 'Or continue with'
   const handleClick = (provider: OAuthProvider) => {
     if (disabled) return
     window.location.href = apiClient.getOAuthLoginUrl(provider)
@@ -62,7 +65,7 @@ export default function SocialLoginButtons({
         </div>
         <div className="relative flex justify-center">
           <span className="bg-white px-3 text-[11px] font-medium uppercase tracking-widest text-gray-400">
-            {label}
+            {displayLabel}
           </span>
         </div>
       </div>
@@ -84,7 +87,7 @@ export default function SocialLoginButtons({
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${meta.className} ${meta.hoverClass}
               `}
-              aria-label={`Đăng nhập bằng ${meta.label}`}
+              aria-label={t('auth.loginWithProvider', { provider: meta.label })}
             >
               {meta.icon}
               <span>{meta.label}</span>

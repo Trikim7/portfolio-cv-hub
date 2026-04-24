@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 
 type Status = 'processing' | 'success' | 'error'
 
 export default function OAuthCallbackPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [status, setStatus] = useState<Status>('processing')
-  const [message, setMessage] = useState('Đang xác thực tài khoản...')
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -45,7 +47,7 @@ export default function OAuthCallbackPage() {
 
     if (!token) {
       setStatus('error')
-      setMessage('Không nhận được token từ máy chủ.')
+      setMessage(t('oauth.noToken'))
       return
     }
 
@@ -55,17 +57,17 @@ export default function OAuthCallbackPage() {
       window.dispatchEvent(new Event('login'))
     } catch {
       setStatus('error')
-      setMessage('Không thể lưu phiên đăng nhập. Kiểm tra trình duyệt của bạn.')
+      setMessage(t('oauth.cannotSaveSession'))
       return
     }
 
     setStatus('success')
     setMessage(
       isLinked
-        ? `Đã liên kết ${provider} thành công. Đang chuyển hướng...`
+        ? t('oauth.linked', { provider })
         : isNew
-          ? `Tài khoản ${provider} đã được tạo. Đang chuyển hướng...`
-          : `Đăng nhập ${provider} thành công. Đang chuyển hướng...`,
+          ? t('oauth.newAccount', { provider })
+          : t('oauth.loginSuccess', { provider }),
     )
 
     window.history.replaceState(null, '', '/auth/oauth-callback')
@@ -79,7 +81,7 @@ export default function OAuthCallbackPage() {
 
     const timer = window.setTimeout(() => router.push(target), 800)
     return () => window.clearTimeout(timer)
-  }, [router])
+  }, [router, t])
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -87,8 +89,8 @@ export default function OAuthCallbackPage() {
         {status === 'processing' && (
           <>
             <div className="animate-spin w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full mx-auto" />
-            <h1 className="text-xl font-bold text-gray-900">Đang xử lý đăng nhập</h1>
-            <p className="text-gray-600 text-sm">{message}</p>
+            <h1 className="text-xl font-bold text-gray-900">{t('oauth.processing')}</h1>
+            <p className="text-gray-600 text-sm">{message || t('oauth.verifying')}</p>
           </>
         )}
 
@@ -97,7 +99,7 @@ export default function OAuthCallbackPage() {
             <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto text-2xl font-bold">
               ✓
             </div>
-            <h1 className="text-xl font-bold text-emerald-700">Thành công</h1>
+            <h1 className="text-xl font-bold text-emerald-700">{t('oauth.success')}</h1>
             <p className="text-gray-600 text-sm">{message}</p>
           </>
         )}
@@ -107,13 +109,13 @@ export default function OAuthCallbackPage() {
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto text-2xl font-bold">
               ×
             </div>
-            <h1 className="text-xl font-bold text-rose-700">Đăng nhập thất bại</h1>
+            <h1 className="text-xl font-bold text-rose-700">{t('oauth.failed')}</h1>
             <p className="text-gray-600 text-sm break-words">{message}</p>
             <Link
               href="/login"
               className="inline-block mt-2 px-5 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
             >
-              Quay lại trang đăng nhập
+              {t('oauth.backToLogin')}
             </Link>
           </>
         )}

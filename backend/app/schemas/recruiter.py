@@ -148,7 +148,7 @@ class CandidateSearchResult(BaseModel):
     id: int
     user_id: int
     full_name: Optional[str] = None
-    headline: Optional[str] = None
+    headline: LocalizedText = None
     bio: LocalizedText = None
     public_slug: str
     avatar_url: Optional[str] = None

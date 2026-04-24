@@ -2,21 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { CandidateProfile, I18nText } from '@/types'
+import { useTranslation } from 'react-i18next'
+import { CandidateProfile } from '@/types'
 import { apiClient } from '@/services/api'
-
-const i18nToText = (value: I18nText): string => {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.vi || value.en || Object.values(value)[0] || ''
-}
+import { useI18nText } from '@/hooks/useI18nText'
+import { Toast, useToast } from '@/components/Toast'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
 export default function PublicPortfolioPage() {
   const params = useParams()
   const slug = params.slug as string
+  const { t } = useTranslation()
+  const resolveText = useI18nText()
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const { toast, showToast, closeToast } = useToast()
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -25,7 +27,7 @@ export default function PublicPortfolioPage() {
         setProfile(data)
         setError(null)
       } catch (err) {
-        setError('Không tìm thấy portfolio hoặc hồ sơ chưa được công khai')
+        setError(t('portfolio.profileNotFound'))
       } finally {
         setLoading(false)
       }
@@ -34,14 +36,54 @@ export default function PublicPortfolioPage() {
     if (slug) {
       fetchProfile()
     }
-  }, [slug])
+  }, [slug, t])
+
+  const handleDownloadCV = async (cvId: number) => {
+    setDownloading(true)
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const response = await fetch(`${apiUrl}/api/candidate/cvs/download/${cvId}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const errorMsg = errorData.detail || t('common.downloadCV')
+        showToast(errorMsg, 'error')
+        return
+      }
+
+      // Lấy filename từ header
+      const contentDisposition = response.headers.get('content-disposition') || ''
+      let filename = 'cv.pdf'
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1]
+      }
+
+      // Download file
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+
+      showToast(t('common.success'), 'success')
+    } catch (err: any) {
+      showToast(err.message || t('common.error'), 'error')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-500">Đang tải hồ sơ...</p>
+          <p className="text-gray-500">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -51,13 +93,16 @@ export default function PublicPortfolioPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
         <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-md w-full border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy</h2>
+          <div className="absolute top-4 right-4">
+            <LanguageToggle />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{t('common.notFound')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <a
             href="/"
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block"
           >
-            Về trang chủ
+            {t('common.goHome')}
           </a>
         </div>
       </div>
@@ -80,6 +125,13 @@ export default function PublicPortfolioPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
+      {toast && <Toast {...toast} onClose={closeToast} />}
+
+      {/* Language toggle - floating top right */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageToggle />
+      </div>
+
       <div
         className="text-white pt-16 pb-16 px-4 md:px-8 shadow-inner relative overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${primaryColor}dd, ${primaryColor})` }}
@@ -104,7 +156,7 @@ export default function PublicPortfolioPage() {
 
           <div className="flex-1 text-center md:text-left pt-2">
             <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-              {profile.full_name || 'Hồ sơ Ứng viên'}
+              {profile.full_name || t('portfolio.candidateProfile')}
             </h1>
             {profile.headline && (
               <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
@@ -114,15 +166,15 @@ export default function PublicPortfolioPage() {
 
             <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 mb-8 text-blue-100/90 text-sm md:text-base">
               <div className="flex items-center gap-2">
-                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">Địa điểm</span>
-                <span>Hồ Chí Minh, Việt Nam</span>
+                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">{t('portfolio.location')}</span>
+                <span>{t('portfolio.locationValue')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">Email</span>
-                <span>{contactEmail || 'Không công khai'}</span>
+                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">{t('portfolio.email')}</span>
+                <span>{contactEmail || t('common.emailNotPublic')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">Lượt xem</span>
+                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">{t('common.views')}</span>
                 <span>{profile.views || 0}</span>
               </div>
             </div>
@@ -133,7 +185,7 @@ export default function PublicPortfolioPage() {
                   href={`mailto:${contactEmail}`}
                   className="px-8 py-2.5 bg-white text-blue-700 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all active:scale-95"
                 >
-                  Liên hệ ngay
+                  {t('common.contactNow')}
                 </a>
               ) : (
                 <button
@@ -141,19 +193,25 @@ export default function PublicPortfolioPage() {
                   disabled
                   className="px-8 py-2.5 bg-white/40 text-white/90 font-semibold rounded-lg border border-white/40 cursor-not-allowed"
                 >
-                  Chưa công khai email
+                  {t('common.emailNotPublic')}
                 </button>
               )}
 
               {primaryCv ? (
-                <a
-                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/cvs/download/${primaryCv.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white/30 hover:bg-white/30 transition backdrop-blur-sm shadow-lg"
+                <button
+                  onClick={() => handleDownloadCV(primaryCv.id)}
+                  disabled={downloading}
+                  className="px-8 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white/30 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition backdrop-blur-sm shadow-lg flex items-center gap-2"
                 >
-                  Tải CV (PDF)
-                </a>
+                  {downloading ? (
+                    <>
+                      <span className="animate-spin border-2 border-white/50 border-t-white rounded-full w-4 h-4 inline-block" />
+                      {t('common.downloading')}
+                    </>
+                  ) : (
+                    t('common.downloadPDF')
+                  )}
+                </button>
               ) : null}
             </div>
           </div>
@@ -165,21 +223,21 @@ export default function PublicPortfolioPage() {
           <div className="p-8 md:p-10 border-b border-gray-100">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Giới thiệu bản thân
+              {t('portfolio.aboutSelf')}
             </h2>
-            {i18nToText(profile.bio) ? (
+            {resolveText(profile.bio) ? (
               <div className="prose prose-blue max-w-none text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
-                {i18nToText(profile.bio)}
+                {resolveText(profile.bio)}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Ứng viên đang cập nhật phần giới thiệu.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noBioPublic')}</p>
             )}
           </div>
 
           <div className="p-8 md:p-10">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Kỹ năng chuyên môn
+              {t('portfolio.professionalSkills')}
             </h2>
             {profile.skills && profile.skills.length > 0 ? (
               <div className="flex flex-wrap gap-3">
@@ -198,7 +256,7 @@ export default function PublicPortfolioPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Chưa có thông tin kỹ năng.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noSkillsPublic')}</p>
             )}
           </div>
         </div>
@@ -207,7 +265,7 @@ export default function PublicPortfolioPage() {
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Kinh nghiệm
+              {t('portfolio.experience')}
             </h2>
             {profile.experiences && profile.experiences.length > 0 ? (
               <div className="space-y-8">
@@ -226,33 +284,33 @@ export default function PublicPortfolioPage() {
                         })}
                         {' - '}
                         {exp.is_current
-                          ? 'Hiện tại'
+                          ? t('common.present')
                           : new Date(exp.end_date!).toLocaleDateString('vi-VN', {
                               month: '2-digit',
                               year: 'numeric',
                             })}
                       </span>
                     </div>
-                    {i18nToText(exp.description) && (
-                      <p className="text-gray-600 leading-relaxed text-sm">{i18nToText(exp.description)}</p>
+                    {resolveText(exp.description) && (
+                      <p className="text-gray-600 leading-relaxed text-sm">{resolveText(exp.description)}</p>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Không có dữ liệu kinh nghiệm.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noExperience')}</p>
             )}
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Dự án tiêu biểu
+              {t('portfolio.projects')}
             </h2>
             {profile.projects && profile.projects.length > 0 ? (
               <div className="space-y-6">
                 {profile.projects.map((proj) => {
-                  const description = i18nToText(proj.description)
+                  const description = resolveText(proj.description)
                   const projectUrl = proj.project_url || proj.github_url
                   return (
                     <div
@@ -291,7 +349,7 @@ export default function PublicPortfolioPage() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 text-sm font-bold w-fit border-b-2 border-transparent hover:border-blue-600 transition-all pb-0.5"
                           >
-                            XEM CHI TIẾT DỰ ÁN
+                            {t('common.viewProjectDetail')}
                           </a>
                         )}
                       </div>
@@ -300,7 +358,7 @@ export default function PublicPortfolioPage() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Chưa có dự án nào được công khai.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noProjects')}</p>
             )}
           </div>
         </div>

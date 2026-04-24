@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/services/api'
 import { Toast, useToast } from '@/components/Toast'
+import { useTranslation } from 'react-i18next'
 
 interface JobRequirement {
   id: number
@@ -26,6 +27,7 @@ export default function JobRequirementList({
   refreshTrigger = 0,
   onEdit,
 }: JobRequirementListProps) {
+  const { t } = useTranslation()
   const [jobs, setJobs] = useState<JobRequirement[]>([])
   const [loading, setLoading] = useState(true)
   const [activeOnly, setActiveOnly] = useState(true)
@@ -43,28 +45,28 @@ export default function JobRequirementList({
       })
       setJobs(data)
     } catch (err: any) {
-      showToast('Không thể tải danh sách công việc', 'error')
+      showToast(t('jobList.loadError'), 'error')
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (jobId: number) => {
-    if (!window.confirm('Bạn có chắc muốn xóa yêu cầu công việc này?')) {
+    if (!window.confirm(t('jobList.confirmDelete'))) {
       return
     }
 
     try {
       await apiClient.delete(`/api/recruiter/job-requirements/${jobId}`)
-      showToast('Đã xóa yêu cầu công việc', 'success')
+      showToast(t('jobList.deleteSuccess'), 'success')
       fetchJobRequirements()
     } catch (err: any) {
-      showToast('Không thể xóa', 'error')
+      showToast(t('jobList.deleteError'), 'error')
     }
   }
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>
+    return <div className="text-center py-8">{t('common.loading')}</div>
   }
 
   return (
@@ -78,14 +80,14 @@ export default function JobRequirementList({
             onChange={(e) => setActiveOnly(e.target.checked)}
             className="w-4 h-4 rounded border-gray-300"
           />
-          <span className="text-sm text-gray-700">Chỉ hiển thị công việc đang mở</span>
+          <span className="text-sm text-gray-700">{t('jobList.showActiveOnly')}</span>
         </label>
       </div>
 
       {/* Jobs List */}
       {jobs.length === 0 ? (
         <div className="bg-gray-50 rounded-lg p-8 text-center">
-          <p className="text-gray-600">Chưa có yêu cầu công việc nào</p>
+          <p className="text-gray-600">{t('jobList.noJobsFound')}</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -105,13 +107,13 @@ export default function JobRequirementList({
                           : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {job.is_active ? 'Đang mở' : 'Đóng'}
+                      {job.is_active ? t('jobList.activeStatus') : t('jobList.closedStatus')}
                     </span>
                   </div>
 
                   {/* Skills */}
                   <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-1">Kỹ năng:</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('jobList.skillsLabel')}</p>
                     <div className="flex flex-wrap gap-2">
                       {job.required_skills.map((skill, idx) => (
                         <span
@@ -129,34 +131,34 @@ export default function JobRequirementList({
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     {job.years_experience && (
                       <div>
-                        <span className="text-gray-500">Kinh nghiệm: </span>
-                        <span className="font-medium">{job.years_experience} năm</span>
+                        <span className="text-gray-500">{t('jobList.experienceLabel')} </span>
+                        <span className="font-medium">{job.years_experience} {t('jobList.years')}</span>
                       </div>
                     )}
                     {job.required_role && (
                       <div>
-                        <span className="text-gray-500">Vai trò: </span>
+                        <span className="text-gray-500">{t('jobList.roleLabel')} </span>
                         <span className="font-medium">{job.required_role}</span>
                       </div>
                     )}
                     {job.customer_facing && (
                       <div className="col-span-2">
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-orange-50 text-orange-700">
-                          👥 Giao tiếp với khách hàng
+                          👥 {t('jobList.customerFacing')}
                         </span>
                       </div>
                     )}
                     {job.is_management_role && (
                       <div className="col-span-2">
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-purple-50 text-purple-700">
-                          👔 Vị trí quản lý
+                          👔 {t('jobList.managementRole')}
                         </span>
                       </div>
                     )}
                   </div>
 
                   <p className="text-xs text-gray-400 mt-3">
-                    Cập nhật: {new Date(job.updated_at).toLocaleDateString('vi-VN')}
+                    {t('jobList.updatedAt')} {new Date(job.updated_at).toLocaleDateString('vi-VN')}
                   </p>
                 </div>
 
@@ -166,13 +168,13 @@ export default function JobRequirementList({
                     onClick={() => onEdit(job.id)}
                     className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium"
                   >
-                    Sửa
+                    {t('common.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(job.id)}
                     className="px-4 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium"
                   >
-                    Xóa
+                    {t('common.delete')}
                   </button>
                 </div>
               </div>
