@@ -21,6 +21,7 @@ import DashboardShell, {
   StatCard,
 } from '@/components/layout/DashboardShell'
 import { useTranslation } from 'react-i18next'
+import { useI18nText } from '@/hooks/useI18nText'
 
 type CandidateSection =
   | 'overview'
@@ -63,6 +64,7 @@ const SECTION_ORDER: CandidateSection[] = [
 function DashboardContent() {
   const { profile, loading, error, refreshProfile } = useProfileContext()
   const { t } = useTranslation()
+  const resolveText = useI18nText()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [section, setSection] = useState<CandidateSection>(() => {
@@ -132,6 +134,8 @@ function DashboardContent() {
     return null
   }
 
+  const fullName = resolveText(profile.full_name as any)
+
   const missing: { id: CandidateSection; label: string }[] = []
   if (!profile.full_name || !profile.headline)
     missing.push({ id: 'profile', label: t('dashboard.addPersonalInfo') })
@@ -145,9 +149,9 @@ function DashboardContent() {
   return (
     <DashboardShell
       accent="blue"
-      title={profile.full_name || t('dashboard.title')}
+      title={fullName || t('dashboard.title')}
       subtitle={t('dashboard.hello')}
-      userName={profile.full_name || undefined}
+      userName={fullName || undefined}
       userAvatarUrl={profile.avatar_url || null}
       onAvatarClick={handleAvatarClick}
       badge={avatarUploading ? t('dashboard.uploading') : (profile.is_public ? t('dashboard.public') : t('dashboard.notPublic'))}

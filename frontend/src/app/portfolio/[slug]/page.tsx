@@ -9,9 +9,25 @@ import { useI18nText } from '@/hooks/useI18nText'
 import { Toast, useToast } from '@/components/Toast'
 import LanguageToggle from '@/components/layout/LanguageToggle'
 
+const normalizeProfile = (data: CandidateProfile): CandidateProfile => ({
+  ...data,
+  skills: Array.isArray(data.skills) ? data.skills : [],
+  experiences: Array.isArray(data.experiences) ? data.experiences : [],
+  projects: Array.isArray(data.projects) ? data.projects : [],
+  cvs: Array.isArray(data.cvs) ? data.cvs : [],
+})
+
+const formatMonthYear = (value: string | undefined) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' })
+}
+
 export default function PublicPortfolioPage() {
   const params = useParams()
-  const slug = params.slug as string
+  const rawSlug = params.slug
+  const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug
   const { t } = useTranslation()
   const resolveText = useI18nText()
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
@@ -20,11 +36,20 @@ export default function PublicPortfolioPage() {
   const [downloading, setDownloading] = useState(false)
   const { toast, showToast, closeToast } = useToast()
 
+  const asText = (value: unknown): string => {
+    if (!value) return ''
+    if (typeof value === 'string') return value
+    if (typeof value === 'object' && !Array.isArray(value)) return resolveText(value as any)
+    return ''
+  }
+
   useEffect(() => {
+    if (!slug) return
+
     const fetchProfile = async () => {
       try {
         const data = await apiClient.getPublicProfile(slug)
-        setProfile(data)
+        setProfile(normalizeProfile(data))
         setError(null)
       } catch (err) {
         setError(t('portfolio.profileNotFound'))
@@ -33,9 +58,7 @@ export default function PublicPortfolioPage() {
       }
     }
 
-    if (slug) {
-      fetchProfile()
-    }
+    fetchProfile()
   }, [slug, t])
 
   const handleDownloadCV = async (cvId: number) => {
@@ -117,7 +140,9 @@ export default function PublicPortfolioPage() {
   }
 
   const primaryCv = profile.cvs.find((cv) => cv.is_primary) || profile.cvs[0]
-  const contactEmail = profile.contact_email?.trim() || ''
+  const contactEmail = asText(profile.contact_email).trim()
+  const fullName = asText(profile.full_name)
+  const headline = asText(profile.headline)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileAny = profile as any
@@ -144,23 +169,23 @@ export default function PublicPortfolioPage() {
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
-                alt={profile.full_name || 'Avatar'}
+                alt={fullName || 'Avatar'}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover shadow-2xl border-4 border-white/20 bg-white/10"
               />
             ) : (
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-[#3b82f6] shadow-2xl border-4 border-white/20 flex items-center justify-center text-5xl md:text-6xl font-bold tracking-tighter shadow-blue-900/20">
-                {getInitials(profile.full_name || 'N')}
+                {getInitials(fullName || 'N')}
               </div>
             )}
           </div>
 
           <div className="flex-1 text-center md:text-left pt-2">
             <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-              {profile.full_name || t('portfolio.candidateProfile')}
+              {fullName || t('portfolio.candidateProfile')}
             </h1>
-            {profile.headline && (
+            {headline && (
               <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
-                {profile.headline}
+                {headline}
               </p>
             )}
 
@@ -246,8 +271,8 @@ export default function PublicPortfolioPage() {
                     key={skill.id}
                     className="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-full shadow-md hover:bg-blue-700 transition cursor-default flex items-center gap-2"
                   >
-                    {skill.name}
-                    {skill.level && (
+                    {asText(skill.name)}
+                    {typeof skill.level === 'string' && skill.level && (
                       <span className="opacity-70 text-xs font-normal border-l border-white/30 pl-2">
                         {skill.level.toUpperCase()}
                       </span>
@@ -272,23 +297,17 @@ export default function PublicPortfolioPage() {
                 {profile.experiences.map((exp) => (
                   <div key={exp.id} className="relative pl-8 border-l-2 border-blue-100 last:pb-0">
                     <div className="absolute w-4 h-4 bg-blue-600 rounded-full -left-[9px] top-1.5 border-4 border-white ring-1 ring-blue-100 shadow-sm"></div>
-                    <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{exp.job_title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{asText(exp.job_title)}</h3>
                     <div className="text-blue-600 font-bold mb-2 uppercase text-sm tracking-wider">
-                      {exp.company_name}
+                      {asText(exp.company_name)}
                     </div>
                     <div className="text-sm text-gray-500 mb-4 font-medium flex items-center gap-2">
                       <span className="bg-gray-100 px-2 py-1 rounded">
-                        {new Date(exp.start_date).toLocaleDateString('vi-VN', {
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
+                        {formatMonthYear(exp.start_date)}
                         {' - '}
                         {exp.is_current
                           ? t('common.present')
-                          : new Date(exp.end_date!).toLocaleDateString('vi-VN', {
-                              month: '2-digit',
-                              year: 'numeric',
-                            })}
+                          : formatMonthYear(exp.end_date)}
                       </span>
                     </div>
                     {resolveText(exp.description) && (
@@ -311,22 +330,22 @@ export default function PublicPortfolioPage() {
               <div className="space-y-6">
                 {profile.projects.map((proj) => {
                   const description = resolveText(proj.description)
-                  const projectUrl = proj.project_url || proj.github_url
+                  const projectUrl = asText(proj.project_url) || asText(proj.github_url)
                   return (
                     <div
                       key={proj.id}
                       className="group p-6 rounded-2xl border border-gray-100 bg-gray-50/30 hover:bg-white hover:border-blue-200 hover:shadow-lg transition-all duration-300"
                     >
                       <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors uppercase">
-                        {proj.project_name}
+                        {asText(proj.project_name)}
                       </h3>
-                      {proj.role && <p className="text-sm text-blue-600 mb-2 font-medium">{proj.role}</p>}
+                      {asText(proj.role) && <p className="text-sm text-blue-600 mb-2 font-medium">{asText(proj.role)}</p>}
                       {description && (
                         <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{description}</p>
                       )}
 
                       <div className="flex flex-col gap-4 mt-auto">
-                        {proj.technologies && (
+                        {typeof proj.technologies === 'string' && proj.technologies && (
                           <div className="flex flex-wrap gap-2 text-[10px]">
                             {proj.technologies
                               .split(',')

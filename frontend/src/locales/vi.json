@@ -14,9 +14,15 @@
     "success": "Thành công",
     "error": "Có lỗi xảy ra",
     "contact": "Liên hệ",
+    "contactNow": "Liên hệ ngay",
     "vietnam": "Việt Nam",
     "present": "Hiện tại",
-    "viewProject": "Xem dự án"
+    "viewProject": "Xem dự án",
+    "viewProjectDetail": "Xem chi tiết dự án",
+    "downloadPDF": "Tải PDF",
+    "emailNotPublic": "Email chưa công khai",
+    "goHome": "Về trang chủ",
+    "notFound": "Không tìm thấy"
   },
   "navbar": {
     "profile": "Hồ sơ",

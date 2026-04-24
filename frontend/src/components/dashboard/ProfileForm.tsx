@@ -6,10 +6,55 @@ import { useProfileContext } from '@/hooks/ProfileContext'
 import { CandidateProfile, I18nText } from '@/types'
 import { Toast, useToast } from '@/components/Toast'
 
+const tryParseJsonObject = (raw: string): unknown => {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return raw
+  }
+}
+
+const unwrapI18nLikeString = (input: string): string => {
+  let current: unknown = input
+
+  for (let i = 0; i < 4; i++) {
+    if (typeof current === 'string') {
+      const trimmed = current.trim()
+      if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return trimmed
+      const parsed = tryParseJsonObject(trimmed)
+      if (parsed === current) return trimmed
+      current = parsed
+      continue
+    }
+
+    if (current && typeof current === 'object' && !Array.isArray(current)) {
+      const record = current as Record<string, unknown>
+      if (typeof record.vi === 'string') {
+        current = record.vi
+        continue
+      }
+      if (typeof record.en === 'string') {
+        current = record.en
+        continue
+      }
+      const firstString = Object.values(record).find((v) => typeof v === 'string')
+      if (typeof firstString === 'string') {
+        current = firstString
+        continue
+      }
+    }
+    break
+  }
+
+  return typeof current === 'string' ? current : ''
+}
+
 const i18nToText = (value: I18nText): string => {
   if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.vi || value.en || Object.values(value)[0] || ''
+  if (typeof value === 'string') return unwrapI18nLikeString(value)
+  if (typeof value !== 'object' || Array.isArray(value)) return ''
+  const picked = value.vi || value.en || Object.values(value)[0] || ''
+  return typeof picked === 'string' ? unwrapI18nLikeString(picked) : ''
 }
 
 export default function ProfileForm() {
@@ -29,15 +74,17 @@ export default function ProfileForm() {
 
   useEffect(() => {
     if (profile) {
+      const fullNameText = i18nToText(profile.full_name as I18nText)
+      const headlineText = i18nToText(profile.headline as I18nText)
       const bioText = i18nToText(profile.bio)
-      setFullName(profile.full_name || '')
-      setHeadline(profile.headline || '')
+      setFullName(fullNameText)
+      setHeadline(headlineText)
       setBio(bioText)
       setIsPublic(profile.is_public || false)
-      if (profile.full_name || profile.headline || bioText) {
+      if (fullNameText || headlineText || bioText) {
         setSavedData({
-          full_name: profile.full_name || '',
-          headline: profile.headline || '',
+          full_name: fullNameText,
+          headline: headlineText,
           bio: bioText,
         })
       }
@@ -46,18 +93,25 @@ export default function ProfileForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fullName.trim()) {
+    const normalizedFullName = fullName.trim()
+    const normalizedHeadline = unwrapI18nLikeString(headline).trim()
+    const normalizedBio = unwrapI18nLikeString(bio).trim()
+
+    if (!normalizedFullName) {
       showToast(t('profile.nameRequired'), 'error')
       return
     }
     try {
       const data: Partial<CandidateProfile> = {
-        full_name: fullName,
-        headline: headline,
-        bio: bio ? { vi: bio } : undefined,
+        full_name: normalizedFullName,
+        headline: normalizedHeadline,
+        bio: normalizedBio ? { vi: normalizedBio } : undefined,
       }
       await updateProfile(data)
-      setSavedData({ full_name: fullName, headline: headline, bio: bio })
+      setFullName(normalizedFullName)
+      setHeadline(normalizedHeadline)
+      setBio(normalizedBio)
+      setSavedData({ full_name: normalizedFullName, headline: normalizedHeadline, bio: normalizedBio })
       showToast(t('profile.updated'), 'success')
     } catch {
       showToast(t('profile.updateFailed'), 'error')

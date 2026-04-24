@@ -100,7 +100,7 @@ function SearchPageInner() {
               <ChevronLeft className="w-4 h-4" />
               {t('common.home')}
             </Link>
-            <LanguageToggle />
+            <LanguageToggle variant="light" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold">{t('searchPage.title')}</h1>
           <p className="mt-2 text-blue-200 text-sm">{t('searchPage.subtitle')}</p>

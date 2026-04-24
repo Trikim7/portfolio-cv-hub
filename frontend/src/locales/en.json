@@ -6,7 +6,14 @@
     "all": "All",
     "refresh": "Refresh",
     "logout": "Logout",
-    "views": "views"
+    "views": "views",
+    "present": "Present",
+    "contactNow": "Contact now",
+    "downloadPDF": "Download PDF",
+    "emailNotPublic": "Email not public",
+    "viewProjectDetail": "View project details",
+    "goHome": "Go home",
+    "notFound": "Not found"
   },
   "navbar": {
     "profile": "Profile",

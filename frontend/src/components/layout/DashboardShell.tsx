@@ -415,7 +415,7 @@ export function PageShell({
                 </Link>
               )}
               {headerAction}
-              <LanguageToggle />
+              <LanguageToggle variant="light" />
               <button
                 type="button"
                 onClick={handleLogout}
