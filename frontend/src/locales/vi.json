@@ -6,7 +6,17 @@
     "all": "Tất cả",
     "refresh": "Làm mới",
     "logout": "Đăng xuất",
-    "views": "lượt xem"
+    "views": "lượt xem",
+    "downloading": "Đang tải xuống...",
+    "downloadFailed": "Tải xuống thất bại",
+    "downloadCV": "Tải CV",
+    "noCVYet": "Chưa có CV",
+    "success": "Thành công",
+    "error": "Có lỗi xảy ra",
+    "contact": "Liên hệ",
+    "vietnam": "Việt Nam",
+    "present": "Hiện tại",
+    "viewProject": "Xem dự án"
   },
   "navbar": {
     "profile": "Hồ sơ",
@@ -898,7 +908,8 @@
     "compare": "So sánh",
     "needCriteria": "Nhập ít nhất một tiêu chí để tìm kiếm",
     "found": "Tìm thấy",
-    "searchFailed": "Tìm kiếm thất bại"
+    "searchFailed": "Tìm kiếm thất bại",
+    "maxCompareReached": "Tối đa {{max}} ứng viên để so sánh"
   },
   "comparison": {
     "title": "So sánh ứng viên",

@@ -62,14 +62,13 @@ class SearchService:
     ) -> List:
         """Search public candidates with filters"""
         from app.models.candidate import CandidateProfile, Skill, Experience
-        from sqlalchemy import cast, String as SAString
+        from sqlalchemy import cast, String as SAString, exists
         from datetime import datetime
 
         query = db.query(CandidateProfile).filter(CandidateProfile.is_public == True)  # noqa: E712
 
         if keyword:
             keyword_filter = f"%{keyword}%"
-            from sqlalchemy import exists
             # Search across: full_name, headline, bio (JSONB cast), AND skill names
             skill_subq = exists().where(
                 (Skill.candidate_id == CandidateProfile.id)
@@ -82,54 +81,43 @@ class SearchService:
                 | skill_subq
             )
 
+        # Use EXISTS subquery for skill — avoids JOIN conflict with experience group_by
         if skill:
-            skill_filter = f"%{skill}%"
-            query = query.join(Skill).filter(Skill.name.ilike(skill_filter)).distinct()
+            for sk in [s.strip() for s in skill.split(',') if s.strip()]:
+                skill_exists = exists().where(
+                    (Skill.candidate_id == CandidateProfile.id)
+                    & Skill.name.ilike(f"%{sk}%")
+                )
+                query = query.filter(skill_exists)
 
-        # Filter by experience level based on years of work
+        # Filter by experience level using correlated scalar subquery (no group_by conflict)
         if experience_level:
-            from app.models.candidate import ExperienceLevel
             now = datetime.utcnow()
-            
-            # Join with Experiences to calculate total years
-            query = query.outerjoin(Experience).group_by(CandidateProfile.id)
-            
-            if experience_level.lower() == "fresher":
-                # 0-1 year
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ) < 1) | (func.count(Experience.id) == 0)
+            exp_years_subq = (
+                db.query(
+                    func.coalesce(
+                        func.sum(
+                            func.extract(
+                                'epoch',
+                                func.coalesce(Experience.end_date, now) - Experience.start_date
+                            ) / (365.25 * 24 * 3600)
+                        ),
+                        0
+                    )
                 )
-            elif experience_level.lower() == "junior":
-                # 1-3 years
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ).between(1, 3))
-                )
-            elif experience_level.lower() == "mid":
-                # 3-5 years
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ).between(3, 5))
-                )
-            elif experience_level.lower() == "senior":
-                # 5+ years
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ) >= 5)
-                )
+                .filter(Experience.candidate_id == CandidateProfile.id)
+                .correlate(CandidateProfile)
+                .scalar_subquery()
+            )
+            lvl = experience_level.lower()
+            if lvl == "fresher":
+                query = query.filter(exp_years_subq < 1)
+            elif lvl == "junior":
+                query = query.filter(exp_years_subq >= 1, exp_years_subq < 3)
+            elif lvl == "mid":
+                query = query.filter(exp_years_subq >= 3, exp_years_subq < 5)
+            elif lvl == "senior":
+                query = query.filter(exp_years_subq >= 5)
 
         # Filter by location (if CandidateProfile has location field, otherwise skip)
         if location:

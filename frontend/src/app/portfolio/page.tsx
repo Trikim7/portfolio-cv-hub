@@ -20,6 +20,8 @@ export default function CandidatePortfolioPreviewPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [downloadingCv, setDownloadingCv] = useState(false)
+  const [cvToast, setCvToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -44,6 +46,37 @@ export default function CandidatePortfolioPreviewPage() {
 
     if (isLoggedIn) fetchData()
   }, [isLoggedIn, authLoading, router, t])
+
+  const handleDownloadCV = async (cvId: number) => {
+    setDownloadingCv(true)
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      const response = await fetch(`${apiUrl}/api/candidate/cvs/download/${cvId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        setCvToast({ msg: data.detail || t('common.downloadFailed'), type: 'error' })
+        setTimeout(() => setCvToast(null), 4000)
+        return
+      }
+      const contentDisposition = response.headers.get('content-disposition') || ''
+      const match = contentDisposition.match(/filename="?([^"]+)"?/)
+      const filename = (match && match[1]) || 'cv.pdf'
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = filename
+      document.body.appendChild(a); a.click(); a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      setCvToast({ msg: err.message || t('common.error'), type: 'error' })
+      setTimeout(() => setCvToast(null), 4000)
+    } finally {
+      setDownloadingCv(false)
+    }
+  }
 
   if (authLoading || loading) {
     return (
@@ -84,6 +117,12 @@ export default function CandidatePortfolioPreviewPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
+      {/* CV download toast */}
+      {cvToast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium text-white ${cvToast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          {cvToast.msg}
+        </div>
+      )}
       {/* Preview top bar */}
       <div className="bg-gray-900 text-white py-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -156,12 +195,13 @@ export default function CandidatePortfolioPreviewPage() {
                   {t('common.contact')}
                 </a>
                 {primaryCv ? (
-                  <a
-                    href={`/api/candidate/cvs/download/${primaryCv.id}`}
-                    className="bg-white/10 hover:bg-white/20 backdrop-blur ring-1 ring-white/30 px-5 py-2.5 rounded-xl text-sm font-semibold transition"
+                  <button
+                    onClick={() => handleDownloadCV(primaryCv.id)}
+                    disabled={downloadingCv}
+                    className="bg-white/10 hover:bg-white/20 backdrop-blur ring-1 ring-white/30 px-5 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-60"
                   >
-                    {t('common.downloadCV')}
-                  </a>
+                    {downloadingCv ? '⏳ ' + t('common.downloading') : t('common.downloadCV')}
+                  </button>
                 ) : (
                   <button
                     disabled

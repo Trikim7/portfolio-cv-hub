@@ -141,7 +141,7 @@ export default function DashboardShell({
               Portfolio CV Hub
             </Link>
             <div className="flex items-center gap-2">
-              <LanguageToggle />
+              <LanguageToggle variant="light" />
               <button
                 type="button"
                 onClick={handleLogout}
