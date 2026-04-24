@@ -9,6 +9,7 @@ Architecture (theo phase2-execution.md §4 CV Generator Playbook):
 from __future__ import annotations
 
 import io
+import json
 from datetime import datetime
 from typing import Optional
 
@@ -231,12 +232,49 @@ class CVDataAssembler:
     """Gom và chuẩn hóa dữ liệu portfolio từ DB thành dict CV chuẩn."""
 
     @staticmethod
+    def _unwrap_i18n_string(value: str, locale: str) -> str:
+        current = value
+
+        for _ in range(4):
+            if not isinstance(current, str):
+                break
+
+            trimmed = current.strip()
+            if not trimmed or trimmed[0] not in "{[":
+                return trimmed
+
+            try:
+                parsed = json.loads(trimmed)
+            except Exception:
+                return trimmed
+
+            if isinstance(parsed, dict):
+                current = (
+                    parsed.get(locale)
+                    or parsed.get("vi")
+                    or parsed.get("en")
+                    or next((v for v in parsed.values() if isinstance(v, str)), "")
+                )
+                if not isinstance(current, str):
+                    return ""
+                continue
+
+            if isinstance(parsed, str):
+                current = parsed
+                continue
+
+            return ""
+
+        return current.strip() if isinstance(current, str) else ""
+
+    @staticmethod
     def _resolve_i18n(value, locale: str) -> str:
         if value is None:
             return ""
         if isinstance(value, dict):
-            return value.get(locale) or value.get("vi") or value.get("en") or ""
-        return str(value)
+            picked = value.get(locale) or value.get("vi") or value.get("en") or ""
+            return CVDataAssembler._unwrap_i18n_string(str(picked), locale) if picked else ""
+        return CVDataAssembler._unwrap_i18n_string(str(value), locale)
 
     @staticmethod
     def _format_period(
@@ -244,16 +282,17 @@ class CVDataAssembler:
     ) -> str:
         fmt = "%m/%Y"
         start_str = start.strftime(fmt) if start else "?"
-        if is_current:
-            return f"{start_str} – {'Hiện tại' if locale == 'vi' else 'Present'}"
-        return f"{start_str} – {end.strftime(fmt) if end else '?'}"
+        present_label = "Hiện tại" if locale == "vi" else "Present"
+        if is_current or end is None:
+            return f"{start_str} – {present_label}"
+        return f"{start_str} – {end.strftime(fmt)}"
 
     @classmethod
     def assemble(cls, profile: CandidateProfile, locale: str = "vi") -> dict:
         bio_text = cls._resolve_i18n(profile.bio, locale)
         personal = {
-            "full_name": profile.full_name or "",
-            "headline": profile.headline or "",
+            "full_name": cls._resolve_i18n(profile.full_name, locale),
+            "headline": cls._resolve_i18n(profile.headline, locale),
             "email": profile.user.email if profile.user else "",
             "phone": "",
             "location": "",
