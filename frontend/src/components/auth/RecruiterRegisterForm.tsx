@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
 import { Toast, useToast } from '@/components/Toast'
 import { useAuth } from '@/hooks/AuthContext'
@@ -18,6 +19,7 @@ const decodeToken = (token: string): { role?: string } => {
 }
 
 export default function RecruiterRegisterForm() {
+  const { t } = useTranslation()
   const router = useRouter()
   const { checkAuth } = useAuth()
   const { toast, showToast, closeToast } = useToast()
@@ -32,7 +34,7 @@ export default function RecruiterRegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password || !companyName) {
-      showToast('Vui lòng điền đầy đủ thông tin', 'error')
+      showToast(t('auth.fillAllFields') || 'Please fill in all required fields', 'error')
       return
     }
 
@@ -53,13 +55,13 @@ export default function RecruiterRegisterForm() {
         // Notify AuthContext to update
         checkAuth()
       }
-      showToast('✓ Đăng ký thành công!', 'success')
+        showToast(t('auth.registerSuccess') || '✓ Registration successful!', 'success')
       // Small delay to ensure state updates before navigation
       setTimeout(() => {
         router.push('/recruiter/dashboard')
       }, 100)
     } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Đăng ký thất bại', 'error')
+      showToast(err.response?.data?.detail || t('auth.registerFailed') || 'Registration failed', 'error')
     } finally {
       setLoading(false)
     }
@@ -67,11 +69,11 @@ export default function RecruiterRegisterForm() {
 
   return (
     <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-      <h2 className="text-2xl font-bold mb-6">Đăng ký Doanh nghiệp</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('auth.registerAsCompany')}</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
           <input
             type="email"
             value={email}
@@ -82,7 +84,7 @@ export default function RecruiterRegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
           <input
             type="password"
             value={password}
@@ -93,7 +95,7 @@ export default function RecruiterRegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tên công ty</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.companyName')}</label>
           <input
             type="text"
             value={companyName}
@@ -104,18 +106,18 @@ export default function RecruiterRegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Địa điểm</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.location')}</label>
           <input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Hà Nội"
+            placeholder={t('auth.locationPlaceholder') || 'Hanoi, Vietnam'}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.website')}</label>
           <input
             type="url"
             value={website}
@@ -130,7 +132,7 @@ export default function RecruiterRegisterForm() {
           disabled={loading}
           className="w-full px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 transition"
         >
-          {loading ? 'Đang xử lý...' : 'Đăng ký'}
+          {loading ? t('auth.processing') : t('auth.registerButton')}
         </button>
       </form>
 

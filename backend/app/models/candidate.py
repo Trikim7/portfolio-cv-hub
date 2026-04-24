@@ -27,7 +27,8 @@ class CandidateProfile(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
     )
     full_name = Column(String(255), nullable=True)
-    headline = Column(String(255), nullable=True)  # Phase 2: renamed from `title`
+    # i18n headline: {"vi": "...", "en": "..."}
+    headline = Column(JSONB, nullable=True)  # Phase 2: renamed from `title`
     # i18n bio: {"vi": "...", "en": "..."}
     bio = Column(JSONB, nullable=True)
     avatar_url = Column(String(500), nullable=True)

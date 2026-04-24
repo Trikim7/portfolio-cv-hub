@@ -148,9 +148,9 @@ class CandidateSearchResult(BaseModel):
     id: int
     user_id: int
     full_name: Optional[str] = None
-    headline: Optional[str] = None
-    bio: LocalizedText = None
-    public_slug: str
+    headline: Optional[object] = None   # str or {vi/en} dict — accept both
+    bio: Optional[object] = None        # str or {vi/en} dict — accept both
+    public_slug: Optional[str] = None
     avatar_url: Optional[str] = None
     skills: List[str] = []
 

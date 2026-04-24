@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import RegisterForm from '@/components/auth/RegisterForm'
 import RecruiterRegisterForm from '@/components/auth/RecruiterRegisterForm'
 
 export default function RegisterPage() {
+  const { t } = useTranslation()
   const [role, setRole] = useState<'candidate' | 'recruiter' | null>(null)
 
   if (role === null) {
@@ -21,11 +23,11 @@ export default function RegisterPage() {
                 href="/login"
                 className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium transition ring-1 ring-white/20"
               >
-                Đăng nhập
+                {t('auth.loginTitle')}
               </Link>
             </div>
-            <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Đăng ký</p>
-            <h1 className="text-2xl sm:text-3xl font-extrabold">Bạn là ai?</h1>
+            <p className="text-white/80 text-xs font-medium uppercase tracking-wider">{t('auth.registerTitle')}</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold">{t('auth.registerPageTitle')}</h1>
           </div>
         </div>
 
@@ -36,14 +38,14 @@ export default function RegisterPage() {
               className="group bg-white border border-gray-200 rounded-2xl p-6 text-left hover:border-blue-400 hover:shadow-md transition"
             >
               <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-                Ứng viên
+                {t('auth.candidate')}
               </p>
-              <h2 className="mt-2 text-xl font-bold text-gray-900">Tôi tìm việc</h2>
+              <h2 className="mt-2 text-xl font-bold text-gray-900">{t('auth.lookingForJob')}</h2>
               <p className="mt-2 text-sm text-gray-600">
-                Tạo hồ sơ, quản lý portfolio và nhận lời mời từ các doanh nghiệp.
+                {t('auth.createProfileAndPortfolio')}
               </p>
               <span className="mt-4 inline-block text-sm font-semibold text-blue-700 group-hover:translate-x-1 transition">
-                Đăng ký ứng viên →
+                {t('auth.registerAsCandidate')}
               </span>
             </button>
 
@@ -52,22 +54,22 @@ export default function RegisterPage() {
               className="group bg-white border border-gray-200 rounded-2xl p-6 text-left hover:border-purple-400 hover:shadow-md transition"
             >
               <p className="text-xs font-semibold uppercase tracking-wider text-purple-700">
-                Doanh nghiệp
+                {t('auth.company')}
               </p>
-              <h2 className="mt-2 text-xl font-bold text-gray-900">Tôi tuyển dụng</h2>
+              <h2 className="mt-2 text-xl font-bold text-gray-900">{t('auth.hiringCandidates')}</h2>
               <p className="mt-2 text-sm text-gray-600">
-                Đăng ký công ty để tìm kiếm ứng viên và gửi lời mời.
+                {t('auth.postJobsAndFindCandidates')}
               </p>
               <span className="mt-4 inline-block text-sm font-semibold text-purple-700 group-hover:translate-x-1 transition">
-                Đăng ký doanh nghiệp →
+                {t('auth.registerAsCompany')}
               </span>
             </button>
           </div>
 
           <p className="text-center text-sm text-gray-600 mt-8">
-            Đã có tài khoản?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <Link href="/login" className="text-blue-700 font-semibold hover:underline">
-              Đăng nhập
+              {t('auth.loginTitle')}
             </Link>
           </p>
         </div>
@@ -88,12 +90,12 @@ export default function RegisterPage() {
               onClick={() => setRole(null)}
               className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium transition ring-1 ring-white/20"
             >
-              Đổi vai trò
+              {t('register.changeRole')}
             </button>
           </div>
-          <p className="text-white/80 text-xs font-medium uppercase tracking-wider">Đăng ký</p>
+          <p className="text-white/80 text-xs font-medium uppercase tracking-wider">{t('auth.registerTitle')}</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold">
-            {role === 'candidate' ? 'Ứng viên' : 'Doanh nghiệp'}
+            {role === 'candidate' ? t('register.candidate') : t('register.company')}
           </h1>
         </div>
       </div>

@@ -1,10 +1,11 @@
 'use client'
 
 import React from 'react'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
+import { useI18nText } from '@/hooks/useI18nText'
 import { apiClient } from '@/services/api'
 import { Code2, Globe, Palette, Send, Users, Eye, Search } from 'lucide-react'
 
@@ -26,25 +27,6 @@ const FALLBACK_CANDIDATES: DisplayCandidate[] = [
   { id: 4, full_name: 'Phạm Đức D', headline: 'Fullstack Engineer', public_slug: '', skills: ['Node.js', 'React', 'Docker'], views: 278 },
 ]
 
-const HOW_STEPS: { icon: React.ReactNode; label: string; desc: string }[] = [
-  {
-    icon: <Code2 className="w-6 h-6" />,
-    label: 'Tạo Portfolio', desc: 'Điền thông tin cá nhân, kỹ năng và dự án',
-  },
-  {
-    icon: <Globe className="w-6 h-6" />,
-    label: 'Chia sẻ Link', desc: 'Portfolio public với đường dẫn riêng',
-  },
-  {
-    icon: <Palette className="w-6 h-6" />,
-    label: 'Thu hút DN', desc: 'Doanh nghiệp tìm kiếm và xem hồ sơ',
-  },
-  {
-    icon: <Send className="w-6 h-6" />,
-    label: 'Nhận lời mời', desc: 'Kết nối trực tiếp với nhà tuyển dụng',
-  },
-]
-
 const QUICK_TAGS = ['React', 'Python', 'UI/UX', 'DevOps', 'Data Science']
 
 // ─── Avatar initials helper ───────────────────────────────────────────────────
@@ -60,6 +42,8 @@ const AVATAR_COLORS = [
 ]
 
 export default function HomePage() {
+  const { t } = useTranslation()
+  const resolveText = useI18nText()
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [featured, setFeatured] = useState<DisplayCandidate[]>([])
@@ -69,6 +53,30 @@ export default function HomePage() {
     total_views: number
     total_invitations: number
   } | null>(null)
+
+  // Generate HOW_STEPS dynamically based on language
+  const howSteps = useMemo(() => [
+    {
+      icon: <Code2 className="w-6 h-6" />,
+      label: t('home.createPortfolio'),
+      desc: t('home.createPortfolioDesc'),
+    },
+    {
+      icon: <Globe className="w-6 h-6" />,
+      label: t('home.shareLink'),
+      desc: t('home.shareLinkDesc'),
+    },
+    {
+      icon: <Palette className="w-6 h-6" />,
+      label: t('home.attractCompanies'),
+      desc: t('home.attractCompaniesDesc'),
+    },
+    {
+      icon: <Send className="w-6 h-6" />,
+      label: t('home.receiveInvites'),
+      desc: t('home.receiveInvitesDesc'),
+    },
+  ], [t])
 
   // Load real data on mount — non-blocking, fallback gracefully
   useEffect(() => {
@@ -116,13 +124,13 @@ export default function HomePage() {
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
-            Nền tảng Portfolio
+            {t('home.title1')}
           </h1>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-emerald-300 mt-1">
-            cho thế hệ mới
+            {t('home.title2')}
           </h2>
           <p className="mt-5 text-lg sm:text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
-            Tạo portfolio chuyên nghiệp, kết nối với doanh nghiệp hàng đầu. Để kỹ năng của bạn tỏa sáng.
+            {t('home.subtitle')}
           </p>
 
           {/* Search bar */}
@@ -134,14 +142,14 @@ export default function HomePage() {
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Tìm kiếm theo kỹ năng, vị trí..."
+              placeholder={t('home.searchPlaceholder')}
               className="flex-1 px-4 py-4 text-gray-800 text-sm outline-none bg-transparent placeholder:text-gray-400"
             />
             <button
               type="submit"
               className="m-1.5 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition shrink-0"
             >
-              Tìm kiếm
+              {t('home.searchButton')}
             </button>
           </form>
 
@@ -168,17 +176,17 @@ export default function HomePage() {
             {
               value: platformStats ? `${platformStats.total_candidates.toLocaleString('vi-VN')}+` : '—',
               icon: <Users className="w-6 h-6 text-blue-600" />,
-              label: 'Ứng viên',
+              label: t('home.totalCandidates'),
             },
             {
               value: platformStats ? `${platformStats.total_views.toLocaleString('vi-VN')}+` : '—',
               icon: <Eye className="w-6 h-6 text-blue-600" />,
-              label: 'Lượt xem Portfolio',
+              label: t('home.totalViews'),
             },
             {
               value: platformStats ? `${platformStats.total_invitations.toLocaleString('vi-VN')}+` : '—',
               icon: <Send className="w-6 h-6 text-blue-600" />,
-              label: 'Lời mời tuyển dụng',
+              label: t('home.totalInvitations'),
             },
           ].map(stat => (
             <div key={stat.label} className="flex items-center gap-4">
@@ -198,8 +206,8 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Ứng viên nổi bật</h2>
-            <p className="mt-1 text-sm text-gray-500">Khám phá những tài năng hàng đầu trên nền tảng</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{t('home.featuredCandidates')}</h2>
+            <p className="mt-1 text-sm text-gray-500">{t('home.discoverTalents')}</p>
           </div>
         </div>
 
@@ -216,7 +224,7 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {displayCandidates.map((c, idx) => {
-              const name = c.full_name || 'Ứng viên'
+              const name = c.full_name || t('searchPage.candidate')
               const headline = c.headline || ''
               const skills = (c.skills ?? []).slice(0, 3)
               const views = c.views
@@ -229,7 +237,7 @@ export default function HomePage() {
                     {initials(name)}
                   </div>
                   <h3 className="font-bold text-gray-900 text-base">{name}</h3>
-                  {headline && <p className="text-sm text-gray-500 mt-0.5">{headline}</p>}
+                  {headline && <p className="text-sm text-gray-500 mt-0.5">{resolveText(headline)}</p>}
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {skills.map(s => (
                       <span key={s} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">{s}</span>
@@ -238,7 +246,7 @@ export default function HomePage() {
                   {views !== undefined && (
                     <p className="mt-4 text-xs text-gray-400 flex items-center gap-1">
                       <Eye className="w-3.5 h-3.5" />
-                      {views} lượt xem
+                      {views} {t('common.views')}
                     </p>
                   )}
                 </div>
@@ -257,9 +265,9 @@ export default function HomePage() {
       {/* ── How it works ── */}
       <section className="bg-white border-t border-gray-100 py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-12">Cách hoạt động</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-12">{t('home.howItWorks')}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-            {HOW_STEPS.map((step, _) => (
+            {howSteps.map((step, _) => (
               <div key={step.label} className="flex flex-col items-center text-center gap-3">
                 <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-200">
                   {step.icon}
@@ -276,22 +284,22 @@ export default function HomePage() {
       <section className="py-16 px-4">
         <div className="max-w-3xl mx-auto bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 rounded-3xl p-10 text-center text-white shadow-2xl shadow-blue-200 relative overflow-hidden">
           <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5 blur-2xl" />
-          <h2 className="text-2xl sm:text-3xl font-extrabold">Sẵn sàng bắt đầu?</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold">{t('home.readyToStart')}</h2>
           <p className="mt-3 text-blue-100 text-sm sm:text-base max-w-md mx-auto">
-            Tạo portfolio của bạn ngay hôm nay và để nhà tuyển dụng tìm đến bạn.
+            {t('home.ctaText')}
           </p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
             <Link
               href="/register"
               className="px-8 py-3 bg-white text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition shadow-sm"
             >
-              Tạo Portfolio miễn phí
+              {t('home.createPortfolioFree')}
             </Link>
             <Link
               href="/recruiter/register"
               className="px-8 py-3 bg-white/20 text-white font-bold rounded-xl hover:bg-white/30 transition ring-1 ring-white/30 backdrop-blur"
             >
-              Tuyển dụng ngay
+              {t('home.recruitNow')}
             </Link>
           </div>
         </div>

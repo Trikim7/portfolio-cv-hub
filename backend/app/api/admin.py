@@ -307,7 +307,10 @@ def delete_template(
     db: Session = Depends(get_db),
 ):
     """Delete a portfolio template."""
-    _get_admin_user(authorization, db)
+    user = _get_admin_user(authorization, db)
+    from app.services.admin import AdminService
+    AdminService._require_admin(user)
+    
     from app.models.admin_config import Template
     tpl = db.query(Template).filter(Template.id == template_id).first()
     if not tpl:
@@ -315,3 +318,72 @@ def delete_template(
     db.delete(tpl)
     db.commit()
     return {"message": f"Đã xóa template '{tpl.name}'"}
+
+
+# ─── Data Tools (Seed / Reset) ────────────────────────────────────────────────
+
+@router.post("/tools/seed-demo")
+async def seed_demo_data(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Populate database with sample data (Phase 2)."""
+    user = _get_admin_user(authorization, db)
+    from app.services.admin import AdminService
+    AdminService._require_admin(user)
+    
+    from app.db.seed import (
+        seed_templates, seed_system_settings, seed_recruiters, 
+        seed_candidates, seed_job_requirements
+    )
+    
+    try:
+        # 1. Templates & Settings
+        templates = seed_templates(db)
+        seed_system_settings(db)
+        
+        # 2. Recruiters & Companies
+        recruiter_pairs = seed_recruiters(db)
+        companies = [p[1] for p in recruiter_pairs]
+        
+        # 3. Candidates
+        seed_candidates(db, templates, companies, count=95)
+        
+        # 4. Job Requirements
+        seed_job_requirements(db, companies)
+        
+        db.commit()
+        return {"message": "Dữ liệu mẫu đã được nạp thành công!"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Lỗi khi nạp dữ liệu: {str(e)}")
+
+
+@router.post("/tools/reset-db")
+async def reset_demo_database(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Clear all non-admin data from the database."""
+    user = _get_admin_user(authorization, db)
+    from app.services.admin import AdminService
+    AdminService._require_admin(user)
+    
+    from app.models.user import User, UserRole
+    from sqlalchemy import delete
+    
+    try:
+        # Delete all users EXCEPT the current admin (and other admins)
+        # Cascade delete should handle profiles, experiences, projects, etc.
+        db.execute(delete(User).where(User.role != UserRole.ADMIN))
+        
+        # Also clear system-wide tables that might not be linked to a specific non-admin user
+        from app.models.admin_config import Template, SystemSetting
+        db.execute(delete(Template))
+        db.execute(delete(SystemSetting))
+        
+        db.commit()
+        return {"message": "Đã xóa toàn bộ dữ liệu mẫu. Hệ thống đã sẵn sàng nạp lại."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Lỗi khi xóa dữ liệu: {str(e)}")

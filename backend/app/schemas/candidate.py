@@ -121,13 +121,13 @@ class CVResponse(CVBase):
 
 class CandidateProfileBase(BaseModel):
     full_name: Optional[str] = None
-    headline: Optional[str] = None
+    headline: LocalizedText = None
     bio: LocalizedText = None
     is_public: bool = False
 
-    @field_validator("bio", mode="before")
+    @field_validator("headline", "bio", mode="before")
     @classmethod
-    def _bio_to_i18n(cls, v):
+    def _to_i18n(cls, v):
         return _coerce_i18n(v)
 
 

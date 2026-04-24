@@ -17,30 +17,23 @@ import DashboardShell, {
   SectionCard,
   StatCard,
 } from '@/components/layout/DashboardShell'
+import { useTranslation } from 'react-i18next'
 import { Company, JobInvitation } from '@/types'
 
 type RecruiterSection = 'overview' | 'company' | 'actions' | 'job-requirements' | 'invitations' | 'social'
 
-const NAV: (DashboardNavItem & { id: RecruiterSection })[] = [
-  { id: 'overview',          label: 'Tổng quan' },
-  { id: 'company',           label: 'Hồ sơ công ty' },
-  { id: 'actions',           label: 'Tuyển dụng' },
-  { id: 'job-requirements',  label: 'Yêu cầu công việc' },
-  { id: 'invitations',       label: 'Lời mời đã gửi' },
-  { id: 'social',            label: 'Tài khoản liên kết' },
-]
-
-const RECRUITER_SECTION_LABELS: Record<RecruiterSection, string> = {
-  overview:          'Tổng quan',
-  company:           'Hồ sơ công ty',
-  actions:           'Tuyển dụng',
-  'job-requirements': 'Yêu cầu công việc',
-  invitations:       'Lời mời đã gửi',
-  social:            'Tài khoản liên kết',
+const NAV_SECTION_KEYS: Record<RecruiterSection, string> = {
+  overview:           'recruiterDashboard.overview',
+  company:            'recruiterDashboard.company',
+  actions:            'recruiterDashboard.actions',
+  'job-requirements': 'recruiterDashboard.jobRequirements',
+  invitations:        'recruiterDashboard.invitations',
+  social:             'recruiterDashboard.social',
 }
 
 export default function RecruiterDashboardPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const { role, loading: authLoading } = useAuth()
   const { fetchCompanyProfile, loading: recruiterLoading } = useRecruiter()
   const [isAuthorized, setIsAuthorized] = useState(false)
@@ -124,7 +117,7 @@ export default function RecruiterDashboardPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-gray-600">Đang kiểm tra thông tin...</p>
+          <p className="text-gray-600">{t('common.checkingInfo')}</p>
         </div>
       </div>
     )
@@ -132,25 +125,30 @@ export default function RecruiterDashboardPage() {
 
   if (!isAuthorized) return null
 
+  // Build nav dynamically per language
+  const NAV: (DashboardNavItem & { id: RecruiterSection })[] = Object.keys(NAV_SECTION_KEYS).map(
+    (id) => ({ id: id as RecruiterSection, label: t(NAV_SECTION_KEYS[id as RecruiterSection]) })
+  )
+
   const statusBadge =
     company?.status === 'approved'
-      ? 'Đã duyệt'
+      ? t('recruiterDashboard.approved')
       : company?.status === 'pending'
-        ? 'Chờ duyệt'
+        ? t('recruiterDashboard.pending')
         : company?.status || undefined
 
   return (
     <DashboardShell
       accent="purple"
-      title={company?.company_name || 'Dashboard Doanh nghiệp'}
-      subtitle="Trung tâm tuyển dụng"
+      title={company?.company_name || t('recruiterDashboard.dashboardTitle')}
+      subtitle={t('recruiterDashboard.recruitingHub')}
       userName={company?.company_name || undefined}
       userAvatarUrl={company?.logo_url || null}
       onAvatarClick={handleLogoClick}
-      badge={logoUploading ? 'Đang tải logo…' : statusBadge}
+      badge={logoUploading ? t('recruiterDashboard.uploadingLogo') : statusBadge}
       nav={NAV}
       activeId={section}
-      activeNavLabel={RECRUITER_SECTION_LABELS[section]}
+      activeNavLabel={t(NAV_SECTION_KEYS[section])}
       onSelect={(id) => setSection(id as RecruiterSection)}
       headerAction={
         <div className="flex gap-2">
@@ -166,13 +164,13 @@ export default function RecruiterDashboardPage() {
             href="/recruiter/search"
             className="bg-white/10 hover:bg-white/20 backdrop-blur px-4 py-2 rounded-xl text-sm font-semibold transition ring-1 ring-white/20"
           >
-            Tìm kiếm
+            {t('recruiterDashboard.goToSearch')}
           </Link>
           <Link
             href="/recruiter/ranking"
             className="bg-white text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-xl text-sm font-semibold transition shadow"
           >
-            AI Ranking
+            {t('recruiterDashboard.goToRanking')}
           </Link>
         </div>
       }
@@ -181,27 +179,27 @@ export default function RecruiterDashboardPage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
-              label="Lời mời đã gửi"
+              label={t('recruiterDashboard.invitationsSent')}
               value={invitations.length > 0 ? String(invitations.length) : '0'}
-              hint={invitations.length > 0 ? `${invitations.filter(i => i.status === 'pending').length} đang chờ phản hồi` : 'Chưa có lời mời nào'}
+              hint={invitations.length > 0 ? `${invitations.filter(i => i.status === 'pending').length} ${t('recruiterDashboard.awaitingResponse')}` : t('recruiterDashboard.noInvitations')}
               tone="purple"
             />
             <StatCard
-              label="Ứng viên tìm thấy"
+              label={t('recruiterDashboard.candidatesFound')}
               value={candidatesFound !== null ? String(candidatesFound.total) : '—'}
               hint={
                 candidatesFound === null
-                  ? 'Đang tải…'
+                  ? t('recruiterDashboard.loading')
                   : candidatesFound.sessions === 0
-                    ? 'Chưa có lần tìm kiếm nào'
-                    : `Qua ${candidatesFound.sessions} lần AI Ranking`
+                    ? t('recruiterDashboard.noSearchSessions')
+                    : t('recruiterDashboard.aiRankingSessions', { count: candidatesFound.sessions })
               }
               tone="emerald"
             />
             <StatCard
-              label="Quan tâm"
+              label={t('recruiterDashboard.interested')}
               value={invitations.filter(i => i.status === 'interested').length > 0 ? String(invitations.filter(i => i.status === 'interested').length) : '0'}
-              hint={invitations.filter(i => i.status === 'interested').length > 0 ? 'Ứng viên đã phản hồi tích cực' : 'Chưa có phản hồi'}
+              hint={invitations.filter(i => i.status === 'interested').length > 0 ? t('recruiterDashboard.positiveResponse') : t('recruiterDashboard.noResponse')}
               tone="amber"
             />
           </div>
@@ -214,26 +212,26 @@ export default function RecruiterDashboardPage() {
                 onClick={() => setSection('invitations')}
                 className="text-sm font-semibold text-purple-700 hover:text-purple-900 hover:underline transition-colors"
               >
-                Xem chi tiết lời mời →
+                {t('recruiterDashboard.viewInvitations')}
               </button>
             </div>
           )}
 
           <SectionCard
-            title="Bắt đầu tuyển dụng"
-            description="Chọn nhanh công cụ bạn cần để tiếp cận ứng viên."
+            title={t('recruiterDashboard.startRecruiting')}
+            description={t('recruiterDashboard.startRecruitingHint')}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link
                 href="/recruiter/search"
                 className="group rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 hover:border-blue-400 transition"
               >
-                <h3 className="font-bold text-gray-900">Tìm kiếm ứng viên</h3>
+                <h3 className="font-bold text-gray-900">{t('recruiterDashboard.findCandidates')}</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Lọc theo kỹ năng, vị trí và kinh nghiệm.
+                  {t('recruiterDashboard.findCandidatesDesc')}
                 </p>
                 <p className="mt-3 text-sm font-semibold text-blue-700 group-hover:translate-x-1 transition">
-                  Mở tìm kiếm →
+                  {t('recruiterDashboard.openSearch')}
                 </p>
               </Link>
 
@@ -241,45 +239,45 @@ export default function RecruiterDashboardPage() {
                 href="/recruiter/ranking"
                 className="group rounded-2xl border border-purple-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-5 hover:border-purple-400 transition"
               >
-                <h3 className="font-bold text-gray-900">AI Ranking</h3>
+                <h3 className="font-bold text-gray-900">{t('ranking.candidateRanking')}</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Xếp hạng ứng viên thông minh theo tiêu chí JD.
+                  {t('recruiterDashboard.aiRankingDesc')}
                 </p>
                 <p className="mt-3 text-sm font-semibold text-purple-700 group-hover:translate-x-1 transition">
-                  Chạy AI Ranking →
+                  {t('recruiterDashboard.runAIRanking')}
                 </p>
               </Link>
             </div>
           </SectionCard>
 
           <SectionCard
-            title="Tóm tắt công ty"
+            title={t('recruiterDashboard.companySummary')}
             action={
               <button
                 type="button"
                 onClick={() => setSection('company')}
                 className="text-sm font-semibold text-purple-700 hover:text-purple-900"
               >
-                Chỉnh sửa →
+                {t('recruiterDashboard.editCompany')}
               </button>
             }
           >
             {company ? (
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-xs font-semibold uppercase text-gray-500">Tên công ty</dt>
+                  <dt className="text-xs font-semibold uppercase text-gray-500">{t('recruiterDashboard.companyName')}</dt>
                   <dd className="mt-1 text-gray-900 font-medium">{company.company_name}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold uppercase text-gray-500">Ngành</dt>
+                  <dt className="text-xs font-semibold uppercase text-gray-500">{t('recruiterDashboard.industry')}</dt>
                   <dd className="mt-1 text-gray-900 font-medium">{company.industry || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold uppercase text-gray-500">Địa điểm</dt>
+                  <dt className="text-xs font-semibold uppercase text-gray-500">{t('recruiterDashboard.location')}</dt>
                   <dd className="mt-1 text-gray-900 font-medium">{company.location || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold uppercase text-gray-500">Website</dt>
+                  <dt className="text-xs font-semibold uppercase text-gray-500">{t('recruiterDashboard.website')}</dt>
                   <dd className="mt-1">
                     {company.website ? (
                       <a
@@ -297,7 +295,7 @@ export default function RecruiterDashboardPage() {
                 </div>
               </dl>
             ) : (
-              <p className="text-gray-500 text-sm">Chưa có thông tin công ty.</p>
+              <p className="text-gray-500 text-sm">{t('recruiterDashboard.noCompanyInfo')}</p>
             )}
           </SectionCard>
         </>
@@ -306,21 +304,21 @@ export default function RecruiterDashboardPage() {
       {section === 'company' && <CompanyProfile />}
 
       {section === 'actions' && (
-        <SectionCard title="Công cụ tuyển dụng">
+        <SectionCard title={t('recruiterDashboard.recruitingTools')}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
               href="/recruiter/search"
               className="p-5 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 transition"
             >
-              <h3 className="font-semibold text-gray-900">Tìm kiếm ứng viên</h3>
-              <p className="text-sm text-gray-500 mt-1">Lọc theo skill, vị trí, kinh nghiệm</p>
+              <h3 className="font-semibold text-gray-900">{t('recruiterDashboard.findCandidates')}</h3>
+              <p className="text-sm text-gray-500 mt-1">{t('recruiterDashboard.filterBySkill')}</p>
             </Link>
             <Link
               href="/recruiter/ranking"
               className="p-5 rounded-xl border border-gray-200 hover:border-purple-400 hover:bg-purple-50/50 transition"
             >
               <h3 className="font-semibold text-gray-900">AI Ranking</h3>
-              <p className="text-sm text-gray-500 mt-1">Xếp hạng ứng viên theo JD</p>
+              <p className="text-sm text-gray-500 mt-1">{t('recruiterDashboard.rankByJD')}</p>
             </Link>
           </div>
         </SectionCard>
@@ -337,7 +335,7 @@ export default function RecruiterDashboardPage() {
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white rounded-xl font-bold text-sm transition shadow-sm"
               >
-                + Tạo yêu cầu công việc
+                {t('recruiterDashboard.createJobReq')}
               </button>
             </div>
           )}
@@ -373,8 +371,8 @@ export default function RecruiterDashboardPage() {
 
       {section === 'invitations' && (
         <SectionCard
-          title="Lời mời Tuyển dụng đã gửi"
-          description="Theo dõi trạng thái phản hồi từ ứng viên. Thu hồi hoặc xem hồ sơ trực tiếp."
+          title={t('recruiterDashboard.invitationsSentTitle')}
+          description={t('recruiterDashboard.invitationsSentHint')}
         >
           <RecruiterInvitationsPanel />
         </SectionCard>

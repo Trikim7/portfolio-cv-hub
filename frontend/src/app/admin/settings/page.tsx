@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
 import {
   Settings, Globe, BarChart2, Layers,
@@ -21,10 +22,10 @@ interface WeightConfig {
 
 interface EmailTemplate {
   id: string
-  label: string
-  subject: string
-  body: string
-  hint: string
+  labelKey: string
+  subjectKey: string
+  bodyKey: string
+  hintKey: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -41,32 +42,32 @@ const DEFAULT_WEIGHTS: WeightConfig = {
 const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
   {
     id: 'invitation',
-    label: 'Lời mời tuyển dụng (gửi cho ứng viên)',
-    subject: '[Portfolio CV Hub] Lời mời từ {{company_name}}',
-    body: 'Xin chào {{candidate_name}},\n\nCông ty {{company_name}} mời bạn ứng tuyển vị trí: {{job_title}}\n\nTin nhắn từ nhà tuyển dụng:\n{{message}}\n\nVào Dashboard để xem và phản hồi: {{dashboard_url}}',
-    hint: 'Biến khả dụng: {{candidate_name}}, {{company_name}}, {{job_title}}, {{message}}, {{dashboard_url}}',
+    labelKey: 'admin.settings.emailTplInvite',
+    subjectKey: 'admin.settings.emailTplInviteSubject',
+    bodyKey: 'admin.settings.emailTplInviteBody',
+    hintKey: 'admin.settings.emailTplInviteHint',
   },
   {
     id: 'company_approved',
-    label: 'Duyệt tài khoản doanh nghiệp',
-    subject: '[Portfolio CV Hub] Tài khoản doanh nghiệp đã được duyệt',
-    body: 'Xin chào {{company_name}},\n\nAdmin đã phê duyệt tài khoản doanh nghiệp của bạn.\nĐăng nhập tại: {{dashboard_url}}',
-    hint: 'Biến khả dụng: {{company_name}}, {{dashboard_url}}',
+    labelKey: 'admin.settings.emailTplApprove',
+    subjectKey: 'admin.settings.emailTplApproveSubject',
+    bodyKey: 'admin.settings.emailTplApproveBody',
+    hintKey: 'admin.settings.emailTplApproveHint',
   },
   {
     id: 'company_rejected',
-    label: 'Từ chối tài khoản doanh nghiệp',
-    subject: '[Portfolio CV Hub] Thông báo về đăng ký tài khoản doanh nghiệp',
-    body: 'Xin chào {{company_name}},\n\nRất tiếc, Admin đã từ chối đăng ký tài khoản của bạn.\nVui lòng liên hệ quản trị viên để biết thêm chi tiết.',
-    hint: 'Biến khả dụng: {{company_name}}',
+    labelKey: 'admin.settings.emailTplReject',
+    subjectKey: 'admin.settings.emailTplRejectSubject',
+    bodyKey: 'admin.settings.emailTplRejectBody',
+    hintKey: 'admin.settings.emailTplRejectHint',
   },
 ]
 
 const TABS = [
-  { id: 'general',    label: 'Cấu hình chung',       icon: Globe },
-  { id: 'algorithm',  label: 'Trọng số Thuật toán',   icon: BarChart2 },
-  { id: 'templates',  label: 'Quản lý Template',       icon: Layers },
-  { id: 'tools',      label: 'Công cụ Dữ liệu',        icon: Database },
+  { id: 'general',    labelKey: 'admin.settings.tabGeneral',       icon: Globe },
+  { id: 'algorithm',  labelKey: 'admin.settings.tabAlgorithm',     icon: BarChart2 },
+  { id: 'templates',  labelKey: 'admin.settings.tabTemplates',     icon: Layers },
+  { id: 'tools',      labelKey: 'admin.settings.tabTools',         icon: Database },
 ]
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -116,6 +117,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
 
 // ─── Tab: General Config ──────────────────────────────────────────────────────
 function TabGeneral() {
+  const { t } = useTranslation()
   const [savingGeneral, setSavingGeneral] = useState(false)
   const [savingSmtp, setSavingSmtp] = useState(false)
   const [testingSmtp, setTestingSmtp] = useState(false)
@@ -167,16 +169,19 @@ function TabGeneral() {
   const handleSaveGeneral = async () => {
     setSavingGeneral(true)
     await new Promise(r => setTimeout(r, 600))
+    // Persist max_comparison so CandidateSearch respects it
+    const clampedMax = Math.min(5, Math.max(1, parseInt(general.max_comparison) || 3))
+    localStorage.setItem('max_comparison', String(clampedMax))
     setSavingGeneral(false)
-    showToast('Đã lưu cấu hình chung!', 'success')
+    showToast(t('admin.settings.saveGeneralSuccess'), 'success')
   }
 
   const handleSaveSmtp = async () => {
     if (!smtp.smtp_username.trim()) {
-      showToast('Vui lòng nhập SMTP Username', 'error'); return
+      showToast(t('admin.settings.smtpUsernameError'), 'error'); return
     }
     if (!smtp.smtp_password || smtp.smtp_password === '••••••••') {
-      showToast('Vui lòng nhập SMTP Password (App Password 16 ký tự)', 'error'); return
+      showToast(t('admin.settings.smtpPasswordError'), 'error'); return
     }
     setSavingSmtp(true)
     try {
@@ -189,9 +194,9 @@ function TabGeneral() {
         smtp_from_address: smtp.smtp_from_address,
         smtp_enabled: smtp.smtp_enabled,
       })
-      showToast('✅ Đã lưu cấu hình SMTP! Email sẽ được gửi tự động.', 'success')
+      showToast(t('admin.settings.smtpSaveSuccess'), 'success')
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Lưu thất bại. Kiểm tra lại thông tin.'
+      const msg = err?.response?.data?.detail || t('admin.settings.smtpSaveError')
       showToast(`❌ ${msg}`, 'error')
     } finally {
       setSavingSmtp(false)
@@ -205,7 +210,7 @@ function TabGeneral() {
       const result = await apiClient.testSmtpConnection()
       showToast(`✅ ${result.message}`, 'success')
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Kết nối thất bại. Kiểm tra host/port/password.'
+      const msg = err?.response?.data?.detail || t('admin.settings.smtpTestError')
       showToast(`❌ ${msg}`, 'error')
     } finally {
       setTestingSmtp(false)
@@ -217,14 +222,14 @@ function TabGeneral() {
       {toast && <Toast msg={toast.msg} type={toast.type} />}
 
       {/* General */}
-      <Section title="Thông tin Hệ thống" desc="Tên thương hiệu và URL công khai">
-        <Field label="Tên hệ thống" hint="Hiển thị trên tiêu đề và email">
+      <Section title={t('admin.settings.systemInfo')} desc={t('admin.settings.systemInfoDesc')}>
+        <Field label={t('admin.settings.siteName')} hint={t('admin.settings.siteNameHint')}>
           <Input value={general.site_name} onChange={setG('site_name')} placeholder="Portfolio CV Hub" />
         </Field>
-        <Field label="URL hệ thống" hint="Dùng cho các link trong email">
+        <Field label={t('admin.settings.siteUrl')} hint={t('admin.settings.siteUrlHint')}>
           <Input value={general.site_url} onChange={setG('site_url')} placeholder="https://yourdomain.com" />
         </Field>
-        <Field label="Giới hạn so sánh" hint="Số ứng viên tối đa so sánh cùng lúc (1–5)">
+        <Field label={t('admin.settings.maxComparison')} hint={t('admin.settings.maxComparisonHint')}>
           <Input type="number" min={1} max={5} value={general.max_comparison} onChange={setG('max_comparison')} className="w-24" />
         </Field>
       </Section>
@@ -235,28 +240,28 @@ function TabGeneral() {
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-60"
         >
           {savingGeneral ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {savingGeneral ? 'Đang lưu…' : 'Lưu cấu hình chung'}
+          {savingGeneral ? t('admin.settings.saving') : t('admin.settings.saveGeneral')}
         </button>
       </div>
 
       {/* SMTP — real API */}
-      <Section title="Cấu hình Email (SMTP)" desc="Gửi thông báo tự động: duyệt tài khoản doanh nghiệp và lời mời tuyển dụng">
-        <Field label="SMTP Host">
+      <Section title={t('admin.settings.smtpTitle')} desc={t('admin.settings.smtpDesc')}>
+        <Field label={t('admin.settings.smtpHost')}>
           <Input value={smtp.smtp_host} onChange={setS('smtp_host')} placeholder="smtp.gmail.com" />
         </Field>
-        <Field label="SMTP Port">
+        <Field label={t('admin.settings.smtpPort')}>
           <Input value={smtp.smtp_port} onChange={setS('smtp_port')} placeholder="587" className="w-28" />
         </Field>
-        <Field label="SMTP Username">
+        <Field label={t('admin.settings.smtpUsername')}>
           <Input value={smtp.smtp_username} onChange={setS('smtp_username')} placeholder="your@gmail.com" />
         </Field>
-        <Field label="SMTP Password" hint="Dùng App Password của Gmail (16 ký tự), KHÔNG dùng mật khẩu tài khoản thường">
-          <Input type="password" value={smtp.smtp_password} onChange={setS('smtp_password')} placeholder="Nhập App Password mới để thay đổi" />
+        <Field label={t('admin.settings.smtpPassword')} hint={t('admin.settings.smtpPasswordHint')}>
+          <Input type="password" value={smtp.smtp_password} onChange={setS('smtp_password')} placeholder={t('admin.settings.smtpPassword')} />
         </Field>
-        <Field label="From Address" hint="Địa chỉ hiển thị khi gửi đi">
+        <Field label={t('admin.settings.smtpFromAddress')} hint={t('admin.settings.smtpFromAddressHint')}>
           <Input value={smtp.smtp_from_address} onChange={setS('smtp_from_address')} placeholder="noreply@portfoliocvhub.com" />
         </Field>
-        <Field label="Bật gửi email">
+        <Field label={t('admin.settings.smtpEnabled')}>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -266,7 +271,7 @@ function TabGeneral() {
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${smtp.smtp_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
             <span className={`text-sm font-medium ${smtp.smtp_enabled ? 'text-blue-700' : 'text-gray-500'}`}>
-              {smtp.smtp_enabled ? 'Đang bật — hệ thống sẽ gửi email tự động' : 'Đang tắt — không gửi email'}
+              {smtp.smtp_enabled ? t('admin.settings.smtpEnabledOn') : t('admin.settings.smtpEnabledOff')}
             </span>
           </div>
         </Field>
@@ -279,7 +284,7 @@ function TabGeneral() {
           className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-60"
         >
           {testingSmtp ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-          {testingSmtp ? 'Đang kiểm tra…' : 'Kiểm tra kết nối'}
+          {testingSmtp ? t('admin.settings.testing') : t('admin.settings.testConnection')}
         </button>
         <button
           onClick={handleSaveSmtp}
@@ -287,7 +292,7 @@ function TabGeneral() {
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-60"
         >
           {savingSmtp ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {savingSmtp ? 'Đang lưu…' : 'Lưu cấu hình SMTP'}
+          {savingSmtp ? t('admin.settings.saving') : t('admin.settings.saveSmtp')}
         </button>
       </div>
     </>
@@ -297,6 +302,7 @@ function TabGeneral() {
 
 // ─── Tab: Algorithm Weights ───────────────────────────────────────────────────
 function TabAlgorithm() {
+  const { t } = useTranslation()
   const [weights, setWeights] = useState<WeightConfig>(DEFAULT_WEIGHTS)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -314,32 +320,32 @@ function TabAlgorithm() {
     setSaving(true)
     await new Promise(r => setTimeout(r, 800))
     setSaving(false)
-    setToast('Đã cập nhật trọng số thuật toán!')
+    setToast(t('admin.settings.saveWeightsSuccess'))
     setTimeout(() => setToast(null), 3000)
   }
 
-  const FACTORS: { key: keyof WeightConfig; label: string; desc: string; color: string }[] = [
-    { key: 'technical_skills',  label: 'Kỹ năng Kỹ thuật',        desc: 'Tỷ lệ khớp skill, level, endorsements', color: 'bg-blue-500' },
-    { key: 'experience',        label: 'Kinh nghiệm',               desc: 'Số năm KN và mức độ khớp vị trí',      color: 'bg-indigo-500' },
-    { key: 'portfolio',         label: 'Thực chứng Dự án',          desc: 'Tech stack, live URL, mô tả đầy đủ',   color: 'bg-violet-500' },
-    { key: 'soft_skills',       label: 'Kỹ năng Mềm',              desc: 'Keywords giao tiếp, teamwork trong bio', color: 'bg-emerald-500' },
-    { key: 'leadership',        label: 'Lãnh đạo & Quản lý',       desc: 'Title Lead/Manager, skill level LEAD',  color: 'bg-amber-500' },
-    { key: 'readiness_signals', label: 'Tín hiệu Tuyển dụng',      desc: 'Active gần đây, lượt xem, hoàn thiện', color: 'bg-rose-500' },
+  const FACTORS: { key: keyof WeightConfig; labelKey: string; descKey: string; color: string }[] = [
+    { key: 'technical_skills',  labelKey: 'admin.settings.techSkills',  descKey: 'admin.settings.techSkillsDesc', color: 'bg-blue-500' },
+    { key: 'experience',        labelKey: 'admin.settings.experience',  descKey: 'admin.settings.experienceDesc', color: 'bg-indigo-500' },
+    { key: 'portfolio',         labelKey: 'admin.settings.portfolio',   descKey: 'admin.settings.portfolioDesc', color: 'bg-violet-500' },
+    { key: 'soft_skills',       labelKey: 'admin.settings.softSkills',  descKey: 'admin.settings.softSkillsDesc', color: 'bg-emerald-500' },
+    { key: 'leadership',        labelKey: 'admin.settings.leadership',  descKey: 'admin.settings.leadershipDesc', color: 'bg-amber-500' },
+    { key: 'readiness_signals', labelKey: 'admin.settings.readiness',   descKey: 'admin.settings.readinessDesc', color: 'bg-rose-500' },
   ]
 
   return (
     <>
       {toast && <Toast msg={toast} type="success" />}
       <Section
-        title="Trọng số 6 Yếu tố Radar Chart"
-        desc="Tổng phải bằng đúng 100%. Thay đổi sẽ ảnh hưởng đến điểm Overall Match Score của toàn hệ thống."
+        title={t('admin.settings.algorithmTitle')}
+        desc={t('admin.settings.algorithmDesc')}
       >
         <div className="space-y-5">
           {FACTORS.map(f => (
             <div key={f.key} className="flex items-center gap-4">
               <div className="w-48 shrink-0">
-                <p className="text-sm font-medium text-gray-700">{f.label}</p>
-                <p className="text-xs text-gray-400">{f.desc}</p>
+                <p className="text-sm font-medium text-gray-700">{t(f.labelKey)}</p>
+                <p className="text-xs text-gray-400">{t(f.descKey)}</p>
               </div>
               <div className="flex-1">
                 <input
@@ -362,20 +368,20 @@ function TabAlgorithm() {
 
         <div className={`mt-6 flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium border ${valid ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
           {valid
-            ? <><Check className="w-4 h-4" /> Tổng trọng số: <strong>100%</strong> — Hợp lệ</>
-            : <><AlertTriangle className="w-4 h-4" /> Tổng hiện tại: <strong>{total}%</strong> — Phải bằng 100%</>
+            ? <><Check className="w-4 h-4" /> {t('admin.settings.totalWeight')}: <strong>100%</strong> — {t('admin.settings.validWeight')}</>
+            : <><AlertTriangle className="w-4 h-4" /> {t('admin.settings.totalWeight')}: <strong>{total}%</strong> — {t('admin.settings.invalidWeight')}</>
           }
         </div>
       </Section>
 
       <div className="flex justify-between">
         <button onClick={reset} className="flex items-center gap-2 border border-gray-300 text-gray-600 hover:bg-gray-50 px-5 py-2.5 rounded-lg text-sm font-medium transition">
-          <RefreshCw className="w-4 h-4" /> Khôi phục mặc định
+          <RefreshCw className="w-4 h-4" /> {t('admin.settings.restoreDefault')}
         </button>
         <button onClick={save} disabled={saving || !valid}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-60">
           {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Đang lưu…' : 'Lưu trọng số'}
+          {saving ? t('admin.settings.saving') : t('admin.settings.saveWeights')}
         </button>
       </div>
     </>
@@ -384,6 +390,7 @@ function TabAlgorithm() {
 
 // ─── Tab: Templates ───────────────────────────────────────────────────────────
 function TabTemplates() {
+  const { t } = useTranslation()
   // ── Portfolio templates state ────────────────────────────────
   const [portfolioTemplates, setPortfolioTemplates] = useState<import('@/types').PortfolioTemplate[]>([])
   const [tplLoading, setTplLoading] = useState(true)
@@ -407,9 +414,9 @@ function TabTemplates() {
   useEffect(() => {
     apiClient.getAdminTemplates()
       .then(data => setPortfolioTemplates(data))
-      .catch(() => showToast('Không thể tải danh sách template', 'error'))
+      .catch(() => showToast(t('admin.settings.loadError'), 'error'))
       .finally(() => setTplLoading(false))
-  }, [])
+  }, [t])
 
   // ── Portfolio template actions ────────────────────────────────
   const toggleTplStatus = async (tpl: import('@/types').PortfolioTemplate) => {
@@ -417,9 +424,9 @@ function TabTemplates() {
     try {
       await apiClient.updateTemplate(tpl.id, { status: newStatus })
       setPortfolioTemplates(ts => ts.map(t => t.id === tpl.id ? { ...t, status: newStatus } : t))
-      showToast(`Đã ${newStatus === 'active' ? 'bật' : 'tắt'} template "${tpl.name}"`)
+      showToast(`${t('admin.settings.statusActive')} ${newStatus === 'active' ? t('admin.settings.statusActive') : t('admin.settings.statusInactive')} template "${tpl.name}"`)
     } catch {
-      showToast('Cập nhật thất bại', 'error')
+      showToast(t('admin.settings.smtpSaveError'), 'error')
     }
   }
 
@@ -433,7 +440,7 @@ function TabTemplates() {
   }
 
   const saveEditTpl = async () => {
-    if (!editTplForm.name.trim()) { showToast('Tên template không được trống', 'error'); return }
+    if (!editTplForm.name.trim()) { showToast(t('admin.settings.templateName') + ' ' + t('admin.settings.invalidWeight'), 'error'); return }
     try {
       const updated = await apiClient.updateTemplate(editingTplId!, {
         name: editTplForm.name,
@@ -442,25 +449,25 @@ function TabTemplates() {
       })
       setPortfolioTemplates(ts => ts.map(t => t.id === editingTplId ? { ...t, ...updated } : t))
       setEditingTplId(null)
-      showToast('Đã cập nhật template!')
+      showToast(t('admin.settings.saveGeneralSuccess'))
     } catch {
-      showToast('Lưu thất bại', 'error')
+      showToast(t('admin.settings.smtpSaveError'), 'error')
     }
   }
 
   const deleteTpl = async (tpl: import('@/types').PortfolioTemplate) => {
-    if (!confirm(`Xóa template "${tpl.name}"? Các ứng viên đang dùng sẽ về mặc định.`)) return
+    if (!confirm(t('admin.settings.deleteConfirm', { name: tpl.name }))) return
     try {
       await apiClient.deleteTemplate(tpl.id)
       setPortfolioTemplates(ts => ts.filter(t => t.id !== tpl.id))
-      showToast('Đã xóa template.')
+      showToast(t('admin.settings.deleteSuccess'))
     } catch {
-      showToast('Xóa thất bại', 'error')
+      showToast(t('admin.settings.smtpSaveError'), 'error')
     }
   }
 
   const addTpl = async () => {
-    if (!newTpl.name.trim()) { showToast('Vui lòng nhập tên template', 'error'); return }
+    if (!newTpl.name.trim()) { showToast(t('admin.settings.templateName') + ' ' + t('admin.settings.invalidWeight'), 'error'); return }
     try {
       const created = await apiClient.createTemplate({
         name: newTpl.name,
@@ -470,20 +477,20 @@ function TabTemplates() {
       setPortfolioTemplates(ts => [...ts, created])
       setNewTpl({ name: '', description: '', primaryColor: '#6366f1' })
       setShowAddTpl(false)
-      showToast(`Đã thêm template "${created.name}"!`)
+      showToast(t('admin.settings.saveGeneralSuccess'))
     } catch {
-      showToast('Thêm template thất bại', 'error')
+      showToast(t('admin.settings.smtpSaveError'), 'error')
     }
   }
 
   // ── Email template actions ────────────────────────────────────
   const startEditEmail = (id: string) => setEditingEmailId(id === editingEmailId ? null : id)
-  const updateEmail = (id: string, field: 'subject' | 'body', value: string) => {
+  const updateEmail = (id: string, field: 'subjectKey' | 'bodyKey', value: string) => {
     setEmailTemplates(ts => ts.map(t => t.id === id ? { ...t, [field]: value } : t))
   }
   const saveEmail = (_id: string) => {
     setEditingEmailId(null)
-    showToast('Đã lưu template email!')
+    showToast(t('admin.settings.saveEmailSuccess'))
   }
 
   return (
@@ -492,13 +499,13 @@ function TabTemplates() {
 
       {/* ── Portfolio Themes ── */}
       <Section
-        title="Template Portfolio Công khai"
-        desc="Quản lý các theme hiển thị portfolio của ứng viên. Ứng viên chọn theme từ danh sách đang bật."
+        title={t('admin.settings.portfolioTemplates')}
+        desc={t('admin.settings.portfolioTemplatesDesc')}
       >
         {tplLoading ? (
           <div className="flex items-center justify-center py-8 text-gray-400 gap-2">
             <RefreshCw className="w-5 h-5 animate-spin" />
-            <span className="text-sm">Đang tải...</span>
+            <span className="text-sm">{t('admin.settings.loading')}</span>
           </div>
         ) : (
           <div className="space-y-2">
@@ -508,7 +515,7 @@ function TabTemplates() {
                   <div className="py-4 space-y-3 border border-blue-200 rounded-xl p-4 bg-blue-50">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Tên template *</label>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.templateName')} *</label>
                         <input
                           value={editTplForm.name}
                           onChange={e => setEditTplForm(f => ({ ...f, name: e.target.value }))}
@@ -516,7 +523,7 @@ function TabTemplates() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Màu chủ đạo</label>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.primaryColor')}</label>
                         <div className="flex items-center gap-2">
                           <input
                             type="color"
@@ -533,7 +540,7 @@ function TabTemplates() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Mô tả</label>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.description')}</label>
                       <input
                         value={editTplForm.description}
                         onChange={e => setEditTplForm(f => ({ ...f, description: e.target.value }))}
@@ -543,11 +550,11 @@ function TabTemplates() {
                     <div className="flex gap-2">
                       <button onClick={saveEditTpl}
                         className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
-                        <Check className="w-3.5 h-3.5" /> Lưu
+                        <Check className="w-3.5 h-3.5" /> {t('admin.settings.save')}
                       </button>
                       <button onClick={() => setEditingTplId(null)}
                         className="flex items-center gap-1.5 px-4 py-1.5 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
-                        <X className="w-3.5 h-3.5" /> Hủy
+                        <X className="w-3.5 h-3.5" /> {t('admin.settings.cancel')}
                       </button>
                     </div>
                   </div>
@@ -560,27 +567,27 @@ function TabTemplates() {
                       />
                       <div>
                         <p className="text-sm font-semibold text-gray-800">{tpl.name}</p>
-                        <p className="text-xs text-gray-500">{tpl.description || 'Chưa có mô tả'}</p>
+                        <p className="text-xs text-gray-500">{tpl.description || t('admin.settings.description')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         tpl.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {tpl.status === 'active' ? 'Bật' : 'Tắt'}
+                        {tpl.status === 'active' ? t('admin.settings.statusActive') : t('admin.settings.statusInactive')}
                       </span>
-                      <button onClick={() => startEditTpl(tpl)} title="Sửa"
+                      <button onClick={() => startEditTpl(tpl)} title={t('admin.settings.edit')}
                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => toggleTplStatus(tpl)}
-                        title={tpl.status === 'active' ? 'Tắt' : 'Bật'}
+                        title={tpl.status === 'active' ? t('admin.settings.statusInactive') : t('admin.settings.statusActive')}
                         className={`relative w-10 h-5 rounded-full transition-colors ${tpl.status === 'active' ? 'bg-blue-500' : 'bg-gray-300'}`}
                       >
                         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${tpl.status === 'active' ? 'left-5' : 'left-0.5'}`} />
                       </button>
-                      <button onClick={() => deleteTpl(tpl)} title="Xóa"
+                      <button onClick={() => deleteTpl(tpl)} title={t('admin.settings.deleteSuccess')}
                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -593,10 +600,10 @@ function TabTemplates() {
             {/* Add form */}
             {showAddTpl ? (
               <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
-                <p className="text-sm font-semibold text-blue-800">Thêm template mới</p>
+                <p className="text-sm font-semibold text-blue-800">{t('admin.settings.addTemplate')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Tên template *</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.templateName')} *</label>
                     <input
                       value={newTpl.name}
                       onChange={e => setNewTpl(f => ({ ...f, name: e.target.value }))}
@@ -605,7 +612,7 @@ function TabTemplates() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Màu chủ đạo</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.primaryColor')}</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
@@ -622,22 +629,22 @@ function TabTemplates() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Mô tả</label>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.description')}</label>
                   <input
                     value={newTpl.description}
                     onChange={e => setNewTpl(f => ({ ...f, description: e.target.value }))}
-                    placeholder="VD: Phù hợp cho designer, artist"
+                    placeholder={t('admin.settings.templateDescPlaceholder') || 'e.g. Suitable for designers, artists'}
                     className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex gap-2">
                   <button onClick={addTpl}
                     className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
-                    <Plus className="w-3.5 h-3.5" /> Thêm
+                    <Plus className="w-3.5 h-3.5" /> {t('admin.settings.save')}
                   </button>
                   <button onClick={() => { setShowAddTpl(false); setNewTpl({ name: '', description: '', primaryColor: '#6366f1' }) }}
                     className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
-                    <X className="w-3.5 h-3.5" /> Hủy
+                    <X className="w-3.5 h-3.5" /> {t('admin.settings.cancel')}
                   </button>
                 </div>
               </div>
@@ -646,7 +653,7 @@ function TabTemplates() {
                 onClick={() => setShowAddTpl(true)}
                 className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 rounded-xl py-3 text-sm font-semibold text-gray-500 hover:text-blue-700 transition"
               >
-                <Plus className="w-4 h-4" /> Thêm template mới
+                <Plus className="w-4 h-4" /> {t('admin.settings.addTemplate')}
               </button>
             )}
           </div>
@@ -655,8 +662,8 @@ function TabTemplates() {
 
       {/* ── Email Templates ── */}
       <Section
-        title="Template Email Thông báo"
-        desc="Tùy chỉnh tiêu đề và nội dung email cho từng loại sự kiện. Dùng {{biến}} để chèn dữ liệu động."
+        title={t('admin.settings.emailTemplates')}
+        desc={t('admin.settings.emailTemplatesDesc')}
       >
         <div className="space-y-3">
           {emailTemplates.map(tpl => (
@@ -665,7 +672,7 @@ function TabTemplates() {
               <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-semibold text-gray-800">{tpl.label}</span>
+                  <span className="text-sm font-semibold text-gray-800">{t(tpl.labelKey)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -673,7 +680,7 @@ function TabTemplates() {
                     className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    {expandedPreview === tpl.id ? 'Ẩn' : 'Xem trước'}
+                    {expandedPreview === tpl.id ? t('admin.settings.hidePreview') : t('admin.settings.viewPreview')}
                   </button>
                   <button
                     onClick={() => startEditEmail(tpl.id)}
@@ -684,7 +691,7 @@ function TabTemplates() {
                     }`}
                   >
                     <Pencil className="w-3.5 h-3.5" />
-                    {editingEmailId === tpl.id ? 'Đóng' : 'Sửa'}
+                    {editingEmailId === tpl.id ? t('admin.settings.close') : t('admin.settings.edit')}
                   </button>
                 </div>
               </div>
@@ -693,33 +700,33 @@ function TabTemplates() {
               {editingEmailId === tpl.id && (
                 <div className="p-4 space-y-3 border-t border-gray-200">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Tiêu đề (Subject)</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.subject')}</label>
                     <input
-                      value={tpl.subject}
-                      onChange={e => updateEmail(tpl.id, 'subject', e.target.value)}
+                      value={t(tpl.subjectKey)}
+                      onChange={e => updateEmail(tpl.id, 'subjectKey', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Nội dung (Body)</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('admin.settings.body')}</label>
                     <textarea
-                      value={tpl.body}
-                      onChange={e => updateEmail(tpl.id, 'body', e.target.value)}
+                      value={t(tpl.bodyKey)}
+                      onChange={e => updateEmail(tpl.id, 'bodyKey', e.target.value)}
                       rows={6}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                     />
                   </div>
                   <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                    💡 {tpl.hint}
+                    💡 {t(tpl.hintKey)}
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => saveEmail(tpl.id)}
                       className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">
-                      <Save className="w-3.5 h-3.5" /> Lưu template
+                      <Save className="w-3.5 h-3.5" /> {t('admin.settings.saveTemplate')}
                     </button>
                     <button onClick={() => setEditingEmailId(null)}
                       className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
-                      <X className="w-3.5 h-3.5" /> Hủy
+                      <X className="w-3.5 h-3.5" /> {t('admin.settings.cancel')}
                     </button>
                   </div>
                 </div>
@@ -728,10 +735,10 @@ function TabTemplates() {
               {/* Preview */}
               {expandedPreview === tpl.id && editingEmailId !== tpl.id && (
                 <div className="p-4 border-t border-gray-200 bg-gray-50">
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Subject:</p>
-                  <p className="text-sm text-gray-800 font-medium mb-3">{tpl.subject}</p>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Body:</p>
-                  <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans bg-white border border-gray-200 rounded-lg p-3">{tpl.body}</pre>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">{t('admin.settings.subject')}:</p>
+                  <p className="text-sm text-gray-800 font-medium mb-3">{t(tpl.subjectKey)}</p>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">{t('admin.settings.body')}:</p>
+                  <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans bg-white border border-gray-200 rounded-lg p-3">{t(tpl.bodyKey)}</pre>
                 </div>
               )}
             </div>
@@ -744,6 +751,7 @@ function TabTemplates() {
 
 // ─── Tab: Data Tools ──────────────────────────────────────────────────────────
 function TabTools() {
+  const { t } = useTranslation()
   const [seedLoading, setSeedLoading] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -751,35 +759,45 @@ function TabTools() {
 
   const handleSeed = async () => {
     setSeedLoading(true)
-    await new Promise(r => setTimeout(r, 2000))
-    setSeedLoading(false)
-    setToast({ msg: 'Đã tạo dữ liệu mẫu thành công! (50 ứng viên, 10 doanh nghiệp)', type: 'success' })
-    setTimeout(() => setToast(null), 4000)
+    try {
+      await apiClient.seedDemoData()
+      setToast({ msg: t('admin.settings.seedSuccess'), type: 'success' })
+    } catch {
+      setToast({ msg: t('admin.settings.smtpSaveError'), type: 'error' })
+    } finally {
+      setSeedLoading(false)
+      setTimeout(() => setToast(null), 4000)
+    }
   }
 
   const handleReset = async () => {
     if (!confirmReset) { setConfirmReset(true); return }
     setResetLoading(true)
-    await new Promise(r => setTimeout(r, 2000))
-    setResetLoading(false)
-    setConfirmReset(false)
-    setToast({ msg: 'Đã xóa toàn bộ dữ liệu demo thành công!', type: 'success' })
-    setTimeout(() => setToast(null), 4000)
+    try {
+      await apiClient.resetDemoData()
+      setConfirmReset(false)
+      setToast({ msg: t('admin.settings.deleteSuccess'), type: 'success' })
+    } catch {
+      setToast({ msg: t('admin.settings.smtpSaveError'), type: 'error' })
+    } finally {
+      setResetLoading(false)
+      setTimeout(() => setToast(null), 4000)
+    }
   }
 
   return (
     <>
       {toast && <Toast msg={toast.msg} type={toast.type} />}
 
-      <Section title="Tạo Dữ liệu Mẫu (Seed Data)"
-        desc="Tạo tự động tập dữ liệu demo đa dạng phục vụ kiểm thử và demo hệ thống.">
+      <Section title={t('admin.settings.seedData')}
+        desc={t('admin.settings.seedDataDesc')}>
         <div className="flex items-start gap-4">
           <div className="flex-1">
             <div className="grid grid-cols-3 gap-3 mb-4">
               {[
-                { icon: Users,  label: '50 Ứng viên', desc: 'Đa dạng kỹ năng, kinh nghiệm' },
-                { icon: Zap,    label: '10 Doanh nghiệp', desc: 'Đã được duyệt sẵn' },
-                { icon: Layers, label: '4 Templates', desc: 'Kích hoạt đầy đủ' },
+                { icon: Users,  label: t('admin.settings.users50'), desc: t('admin.settings.users50Desc') },
+                { icon: Zap,    label: t('admin.settings.companies10'), desc: t('admin.settings.companies10Desc') },
+                { icon: Layers, label: t('admin.settings.templates4'), desc: t('admin.settings.templates4Desc') },
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center gap-2">
                   <item.icon className="w-5 h-5 text-blue-600 shrink-0" />
@@ -793,27 +811,26 @@ function TabTools() {
             <button onClick={handleSeed} disabled={seedLoading}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-60">
               {seedLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-              {seedLoading ? 'Đang tạo dữ liệu…' : 'Chạy Seed Data'}
+              {seedLoading ? t('admin.settings.seeding') : t('admin.settings.runSeed')}
             </button>
           </div>
         </div>
       </Section>
 
-      <Section title="Xóa Dữ liệu Demo (Reset)"
-        desc="Xóa toàn bộ dữ liệu test/demo. Hành động này KHÔNG thể hoàn tác!">
+      <Section title={t('admin.settings.resetTitle')}
+        desc={t('admin.settings.resetDesc')}>
         <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
           <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
           <div className="text-sm text-red-700">
-            <p className="font-semibold mb-1">Cảnh báo nguy hiểm</p>
-            <p>Thao tác này sẽ xóa toàn bộ ứng viên, doanh nghiệp và dữ liệu liên quan đã được tạo bởi seed.
-              Dữ liệu thật (tài khoản admin, settings) sẽ được giữ nguyên.</p>
+            <p className="font-semibold mb-1">{t('admin.settings.dangerZone')}</p>
+            <p>{t('admin.settings.resetWarning')}</p>
           </div>
         </div>
 
         {confirmReset && (
           <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg mb-3 text-sm text-amber-700 font-medium">
             <AlertTriangle className="w-4 h-4" />
-            Nhấn lần nữa để xác nhận xóa toàn bộ dữ liệu demo!
+            {t('admin.settings.confirmResetMsg')}
           </div>
         )}
 
@@ -821,12 +838,12 @@ function TabTools() {
           <button onClick={handleReset} disabled={resetLoading}
             className={`flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-60 ${confirmReset ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700'}`}>
             {resetLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
-            {resetLoading ? 'Đang xóa…' : confirmReset ? 'Xác nhận xóa!' : 'Reset Database Demo'}
+            {resetLoading ? t('admin.settings.saving') : confirmReset ? t('admin.settings.confirmResetBtn') : t('admin.settings.resetBtn')}
           </button>
           {confirmReset && (
             <button onClick={() => setConfirmReset(false)}
               className="px-5 py-2.5 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition">
-              Hủy
+              {t('admin.settings.cancel')}
             </button>
           )}
         </div>
@@ -837,6 +854,7 @@ function TabTools() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminSettingsPage() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('general')
 
   return (
@@ -845,9 +863,9 @@ export default function AdminSettingsPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Settings className="w-5 h-5 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Cài đặt Hệ thống</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.settings.systemSettingsTitle')}</h1>
         </div>
-        <p className="text-sm text-gray-500">Quản lý cấu hình, thuật toán, template và công cụ dữ liệu</p>
+        <p className="text-sm text-gray-500">{t('admin.settings.systemSettingsDesc')}</p>
       </div>
 
       {/* Tabs */}
@@ -864,7 +882,7 @@ export default function AdminSettingsPage() {
               }`}
             >
               <Icon className="w-4 h-4" />
-              {tab.label}
+              {t(tab.labelKey)}
               {active && <ChevronRight className="w-3.5 h-3.5" />}
             </button>
           )

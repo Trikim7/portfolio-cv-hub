@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiClient } from '@/services/api'
+import { useTranslation } from 'react-i18next'
 import { ComparisonDetailResponse, ComparisonHistoryItem } from '@/types'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -30,10 +31,10 @@ function avatarColor(id: number): string {
 }
 
 /** Fallback: give a generic name to a bare id */
-function idToMini(id: number): CandidateMini {
+function idToMini(id: number, t: any): CandidateMini {
   return {
     id,
-    name: `Ứng viên ${id}`,
+    name: `${t('ranking.candidate_label')} ${id}`,
     initials: `${id}`.slice(-2),
     color: avatarColor(id),
   }
@@ -49,22 +50,25 @@ interface ParsedCriteria {
   priorities: { label: string; level: string; color: string }[]
 }
 
-const WEIGHT_LABELS: Record<string, string> = {
-  technical_skills: 'Kỹ thuật',
-  experience: 'Kinh nghiệm',
-  portfolio: 'Portfolio',
-  soft_skills: 'Kỹ năng mềm',
-  leadership: 'Lãnh đạo',
-  readiness_signals: 'Sẵn sàng',
+function levelBadge(pct: number, t: any): { level: string; color: string } {
+  if (pct >= 30) return { level: t('ranking.level_high'), color: 'bg-violet-100 text-violet-700 border-violet-200' }
+  if (pct >= 15) return { level: t('ranking.level_medium'), color: 'bg-blue-100 text-blue-700 border-blue-200' }
+  return { level: t('ranking.level_low'), color: 'bg-gray-100 text-gray-500 border-gray-200' }
 }
 
-function levelBadge(pct: number): { level: string; color: string } {
-  if (pct >= 30) return { level: 'Cao', color: 'bg-violet-100 text-violet-700 border-violet-200' }
-  if (pct >= 15) return { level: 'Trung bình', color: 'bg-blue-100 text-blue-700 border-blue-200' }
-  return { level: 'Thấp', color: 'bg-gray-100 text-gray-500 border-gray-200' }
+function getWeightLabel(key: string, t: any): string {
+  const map: Record<string, string> = {
+    technical_skills: t('ranking.axis_technical_skills'),
+    experience: t('ranking.axis_experience'),
+    portfolio: t('ranking.axis_portfolio'),
+    soft_skills: t('ranking.axis_soft_skills'),
+    leadership: t('ranking.axis_leadership'),
+    readiness_signals: t('ranking.axis_readiness_signals'),
+  }
+  return map[key] ?? key
 }
 
-function parseCriteria(json: Record<string, unknown>): ParsedCriteria {
+function parseCriteria(json: Record<string, unknown>, t: any): ParsedCriteria {
   // skills may be strings or {name, level} objects
   const rawSkills = (json.required_skills ?? json.skills) as unknown[] | undefined
   const skills: string[] = (rawSkills ?? []).map((s) =>
@@ -83,8 +87,8 @@ function parseCriteria(json: Record<string, unknown>): ParsedCriteria {
       .filter(([, v]) => v > 0)
       .forEach(([key, val]) => {
         const pct = Math.round((val / total) * 100)
-        const { level, color } = levelBadge(pct)
-        priorities.push({ label: WEIGHT_LABELS[key] ?? key, level, color })
+        const { level, color } = levelBadge(pct, t)
+        priorities.push({ label: getWeightLabel(key, t), level, color })
       })
   }
 
@@ -159,11 +163,13 @@ function DetailPanel({
   onRerun: (item: ComparisonHistoryItem) => void
 }) {
 
+  const { t, i18n } = useTranslation()
+
   if (loading && !detail) {
     return (
       <div className="flex items-center gap-2 py-6 px-4 text-sm text-gray-400">
         <span className="w-4 h-4 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin shrink-0" />
-        Đang tải chi tiết...
+        {t('ranking.history_loading_detail')}
       </div>
     )
   }
@@ -184,7 +190,7 @@ function DetailPanel({
   // parseCriteria needs the inner criteria_source object, not the wrapper
   const criteriaSource =
     (raw.criteria_source as Record<string, unknown> | undefined) ?? raw
-  const criteria = parseCriteria(criteriaSource)
+  const criteria = parseCriteria(criteriaSource, t)
 
   // Candidate names are already stored inside criteria_json.results
   const storedResults = (
@@ -207,7 +213,7 @@ function DetailPanel({
           : name.slice(0, 2).toUpperCase()
       return { id, name, initials, color: avatarColor(id) }
     }
-    return idToMini(id)
+    return idToMini(id, t)
   })
   const visibleCandidates = candidates.slice(0, 5)
   const extraCount = candidates.length - visibleCandidates.length
@@ -219,14 +225,14 @@ function DetailPanel({
         {/* ─── Top action bar ─────────────────────────────── */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <span className="text-xs text-gray-400">
-            {new Date(detail.created_at).toLocaleString('vi-VN')}
+            {new Date(detail.created_at).toLocaleString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}
           </span>
           <button
             type="button"
             onClick={() => onRerun(historyItem)}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg px-2.5 py-1 transition"
           >
-            ▶ Chạy lại
+            ▶ {t('ranking.history_rerun')}
           </button>
         </div>
 
@@ -234,32 +240,32 @@ function DetailPanel({
             {/* ─── Criteria Summary ─────────────────────── */}
             <div className="bg-gradient-to-br from-slate-50 to-violet-50/30 border border-violet-100 rounded-xl p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-violet-700 mb-3">
-                📋 Tiêu chí tìm kiếm
+                📋 {t('ranking.history_search_criteria')}
               </p>
               <div className="space-y-2 text-sm">
                 {criteria.title && (
                   <div className="flex gap-2">
-                    <span className="text-gray-400 w-24 shrink-0">Vị trí</span>
+                    <span className="text-gray-400 w-24 shrink-0">{t('ranking.history_position')}</span>
                     <span className="font-semibold text-gray-800 truncate">{criteria.title}</span>
                   </div>
                 )}
                 {criteria.role && (
                   <div className="flex gap-2">
-                    <span className="text-gray-400 w-24 shrink-0">Loại vai trò</span>
+                    <span className="text-gray-400 w-24 shrink-0">{t('ranking.history_role_type')}</span>
                     <span className="font-semibold text-gray-800">{criteria.role}</span>
                   </div>
                 )}
                 {criteria.experience !== undefined && (
                   <div className="flex gap-2">
-                    <span className="text-gray-400 w-24 shrink-0">Kinh nghiệm</span>
+                    <span className="text-gray-400 w-24 shrink-0">{t('ranking.history_experience')}</span>
                     <span className="font-semibold text-gray-800">
-                      {criteria.experience === 0 ? 'Không yêu cầu' : `${criteria.experience} năm`}
+                      {criteria.experience === 0 ? t('ranking.no_exp_required') : `${criteria.experience} ${t('ranking.years_suffix')}`}
                     </span>
                   </div>
                 )}
                 {criteria.skills.length > 0 && (
                   <div className="flex gap-2">
-                    <span className="text-gray-400 w-24 shrink-0">Kỹ năng</span>
+                    <span className="text-gray-400 w-24 shrink-0">{t('ranking.history_skills')}</span>
                     <div className="flex flex-wrap gap-1">
                       {criteria.skills.map((s) => (
                         <span key={s} className="bg-violet-100 text-violet-700 text-xs px-2 py-0.5 rounded-full font-medium">
@@ -271,7 +277,7 @@ function DetailPanel({
                 )}
                 {criteria.techStack.length > 0 && (
                   <div className="flex gap-2">
-                    <span className="text-gray-400 w-24 shrink-0">Tech stack</span>
+                    <span className="text-gray-400 w-24 shrink-0">{t('ranking.history_tech_stack')}</span>
                     <div className="flex flex-wrap gap-1">
                       {criteria.techStack.map((t) => (
                         <span key={t} className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded-full font-medium border border-blue-100">
@@ -283,7 +289,7 @@ function DetailPanel({
                 )}
                 {criteria.priorities.length > 0 && (
                   <div className="flex gap-2 items-start">
-                    <span className="text-gray-400 w-24 shrink-0">Ưu tiên</span>
+                    <span className="text-gray-400 w-24 shrink-0">{t('ranking.history_priority')}</span>
                     <div className="flex flex-wrap gap-1">
                       {criteria.priorities.map((p) => (
                         <span key={p.label} className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${p.color}`}>
@@ -299,13 +305,13 @@ function DetailPanel({
             {/* ─── Candidate List ───────────────────────── */}
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-violet-700 mb-3">
-                👥 Ứng viên trong phiên ({ids.length})
+                👥 {t('ranking.history_session_candidates')} ({ids.length})
               </p>
 
               {ids.length === 0 ? (
                 <div className="text-center py-6 text-gray-400">
                   <p className="text-2xl mb-1">🚫</p>
-                  <p className="text-sm">Không có ứng viên nào trong phiên này</p>
+                  <p className="text-sm">{t('ranking.history_no_candidates')}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -329,7 +335,7 @@ function DetailPanel({
 
                   {extraCount > 0 && (
                     <p className="text-xs text-gray-400 text-center pt-1">
-                      +{extraCount} ứng viên khác
+                      +{extraCount} {t('ranking.history_other_candidates')}
                     </p>
                   )}
                 </div>
@@ -353,6 +359,7 @@ interface HistoryRowProps {
 }
 
 function HistoryRow({ item, isOpen, detail, detailLoading, detailError, onToggle, onRerun }: HistoryRowProps) {
+  const { t, i18n } = useTranslation()
   const rowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -383,17 +390,17 @@ function HistoryRow({ item, isOpen, detail, detailLoading, detailError, onToggle
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold truncate ${isOpen ? 'text-violet-900' : 'text-gray-900'}`}>
-            {item.criteria_title ?? `Phiên ${item.comparison_id}`}
+            {item.criteria_title ?? `${t('ranking.history_session')} ${item.comparison_id}`}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
-            {new Date(item.created_at).toLocaleString('vi-VN')}
+            {new Date(item.created_at).toLocaleString(i18n.language === 'vi' ? 'vi-VN' : 'en-US')}
           </p>
         </div>
 
         {/* Badge + chevron */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="hidden sm:inline-flex text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-semibold border border-violet-200">
-            {item.candidate_count} ứng viên
+            {item.candidate_count} {t('ranking.history_candidates_count')}
           </span>
           <span className={`text-gray-400 text-sm transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             ▼
@@ -424,6 +431,7 @@ interface SearchHistoryListProps {
 }
 
 export default function SearchHistoryList({ onRerun, refreshKey = 0 }: SearchHistoryListProps) {
+  const { t } = useTranslation()
   const [history, setHistory] = useState<ComparisonHistoryItem[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
@@ -444,7 +452,7 @@ export default function SearchHistoryList({ onRerun, refreshKey = 0 }: SearchHis
       setDetailCache({})
       setErrorCache({})
     } catch (err) {
-      setHistoryError(extractError(err, 'Không thể tải lịch sử'))
+      setHistoryError(extractError(err, t('ranking.history_loading_error') || 'Could not load history'))
     } finally {
       setHistoryLoading(false)
     }
@@ -469,7 +477,7 @@ export default function SearchHistoryList({ onRerun, refreshKey = 0 }: SearchHis
         const detail = await apiClient.getComparisonDetail(id)
         setDetailCache((prev) => ({ ...prev, [id]: detail }))
       } catch (err) {
-        setErrorCache((prev) => ({ ...prev, [id]: extractError(err, 'Không thể tải chi tiết') }))
+        setErrorCache((prev) => ({ ...prev, [id]: extractError(err, t('ranking.history_loading_detail_error') || 'Could not load details') }))
       } finally {
         setLoadingId(null)
       }
@@ -488,8 +496,8 @@ export default function SearchHistoryList({ onRerun, refreshKey = 0 }: SearchHis
       {/* Header */}
       <div className="flex items-center mb-4">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Lịch sử tìm kiếm</h3>
-          <p className="text-xs text-gray-400 mt-0.5">Nhấn để xem chi tiết từng phiên</p>
+          <h3 className="text-lg font-bold text-gray-900">{t('ranking.history_title')}</h3>
+          <p className="text-xs text-gray-400 mt-0.5">{t('ranking.history_desc')}</p>
         </div>
         {historyLoading && (
           <span className="ml-auto w-4 h-4 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
@@ -505,13 +513,13 @@ export default function SearchHistoryList({ onRerun, refreshKey = 0 }: SearchHis
       {historyLoading && history.length === 0 ? (
         <div className="flex items-center gap-2 py-8 justify-center text-gray-400 text-sm">
           <span className="w-4 h-4 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
-          Đang tải lịch sử...
+          {t('ranking.history_loading')}
         </div>
       ) : history.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-4xl mb-2">📋</p>
-          <p className="text-sm font-medium text-gray-500">Chưa có lịch sử tìm kiếm nào</p>
-          <p className="text-xs text-gray-400 mt-1">Chạy tìm kiếm AI đầu tiên để xem tại đây</p>
+          <p className="text-sm font-medium text-gray-500">{t('ranking.history_empty')}</p>
+          <p className="text-xs text-gray-400 mt-1">{t('ranking.history_empty_hint')}</p>
         </div>
       ) : (
         <div className="space-y-2">

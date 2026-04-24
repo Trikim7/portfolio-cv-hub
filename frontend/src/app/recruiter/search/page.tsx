@@ -7,9 +7,11 @@ import CandidateSearch from '@/components/recruiter/CandidateSearch'
 import { useRecruiter } from '@/hooks/useRecruiter'
 import { useAuth } from '@/hooks/AuthContext'
 import { PageShell } from '@/components/layout/DashboardShell'
+import { useTranslation } from 'react-i18next'
 
 export default function RecruiterSearchPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const { role, loading: authLoading } = useAuth()
   const { fetchCompanyProfile, loading: recruiterLoading } = useRecruiter()
   const [isAuthorized, setIsAuthorized] = useState(false)
@@ -48,7 +50,7 @@ export default function RecruiterSearchPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-gray-600">Đang kiểm tra thông tin...</p>
+          <p className="text-gray-600">{t('common.checkingInfo')}</p>
         </div>
       </div>
     )
@@ -59,8 +61,8 @@ export default function RecruiterSearchPage() {
   return (
     <PageShell
       accent="purple"
-      title="Tìm kiếm ứng viên"
-      subtitle="Bộ lọc nâng cao"
+      title={t('search.pageTitle')}
+      subtitle={t('search.pageSubtitle')}
       backHref="/recruiter/dashboard"
       backLabel="Dashboard"
       headerAction={
@@ -68,7 +70,7 @@ export default function RecruiterSearchPage() {
           href="/recruiter/ranking"
           className="bg-white text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-xl text-sm font-semibold transition shadow"
         >
-          Chuyển sang AI Ranking
+          {t('search.switchToRanking')}
         </Link>
       }
     >

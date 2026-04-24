@@ -7,6 +7,7 @@ import {
   Mail, User, CheckCircle, XCircle, Clock, AlertCircle,
   ExternalLink, RefreshCw, Trash2, Eye,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DetailedInvitation {
@@ -28,22 +29,23 @@ interface DetailedInvitation {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  pending:    { label: 'Chờ phản hồi',  bg: 'bg-amber-100',  text: 'text-amber-700',  icon: Clock },
-  interested: { label: 'Quan tâm',       bg: 'bg-green-100',  text: 'text-green-700',  icon: CheckCircle },
-  rejected:   { label: 'Đã từ chối',    bg: 'bg-red-100',    text: 'text-red-700',    icon: XCircle },
-  withdrawn:  { label: 'Đã thu hồi',    bg: 'bg-gray-100',   text: 'text-gray-500',   icon: AlertCircle },
+  pending:    { labelKey: 'invitations.statusPending',  bg: 'bg-amber-100',  text: 'text-amber-700',  icon: Clock },
+  interested: { labelKey: 'invitations.statusInterested',       bg: 'bg-green-100',  text: 'text-green-700',  icon: CheckCircle },
+  rejected:   { labelKey: 'invitations.statusRejected',    bg: 'bg-red-100',    text: 'text-red-700',    icon: XCircle },
+  withdrawn:  { labelKey: 'invitations.statusWithdrawn',    bg: 'bg-gray-100',   text: 'text-gray-500',   icon: AlertCircle },
 }
 
-function StatusBadge({ status }: { status: DetailedInvitation['status'] }) {
+function StatusBadge({ status, t }: { status: DetailedInvitation['status'], t: any }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending
   const Icon = cfg.icon
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
       <Icon className="w-3 h-3" />
-      {cfg.label}
+      {t(cfg.labelKey)}
     </span>
   )
 }
+
 
 function Avatar({ name, avatarUrl }: { name?: string; avatarUrl?: string }) {
   if (avatarUrl) {
@@ -63,6 +65,7 @@ function formatDate(iso: string) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function RecruiterInvitationsPanel() {
+  const { t } = useTranslation()
   const [invitations, setInvitations] = useState<DetailedInvitation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -82,7 +85,7 @@ export default function RecruiterInvitationsPanel() {
       setInvitations(data)
       setError(null)
     } catch {
-      setError('Không thể tải danh sách lời mời')
+      setError(t('invitations.loadError'))
     } finally {
       setLoading(false)
     }
@@ -91,27 +94,27 @@ export default function RecruiterInvitationsPanel() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const handleWithdraw = async (id: number) => {
-    if (!confirm('Thu hồi lời mời này? Ứng viên sẽ không còn thấy lời mời.')) return
+    if (!confirm(t('invitations.confirmWithdraw'))) return
     setWithdrawing(id)
     try {
       await apiClient.updateJobInvitation(id, 'withdrawn')
       setInvitations(prev => prev.map(inv => inv.id === id ? { ...inv, status: 'withdrawn' } : inv))
-      showToast('Đã thu hồi lời mời.', 'success')
+      showToast(t('invitations.withdrawSuccess'), 'success')
     } catch {
-      showToast('Không thể thu hồi. Thử lại sau.', 'error')
+      showToast(t('invitations.withdrawError'), 'error')
     } finally {
       setWithdrawing(null)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Xóa lời mời này khỏi hệ thống?')) return
+    if (!confirm(t('invitations.confirmDelete'))) return
     try {
       await apiClient.deleteJobInvitation(id)
       setInvitations(prev => prev.filter(inv => inv.id !== id))
-      showToast('Đã xóa lời mời.', 'success')
+      showToast(t('invitations.deleteSuccess'), 'success')
     } catch {
-      showToast('Không thể xóa. Thử lại sau.', 'error')
+      showToast(t('invitations.deleteError'), 'error')
     }
   }
 
@@ -139,17 +142,17 @@ export default function RecruiterInvitationsPanel() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Mail className="w-5 h-5 text-purple-600" />
-          <h2 className="text-lg font-bold text-gray-900">Lời mời đã gửi</h2>
+          <h2 className="text-lg font-bold text-gray-900">{t('invitations.sentInvitations')}</h2>
           {counts.interested > 0 && (
             <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              {counts.interested} quan tâm
+              {counts.interested} {t('invitations.interested')}
             </span>
           )}
         </div>
         <button onClick={fetchData} disabled={loading}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition">
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Làm mới
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -157,10 +160,10 @@ export default function RecruiterInvitationsPanel() {
       {!loading && !error && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Đã gửi',     value: counts.all,        color: 'bg-purple-50 border-purple-100 text-purple-700' },
-            { label: 'Chờ phản hồi', value: counts.pending,  color: 'bg-amber-50 border-amber-100 text-amber-700' },
-            { label: 'Quan tâm',   value: counts.interested,  color: 'bg-green-50 border-green-100 text-green-700' },
-            { label: 'Từ chối',    value: counts.rejected,    color: 'bg-red-50 border-red-100 text-red-700' },
+            { label: t('invitations.sent'),     value: counts.all,        color: 'bg-purple-50 border-purple-100 text-purple-700' },
+            { label: t('invitations.statusPending'), value: counts.pending,  color: 'bg-amber-50 border-amber-100 text-amber-700' },
+            { label: t('invitations.interested'),   value: counts.interested,  color: 'bg-green-50 border-green-100 text-green-700' },
+            { label: t('invitations.statusRejected'),    value: counts.rejected,    color: 'bg-red-50 border-red-100 text-red-700' },
           ].map(s => (
             <div key={s.label} className={`rounded-xl border p-3 text-center ${s.color}`}>
               <p className="text-2xl font-extrabold">{s.value}</p>
@@ -173,11 +176,11 @@ export default function RecruiterInvitationsPanel() {
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
         {([
-          { key: 'all',        label: `Tất cả (${counts.all})` },
-          { key: 'pending',    label: `Chờ (${counts.pending})` },
-          { key: 'interested', label: `Quan tâm (${counts.interested})` },
-          { key: 'rejected',   label: `Từ chối (${counts.rejected})` },
-          { key: 'withdrawn',  label: `Thu hồi (${counts.withdrawn})` },
+          { key: 'all',        label: `${t('common.all')} (${counts.all})` },
+          { key: 'pending',    label: `${t('invitations.pendingTab')} (${counts.pending})` },
+          { key: 'interested', label: `${t('invitations.interested')} (${counts.interested})` },
+          { key: 'rejected',   label: `${t('invitations.rejectedTab')} (${counts.rejected})` },
+          { key: 'withdrawn',  label: `${t('invitations.withdrawnTab')} (${counts.withdrawn})` },
         ] as const).map(tab => (
           <button key={tab.key} onClick={() => setFilter(tab.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${filter === tab.key ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
@@ -205,10 +208,10 @@ export default function RecruiterInvitationsPanel() {
         <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
           <Mail className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="font-semibold text-gray-500">
-            {filter === 'all' ? 'Chưa gửi lời mời nào' : 'Không có lời mời trong mục này'}
+            {filter === 'all' ? t('invitations.noInvitations') : t('invitations.noInvitationsFilter')}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            Tìm ứng viên và gửi lời mời từ trang Tìm kiếm hoặc AI Ranking.
+            {t('invitations.findCandidatesHint')}
           </p>
         </div>
       )}
@@ -234,32 +237,32 @@ export default function RecruiterInvitationsPanel() {
                         {portfolioHref ? (
                           <Link href={portfolioHref} target="_blank" rel="noreferrer"
                             className="font-semibold text-gray-900 hover:text-purple-700 hover:underline transition-colors flex items-center gap-1">
-                            {cand?.full_name || 'Ứng viên'}
+                            {cand?.full_name || t('invitations.candidate')}
                             <ExternalLink className="w-3 h-3" />
                           </Link>
                         ) : (
                           <span className="font-semibold text-gray-900 flex items-center gap-1">
                             <User className="w-3.5 h-3.5 text-gray-400" />
-                            {cand?.full_name || 'Ứng viên'}
+                            {cand?.full_name || t('invitations.candidate')}
                           </span>
                         )}
                         {!cand?.is_public && (
-                          <span className="text-xs text-gray-400 italic">(chưa public)</span>
+                          <span className="text-xs text-gray-400 italic">({t('invitations.notPublic')})</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{cand?.headline || 'Chưa có tiêu đề'}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Gửi {formatDate(inv.created_at)}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{cand?.headline || t('invitations.noHeadline')}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{t('invitations.sentOn')} {formatDate(inv.created_at)}</p>
                     </div>
                   </div>
 
                   {/* Status */}
-                  <StatusBadge status={inv.status} />
+                  <StatusBadge status={inv.status} t={t} />
                 </div>
 
                 {/* Job title + message */}
                 <div className="mt-3">
                   <p className="text-sm font-semibold text-gray-700">
-                    Vị trí: <span className="text-purple-700">{inv.job_title}</span>
+                    {t('invitations.position')}: <span className="text-purple-700">{inv.job_title}</span>
                   </p>
                   {inv.message && (
                     <p className="mt-1.5 text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border-l-2 border-purple-300">
@@ -276,8 +279,8 @@ export default function RecruiterInvitationsPanel() {
                       : 'bg-red-50 text-red-700'
                   }`}>
                     {inv.status === 'interested'
-                      ? <><CheckCircle className="w-3.5 h-3.5" /> Ứng viên đã phản hồi: <strong>Quan tâm</strong> — Phản hồi {formatDate(inv.updated_at)}</>
-                      : <><XCircle className="w-3.5 h-3.5" /> Ứng viên đã phản hồi: <strong>Từ chối</strong> — Phản hồi {formatDate(inv.updated_at)}</>
+                      ? <><CheckCircle className="w-3.5 h-3.5" /> {t('invitations.candidateResponded')}: <strong>{t('invitations.interested')}</strong> — {t('invitations.respondedOn')} {formatDate(inv.updated_at)}</>
+                      : <><XCircle className="w-3.5 h-3.5" /> {t('invitations.candidateResponded')}: <strong>{t('invitations.statusRejected')}</strong> — {t('invitations.respondedOn')} {formatDate(inv.updated_at)}</>
                     }
                   </div>
                 )}
@@ -288,7 +291,7 @@ export default function RecruiterInvitationsPanel() {
                     <Link href={portfolioHref} target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 border border-purple-200 hover:border-purple-400 px-3 py-1.5 rounded-lg transition">
                       <Eye className="w-3.5 h-3.5" />
-                      Xem hồ sơ
+                      {t('invitations.viewProfile')}
                     </Link>
                   )}
 
@@ -302,7 +305,7 @@ export default function RecruiterInvitationsPanel() {
                         ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         : <AlertCircle className="w-3.5 h-3.5" />
                       }
-                      Thu hồi
+                      {t('invitations.withdraw')}
                     </button>
                   )}
 
@@ -312,7 +315,7 @@ export default function RecruiterInvitationsPanel() {
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-800 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      Xóa
+                      {t('common.delete')}
                     </button>
                   )}
                 </div>

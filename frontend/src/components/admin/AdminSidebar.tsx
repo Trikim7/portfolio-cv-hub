@@ -8,6 +8,8 @@ import {
   Activity, Users, Building2, Settings, Shield,
   LogOut, Menu, X,
 } from 'lucide-react'
+import LanguageToggle from '@/components/layout/LanguageToggle'
+import { useTranslation } from 'react-i18next'
 
 // ─── Lucide icon map ───────────────────────────────────────────────────────────────────
 const ICON_CLS = 'w-[18px] h-[18px] shrink-0'
@@ -19,15 +21,16 @@ const NAV_ICON_MAP: Record<string, React.ReactNode> = {
   '/admin/settings':  <Settings className={ICON_CLS} />,
 }
 
-const navItems = [
-  { label: 'Bảng điều khiển', href: '/admin/dashboard' },
-  { label: 'Quản lý Ứng viên', href: '/admin/users' },
-  { label: 'Quản lý Doanh nghiệp', href: '/admin/companies', showBadge: true },
-  { label: 'Cài đặt Hệ thống', href: '/admin/settings' },
-]
-
 export default function AdminSidebar() {
+  const { t } = useTranslation()
   const pathname = usePathname()
+
+  const navItems = [
+    { label: t('admin.navDashboard'), href: '/admin/dashboard' },
+    { label: t('admin.navUsers'), href: '/admin/users' },
+    { label: t('admin.navCompanies'), href: '/admin/companies', showBadge: true },
+    { label: t('admin.navSettings'), href: '/admin/settings' },
+  ]
   const router = useRouter()
   const [pendingCount, setPendingCount] = useState(0)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -56,7 +59,7 @@ export default function AdminSidebar() {
           <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
             <Shield className="w-[18px] h-[18px] shrink-0" />
           </div>
-          <span className="text-lg font-bold tracking-tight">Quản lý CV Hub</span>
+          <span className="text-lg font-bold tracking-tight">{t('admin.title')}</span>
         </Link>
       </div>
 
@@ -97,15 +100,18 @@ export default function AdminSidebar() {
             A
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">Chào mừng</p>
-            <p className="text-xs text-blue-200 truncate">Quản trị viên</p>
+            <p className="text-sm font-semibold truncate">{t('admin.welcome')}</p>
+            <p className="text-xs text-blue-200 truncate">{t('admin.adminRole')}</p>
           </div>
+        </div>
+        <div className="mb-3">
+          <LanguageToggle variant="light" dropUp />
         </div>
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
         >
-          <LogOut className="w-[18px] h-[18px] shrink-0" /> Đăng xuất
+          <LogOut className="w-[18px] h-[18px] shrink-0" /> {t('common.logout')}
         </button>
       </div>
     </>

@@ -9,10 +9,12 @@ import {
   ClipboardList, Camera, ChevronUp, ChevronDown,
   BarChart2, Mail, Palette,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import LanguageToggle from './LanguageToggle'
 
 export interface DashboardNavItem {
   id: string
-  /** Chỉ dòng đầu (trước ký tự xuống dòng) được hiển thị trong sidebar */
+  /** First line (before newline) displayed in sidebar */
   label: string
   /** Không hiển thị trong UI — giữ nếu cần metadata; sidebar chỉ dùng `label` */
   description?: string
@@ -106,6 +108,7 @@ export default function DashboardShell({
   children,
 }: DashboardShellProps) {
   const router = useRouter()
+  const { t } = useTranslation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const styles = ACCENT_STYLES[accent]
 
@@ -137,13 +140,16 @@ export default function DashboardShell({
             >
               Portfolio CV Hub
             </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
-            >
-              Đăng xuất
-            </button>
+            <div className="flex items-center gap-2">
+              <LanguageToggle variant="light" />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="bg-white/10 hover:bg-white/20 backdrop-blur px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
+              >
+                {t('common.logout')}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -153,7 +159,7 @@ export default function DashboardShell({
                   <button
                     type="button"
                     onClick={onAvatarClick}
-                    title="Đổi ảnh đại diện"
+                    title={t('common.changeAvatar')}
                     className="relative group block focus:outline-none"
                   >
                     {userAvatarUrl ? (
@@ -192,7 +198,7 @@ export default function DashboardShell({
               </div>
               <div className="min-w-0">
                 <p className="text-white/80 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
-                  {subtitle || 'Xin chào'}
+                  {subtitle || t('dashboard.hello')}
                 </p>
                 <h1 className="text-xl sm:text-2xl font-extrabold leading-snug truncate">
                   {title}
@@ -226,7 +232,7 @@ export default function DashboardShell({
           <span>
             {navTitleFromLabel(
               activeNavLabel ?? nav.find((n) => n.id === activeId)?.label,
-            ) || 'Điều hướng'}
+            ) || t('common.navigate')}
           </span>
           <span className="text-gray-400">{mobileNavOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
         </button>
@@ -353,7 +359,7 @@ export function PageShell({
   accent = 'blue',
   headerAction,
   backHref,
-  backLabel = 'Quay lại',
+  backLabel,
   children,
 }: {
   title: string
@@ -365,7 +371,9 @@ export function PageShell({
   children: ReactNode
 }) {
   const router = useRouter()
+  const { t } = useTranslation()
   const styles = ACCENT_STYLES[accent]
+  const resolvedBackLabel = backLabel ?? t('common.back')
 
   const handleLogout = () => {
     localStorage.removeItem('access_token')
@@ -403,16 +411,17 @@ export function PageShell({
                   href={backHref}
                   className="bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ring-1 ring-white/20"
                 >
-                  {backLabel}
+                  {resolvedBackLabel}
                 </Link>
               )}
               {headerAction}
+              <LanguageToggle variant="light" />
               <button
                 type="button"
                 onClick={handleLogout}
                 className="bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ring-1 ring-white/30 text-white"
               >
-                Đăng xuất
+                {t('common.logout')}
               </button>
             </div>
           </div>

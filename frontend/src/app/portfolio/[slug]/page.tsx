@@ -2,46 +2,111 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { CandidateProfile, I18nText } from '@/types'
+import { useTranslation } from 'react-i18next'
+import { CandidateProfile } from '@/types'
 import { apiClient } from '@/services/api'
+import { useI18nText } from '@/hooks/useI18nText'
+import { Toast, useToast } from '@/components/Toast'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
-const i18nToText = (value: I18nText): string => {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.vi || value.en || Object.values(value)[0] || ''
+const normalizeProfile = (data: CandidateProfile): CandidateProfile => ({
+  ...data,
+  skills: Array.isArray(data.skills) ? data.skills : [],
+  experiences: Array.isArray(data.experiences) ? data.experiences : [],
+  projects: Array.isArray(data.projects) ? data.projects : [],
+  cvs: Array.isArray(data.cvs) ? data.cvs : [],
+})
+
+const formatMonthYear = (value: string | undefined) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' })
 }
 
 export default function PublicPortfolioPage() {
   const params = useParams()
-  const slug = params.slug as string
+  const rawSlug = params.slug
+  const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug
+  const { t } = useTranslation()
+  const resolveText = useI18nText()
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const { toast, showToast, closeToast } = useToast()
+
+  const asText = (value: unknown): string => {
+    if (!value) return ''
+    if (typeof value === 'string') return value
+    if (typeof value === 'object' && !Array.isArray(value)) return resolveText(value as any)
+    return ''
+  }
 
   useEffect(() => {
+    if (!slug) return
+
     const fetchProfile = async () => {
       try {
         const data = await apiClient.getPublicProfile(slug)
-        setProfile(data)
+        setProfile(normalizeProfile(data))
         setError(null)
       } catch (err) {
-        setError('Không tìm thấy portfolio hoặc hồ sơ chưa được công khai')
+        setError(t('portfolio.profileNotFound'))
       } finally {
         setLoading(false)
       }
     }
 
-    if (slug) {
-      fetchProfile()
+    fetchProfile()
+  }, [slug, t])
+
+  const handleDownloadCV = async (cvId: number) => {
+    setDownloading(true)
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const response = await fetch(`${apiUrl}/api/candidate/cvs/download/${cvId}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const errorMsg = errorData.detail || t('common.downloadCV')
+        showToast(errorMsg, 'error')
+        return
+      }
+
+      // Lấy filename từ header
+      const contentDisposition = response.headers.get('content-disposition') || ''
+      let filename = 'cv.pdf'
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1]
+      }
+
+      // Download file
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+
+      showToast(t('common.success'), 'success')
+    } catch (err: any) {
+      showToast(err.message || t('common.error'), 'error')
+    } finally {
+      setDownloading(false)
     }
-  }, [slug])
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-500">Đang tải hồ sơ...</p>
+          <p className="text-gray-500">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -49,15 +114,18 @@ export default function PublicPortfolioPage() {
 
   if (error || !profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4 relative">
         <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-md w-full border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy</h2>
+          <div className="absolute top-4 right-4">
+            <LanguageToggle variant="dark" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{t('common.notFound')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <a
             href="/"
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block"
           >
-            Về trang chủ
+            {t('common.goHome')}
           </a>
         </div>
       </div>
@@ -72,7 +140,9 @@ export default function PublicPortfolioPage() {
   }
 
   const primaryCv = profile.cvs.find((cv) => cv.is_primary) || profile.cvs[0]
-  const contactEmail = profile.contact_email?.trim() || ''
+  const contactEmail = asText(profile.contact_email).trim()
+  const fullName = asText(profile.full_name)
+  const headline = asText(profile.headline)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileAny = profile as any
@@ -80,6 +150,13 @@ export default function PublicPortfolioPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
+      {toast && <Toast {...toast} onClose={closeToast} />}
+
+      {/* Language toggle - floating top right, light variant for dark hero */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageToggle variant="light" />
+      </div>
+
       <div
         className="text-white pt-16 pb-16 px-4 md:px-8 shadow-inner relative overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${primaryColor}dd, ${primaryColor})` }}
@@ -92,37 +169,37 @@ export default function PublicPortfolioPage() {
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
-                alt={profile.full_name || 'Avatar'}
+                alt={fullName || 'Avatar'}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover shadow-2xl border-4 border-white/20 bg-white/10"
               />
             ) : (
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-[#3b82f6] shadow-2xl border-4 border-white/20 flex items-center justify-center text-5xl md:text-6xl font-bold tracking-tighter shadow-blue-900/20">
-                {getInitials(profile.full_name || 'N')}
+                {getInitials(fullName || 'N')}
               </div>
             )}
           </div>
 
           <div className="flex-1 text-center md:text-left pt-2">
             <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-              {profile.full_name || 'Hồ sơ Ứng viên'}
+              {fullName || t('portfolio.candidateProfile')}
             </h1>
-            {profile.headline && (
+            {headline && (
               <p className="text-xl md:text-2xl text-blue-200 mb-6 font-medium">
-                {profile.headline}
+                {headline}
               </p>
             )}
 
             <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 mb-8 text-blue-100/90 text-sm md:text-base">
               <div className="flex items-center gap-2">
-                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">Địa điểm</span>
-                <span>Hồ Chí Minh, Việt Nam</span>
+                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">{t('portfolio.location')}</span>
+                <span>{t('portfolio.locationValue')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">Email</span>
-                <span>{contactEmail || 'Không công khai'}</span>
+                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">{t('portfolio.email')}</span>
+                <span>{contactEmail || t('common.emailNotPublic')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">Lượt xem</span>
+                <span className="uppercase text-[10px] tracking-widest text-blue-200/80">{t('common.views')}</span>
                 <span>{profile.views || 0}</span>
               </div>
             </div>
@@ -133,7 +210,7 @@ export default function PublicPortfolioPage() {
                   href={`mailto:${contactEmail}`}
                   className="px-8 py-2.5 bg-white text-blue-700 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all active:scale-95"
                 >
-                  Liên hệ ngay
+                  {t('common.contactNow')}
                 </a>
               ) : (
                 <button
@@ -141,19 +218,25 @@ export default function PublicPortfolioPage() {
                   disabled
                   className="px-8 py-2.5 bg-white/40 text-white/90 font-semibold rounded-lg border border-white/40 cursor-not-allowed"
                 >
-                  Chưa công khai email
+                  {t('common.emailNotPublic')}
                 </button>
               )}
 
               {primaryCv ? (
-                <a
-                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/cvs/download/${primaryCv.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white/30 hover:bg-white/30 transition backdrop-blur-sm shadow-lg"
+                <button
+                  onClick={() => handleDownloadCV(primaryCv.id)}
+                  disabled={downloading}
+                  className="px-8 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white/30 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition backdrop-blur-sm shadow-lg flex items-center gap-2"
                 >
-                  Tải CV (PDF)
-                </a>
+                  {downloading ? (
+                    <>
+                      <span className="animate-spin border-2 border-white/50 border-t-white rounded-full w-4 h-4 inline-block" />
+                      {t('common.downloading')}
+                    </>
+                  ) : (
+                    t('common.downloadPDF')
+                  )}
+                </button>
               ) : null}
             </div>
           </div>
@@ -165,21 +248,21 @@ export default function PublicPortfolioPage() {
           <div className="p-8 md:p-10 border-b border-gray-100">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Giới thiệu bản thân
+              {t('portfolio.aboutSelf')}
             </h2>
-            {i18nToText(profile.bio) ? (
+            {resolveText(profile.bio) ? (
               <div className="prose prose-blue max-w-none text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
-                {i18nToText(profile.bio)}
+                {resolveText(profile.bio)}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Ứng viên đang cập nhật phần giới thiệu.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noBioPublic')}</p>
             )}
           </div>
 
           <div className="p-8 md:p-10">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Kỹ năng chuyên môn
+              {t('portfolio.professionalSkills')}
             </h2>
             {profile.skills && profile.skills.length > 0 ? (
               <div className="flex flex-wrap gap-3">
@@ -188,8 +271,8 @@ export default function PublicPortfolioPage() {
                     key={skill.id}
                     className="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-full shadow-md hover:bg-blue-700 transition cursor-default flex items-center gap-2"
                   >
-                    {skill.name}
-                    {skill.level && (
+                    {asText(skill.name)}
+                    {typeof skill.level === 'string' && skill.level && (
                       <span className="opacity-70 text-xs font-normal border-l border-white/30 pl-2">
                         {skill.level.toUpperCase()}
                       </span>
@@ -198,7 +281,7 @@ export default function PublicPortfolioPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Chưa có thông tin kỹ năng.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noSkillsPublic')}</p>
             )}
           </div>
         </div>
@@ -207,68 +290,62 @@ export default function PublicPortfolioPage() {
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Kinh nghiệm
+              {t('portfolio.experience')}
             </h2>
             {profile.experiences && profile.experiences.length > 0 ? (
               <div className="space-y-8">
                 {profile.experiences.map((exp) => (
                   <div key={exp.id} className="relative pl-8 border-l-2 border-blue-100 last:pb-0">
                     <div className="absolute w-4 h-4 bg-blue-600 rounded-full -left-[9px] top-1.5 border-4 border-white ring-1 ring-blue-100 shadow-sm"></div>
-                    <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{exp.job_title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{asText(exp.job_title)}</h3>
                     <div className="text-blue-600 font-bold mb-2 uppercase text-sm tracking-wider">
-                      {exp.company_name}
+                      {asText(exp.company_name)}
                     </div>
                     <div className="text-sm text-gray-500 mb-4 font-medium flex items-center gap-2">
                       <span className="bg-gray-100 px-2 py-1 rounded">
-                        {new Date(exp.start_date).toLocaleDateString('vi-VN', {
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
+                        {formatMonthYear(exp.start_date)}
                         {' - '}
                         {exp.is_current
-                          ? 'Hiện tại'
-                          : new Date(exp.end_date!).toLocaleDateString('vi-VN', {
-                              month: '2-digit',
-                              year: 'numeric',
-                            })}
+                          ? t('common.present')
+                          : formatMonthYear(exp.end_date)}
                       </span>
                     </div>
-                    {i18nToText(exp.description) && (
-                      <p className="text-gray-600 leading-relaxed text-sm">{i18nToText(exp.description)}</p>
+                    {resolveText(exp.description) && (
+                      <p className="text-gray-600 leading-relaxed text-sm">{resolveText(exp.description)}</p>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Không có dữ liệu kinh nghiệm.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noExperience')}</p>
             )}
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
-              Dự án tiêu biểu
+              {t('portfolio.projects')}
             </h2>
             {profile.projects && profile.projects.length > 0 ? (
               <div className="space-y-6">
                 {profile.projects.map((proj) => {
-                  const description = i18nToText(proj.description)
-                  const projectUrl = proj.project_url || proj.github_url
+                  const description = resolveText(proj.description)
+                  const projectUrl = asText(proj.project_url) || asText(proj.github_url)
                   return (
                     <div
                       key={proj.id}
                       className="group p-6 rounded-2xl border border-gray-100 bg-gray-50/30 hover:bg-white hover:border-blue-200 hover:shadow-lg transition-all duration-300"
                     >
                       <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors uppercase">
-                        {proj.project_name}
+                        {asText(proj.project_name)}
                       </h3>
-                      {proj.role && <p className="text-sm text-blue-600 mb-2 font-medium">{proj.role}</p>}
+                      {asText(proj.role) && <p className="text-sm text-blue-600 mb-2 font-medium">{asText(proj.role)}</p>}
                       {description && (
                         <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{description}</p>
                       )}
 
                       <div className="flex flex-col gap-4 mt-auto">
-                        {proj.technologies && (
+                        {typeof proj.technologies === 'string' && proj.technologies && (
                           <div className="flex flex-wrap gap-2 text-[10px]">
                             {proj.technologies
                               .split(',')
@@ -291,7 +368,7 @@ export default function PublicPortfolioPage() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 text-sm font-bold w-fit border-b-2 border-transparent hover:border-blue-600 transition-all pb-0.5"
                           >
-                            XEM CHI TIẾT DỰ ÁN
+                            {t('common.viewProjectDetail')}
                           </a>
                         )}
                       </div>
@@ -300,7 +377,7 @@ export default function PublicPortfolioPage() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-400 italic">Chưa có dự án nào được công khai.</p>
+              <p className="text-gray-400 italic">{t('portfolio.noProjects')}</p>
             )}
           </div>
         </div>

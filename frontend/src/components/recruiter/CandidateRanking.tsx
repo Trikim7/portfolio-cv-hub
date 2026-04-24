@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
 import {
   CandidateScore,
@@ -8,6 +9,7 @@ import {
   RankingResponse,
 } from '@/types'
 import SearchHistoryList from './SearchHistoryList'
+import CandidateRadarChart from './CandidateRadarChart'
 import { Scale, Zap, FolderOpen, Search } from 'lucide-react'
 
 // ─── Job Requirement Interface ────────────────────────────────────────────────
@@ -47,28 +49,28 @@ function PresetIcon({ id, className }: { id: PresetKey; className?: string }) {
 type PresetKey = 'balanced' | 'tech' | 'portfolio'
 
 interface Preset {
-  label: string
-  desc: string
+  labelKey: string
+  descKey: string
   icon: string
   weights: WeightsConfig
 }
 
 const PRESETS: Record<PresetKey, Preset> = {
   balanced: {
-    label: 'Cân bằng',
-    desc: 'Đánh giá đều tất cả tiêu chí',
+    labelKey: 'ranking.balanced',
+    descKey: 'ranking.balancedDesc',
     icon: 'balanced',
     weights: { technical_skills: 0.25, experience: 0.25, portfolio: 0.2, soft_skills: 0.1, leadership: 0.1, readiness_signals: 0.1 },
   },
   tech: {
-    label: 'Ưu tiên kỹ thuật',
-    desc: 'Chú trọng kỹ năng & kinh nghiệm thực chiến',
+    labelKey: 'ranking.technicalFocus',
+    descKey: 'ranking.technicalFocusDesc',
     icon: 'tech',
     weights: { technical_skills: 0.4, experience: 0.3, portfolio: 0.15, soft_skills: 0.05, leadership: 0.05, readiness_signals: 0.05 },
   },
   portfolio: {
-    label: 'Ưu tiên Portfolio',
-    desc: 'Đề cao dự án thực tế đã làm',
+    labelKey: 'ranking.portfolioFocus',
+    descKey: 'ranking.portfolioFocusDesc',
     icon: '🎨',
     weights: { technical_skills: 0.2, experience: 0.15, portfolio: 0.4, soft_skills: 0.1, leadership: 0.05, readiness_signals: 0.1 },
   },
@@ -91,12 +93,12 @@ const SKILL_SUGGESTIONS = [
 ]
 
 const AXIS_META: Record<RadarKey, { label: string; tooltip: string }> = {
-  technical_skills: { label: 'Kỹ năng kỹ thuật', tooltip: 'Mức độ thành thạo các công nghệ trong yêu cầu' },
-  experience: { label: 'Kinh nghiệm làm việc', tooltip: 'Số năm và độ phù hợp với vị trí đã trải qua' },
-  portfolio: { label: 'Dự án thực tế', tooltip: 'Chất lượng và số lượng dự án đã thực hiện' },
-  soft_skills: { label: 'Kỹ năng mềm', tooltip: 'Giao tiếp, teamwork và các kỹ năng tổng quát' },
-  leadership: { label: 'Khả năng lãnh đạo', tooltip: 'Kinh nghiệm dẫn dắt nhóm hoặc mentoring' },
-  readiness_signals: { label: 'Sẵn sàng đảm nhận', tooltip: 'Các tín hiệu cho thấy ứng viên sẵn sàng vào vai' },
+  technical_skills: { label: 'ranking.axis_technical_skills', tooltip: 'ranking.axis_technical_skills_tooltip' },
+  experience: { label: 'ranking.axis_experience', tooltip: 'ranking.axis_experience_tooltip' },
+  portfolio: { label: 'ranking.axis_portfolio', tooltip: 'ranking.axis_portfolio_tooltip' },
+  soft_skills: { label: 'ranking.axis_soft_skills', tooltip: 'ranking.axis_soft_skills_tooltip' },
+  leadership: { label: 'ranking.axis_leadership', tooltip: 'ranking.axis_leadership_tooltip' },
+  readiness_signals: { label: 'ranking.axis_readiness_signals', tooltip: 'ranking.axis_readiness_signals_tooltip' },
 }
 
 const RADAR_KEYS: RadarKey[] = [
@@ -105,12 +107,12 @@ const RADAR_KEYS: RadarKey[] = [
 ]
 
 const AXIS_SHORT: Record<RadarKey, string> = {
-  technical_skills: 'Kỹ thuật',
-  experience: 'Kinh nghiệm',
-  portfolio: 'Dự án',
-  soft_skills: 'Kỹ năng mềm',
-  leadership: 'Lãnh đạo',
-  readiness_signals: 'Sẵn sàng',
+  technical_skills: 'scoring.technicalSkills',
+  experience: 'scoring.experience',
+  portfolio: 'scoring.portfolio',
+  soft_skills: 'scoring.softSkills',
+  leadership: 'scoring.leadership',
+  readiness_signals: 'scoring.readinessSignals',
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -271,6 +273,8 @@ function FieldLabel({ children, tooltip }: LabelProps) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function CandidateRanking() {
+  const { t } = useTranslation()
+  
   // Form state
   const [jobTitle, setJobTitle] = useState('')
   const [roleType, setRoleType] = useState('')
@@ -338,7 +342,7 @@ export default function CandidateRanking() {
         })
         setJobRequirements(data)
       } catch (err) {
-        console.error('Lỗi tải yêu cầu công việc:', err)
+        console.error('Error loading job requirements:', err)
       } finally {
         setLoadingJobs(false)
       }
@@ -447,7 +451,7 @@ export default function CandidateRanking() {
       // Trigger auto-refresh of the history panel
       setHistoryRefreshKey((k) => k + 1)
     } catch (err: unknown) {
-      setError(extractError(err, 'Không thể tải kết quả'))
+      setError(extractError(err, t('ranking.load_results_error')))
     } finally {
       setLoading(false)
     }
@@ -462,7 +466,7 @@ export default function CandidateRanking() {
   const totalWeight = RADAR_KEYS.reduce((sum, k) => sum + weights[k], 0) || 1
 
   const previewPriorities = RADAR_KEYS
-    .map((k) => ({ key: k, label: AXIS_META[k].label, pct: Math.round((weights[k] / totalWeight) * 100) }))
+    .map((k) => ({ key: k, label: t(AXIS_META[k].label as any), pct: Math.round((weights[k] / totalWeight) * 100) }))
     .sort((a, b) => b.pct - a.pct)
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -474,7 +478,7 @@ export default function CandidateRanking() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-gray-900">Gửi lời mời phỏng vấn</h3>
+              <h3 className="text-base font-bold text-gray-900">{t('ranking.invite_modal_title')}</h3>
               <button
                 type="button"
                 onClick={() => { setInviteTarget(null); setInviteError(null) }}
@@ -482,25 +486,25 @@ export default function CandidateRanking() {
               >×</button>
             </div>
             <p className="text-sm text-gray-500">
-              Gửi lời mời tới <span className="font-semibold text-gray-800">{inviteTarget.name}</span>
+              {t('ranking.invite_modal_to')} <span className="font-semibold text-gray-800">{inviteTarget.name}</span>
             </p>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vị trí tuyển dụng <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('ranking.invite_job_title_label')} <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={inviteJobTitle}
                 onChange={e => setInviteJobTitle(e.target.value)}
-                placeholder={jobTitle || 'VD: Backend Developer'}
+                placeholder={jobTitle || t('ranking.placeholder_job_title')}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lời nhắn (tùy chọn)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('ranking.invite_message_label')}</label>
               <textarea
                 value={inviteMessage}
                 onChange={e => setInviteMessage(e.target.value)}
                 rows={3}
-                placeholder="Xin chào! Chúng tôi rất quan tâm đến hồ sơ của bạn..."
+                placeholder={t('ranking.invite_message_placeholder')}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition resize-none"
               />
             </div>
@@ -513,7 +517,7 @@ export default function CandidateRanking() {
                 onClick={() => { setInviteTarget(null); setInviteError(null) }}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
               >
-                Hủy
+                {t('ranking.invite_cancel')}
               </button>
               <button
                 type="button"
@@ -532,14 +536,14 @@ export default function CandidateRanking() {
                     setInviteTarget(null)
                     setInviteMessage('')
                   } catch (err: unknown) {
-                    setInviteError(extractError(err, 'Không thể gửi lời mời'))
+                    setInviteError(extractError(err, t('ranking.invite_send_error')))
                   } finally {
                     setInviteSending(false)
                   }
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold transition shadow-sm"
               >
-                {inviteSending ? 'Đang gửi…' : 'Gửi lời mời'}
+                {inviteSending ? t('comparison.sending') : t('comparison.sendInvitation')}
               </button>
             </div>
           </div>
@@ -547,46 +551,46 @@ export default function CandidateRanking() {
       )}
 
       {/* ── Section 1: Job Overview ── */}
-      <Section step={1} title="Thông tin vị trí tuyển dụng" desc="Mô tả công việc để AI hiểu bạn đang tìm kiếm ai">
+      <Section step={1} title={t('ranking.sectionJobTitle')} desc={t('ranking.sectionJobDesc')}>
         {jobRequirements.length > 0 && (
           <div className="mb-5 p-4 bg-green-50 border border-green-200 rounded-xl">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Điền nhanh từ Yêu cầu công việc
+              {t('candidateSearch.quickFillLabel')}
             </label>
             <select
               onChange={(e) => handleSelectJobRequirement(e.target.value)}
               disabled={loadingJobs}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
             >
-              <option value="">-- Chọn yêu cầu công việc --</option>
+              <option value="">{t('candidateSearch.selectJobReq')}</option>
               {jobRequirements.map((job) => (
                 <option key={job.id} value={job.id}>
                   {job.title}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-600 mt-1.5">Chọn một yêu cầu để tự động điền tiêu chí tuyển dụng</p>
+            <p className="text-xs text-gray-600 mt-1.5">{t('candidateSearch.quickFillHint')}</p>
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-1">
-            <FieldLabel tooltip="Tên công việc giúp AI gợi ý kỹ năng phù hợp tự động">Tên vị trí</FieldLabel>
+            <FieldLabel tooltip={t('ranking.axis_technical_skills_tooltip') as string}>{t('ranking.jobTitle')}</FieldLabel>
             <input
               type="text"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="VD: Backend Developer"
+              placeholder={t('ranking.placeholder_job_title')}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
             />
           </div>
           <div>
-            <FieldLabel tooltip="Phân loại chuyên môn của vị trí">Loại vai trò</FieldLabel>
+            <FieldLabel tooltip={t('ranking.axis_readiness_signals_tooltip') as string}>{t('ranking.roleType')}</FieldLabel>
             <select
               value={roleType}
               onChange={(e) => setRoleType(e.target.value)}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
             >
-              <option value="">-- Chọn --</option>
+              <option value="">{t('ranking.select_placeholder')}</option>
               <option value="Backend">Backend</option>
               <option value="Frontend">Frontend</option>
               <option value="Fullstack">Fullstack</option>
@@ -596,7 +600,7 @@ export default function CandidateRanking() {
             </select>
           </div>
           <div>
-            <FieldLabel tooltip="Số năm kinh nghiệm tối thiểu ứng viên cần có">Kinh nghiệm tối thiểu</FieldLabel>
+            <FieldLabel tooltip={t('ranking.axis_experience_tooltip') as string}>{t('ranking.min_experience_label')}</FieldLabel>
             <div className="flex items-center gap-3">
               <input
                 type="range" min={0} max={10} step={1}
@@ -605,7 +609,7 @@ export default function CandidateRanking() {
                 className="flex-1 accent-violet-600"
               />
               <span className="w-24 text-center text-sm font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg py-1.5">
-                {yearsExp === 0 ? 'Không yêu cầu' : `${yearsExp} năm`}
+                {yearsExp === 0 ? t('ranking.no_exp_required') : `${yearsExp} ${t('ranking.years_suffix')}`}
               </span>
             </div>
           </div>
@@ -613,40 +617,40 @@ export default function CandidateRanking() {
       </Section>
 
       {/* ── Section 2: Core Requirements ── */}
-      <Section step={2} title="Yêu cầu kỹ năng" desc="Nhập kỹ năng bắt buộc">
+      <Section step={2} title={t('ranking.sectionSkillsTitle')} desc={t('ranking.sectionSkillsDesc')}>
         <div className="space-y-4">
           <div>
-            <FieldLabel tooltip="Các kỹ năng mà ứng viên cần có. Thêm bằng cách chọn gợi ý hoặc nhập rồi Enter">
-              Kỹ năng yêu cầu <span className="text-red-500">*</span>
+            <FieldLabel tooltip={t('ranking.axis_technical_skills_tooltip') as string}>
+              {t('ranking.requiredSkills')} <span className="text-red-500">*</span>
             </FieldLabel>
             <TagInput
               tags={skills}
               onChange={setSkills}
               suggestions={SKILL_SUGGESTIONS}
-              placeholder="VD: Python, React, SQL… (chọn gợi ý hoặc nhập rồi Enter)"
+              placeholder={t('ranking.placeholder_skills')}
             />
             {skills.length === 0 && (
               <p className="text-xs text-gray-400 mt-1.5">
-                Thêm ít nhất 1 kỹ năng để có kết quả tốt hơn
+                {t('ranking.skills_hint')}
               </p>
             )}
           </div>
           <div>
-            <FieldLabel tooltip="Công nghệ, framework hoặc công cụ cụ thể ứng viên đã dùng trong dự án thực tế">
-              Tech Stack{' '}
+            <FieldLabel tooltip={t('ranking.axis_technical_skills_tooltip') as string}>
+              {t('ranking.techStack')}{' '}
             </FieldLabel>
             <TagInput
               tags={techStack}
               onChange={setTechStack}
               suggestions={['Docker', 'PostgreSQL', 'Redis', 'Next.js', 'FastAPI', 'Django', 'Spring Boot', 'Kubernetes', 'AWS', 'GCP', 'Figma', 'Tailwind CSS']}
-              placeholder="VD: Docker, PostgreSQL, AWS… (nhập rồi Enter)"
+              placeholder={t('ranking.tech_stack_placeholder')}
             />
           </div>
         </div>
       </Section>
 
       {/* ── Section 3: Evaluation Preferences ── */}
-      <Section step={3} title="Tiêu chí đánh giá" desc="Chọn cách AI ưu tiên đánh giá ứng viên cho vị trí này">
+      <Section step={3} title={t('ranking.evaluation_criteria_title')} desc={t('ranking.evaluation_criteria_desc')}>
         {/* Presets */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           {(Object.keys(PRESETS) as PresetKey[]).map((key) => {
@@ -664,9 +668,9 @@ export default function CandidateRanking() {
               >
                 <PresetIcon id={key} className="w-5 h-5" />
                 <p className={`text-sm font-bold mt-1 ${active ? 'text-violet-700' : 'text-gray-800'}`}>
-                  {p.label}
+                  {t(p.labelKey as any)}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">{p.desc}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t(p.descKey as any)}</p>
               </button>
             )
           })}
@@ -675,7 +679,7 @@ export default function CandidateRanking() {
         {/* Evaluation preview — hidden when advanced sliders are open */}
         {!showAdvanced && <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-100 rounded-xl p-4 mb-4">
           <p className="text-xs font-semibold text-violet-700 uppercase tracking-wider mb-3">
-            Xem trước cách AI sẽ chấm điểm
+            {t('ranking.previewScoringMethod')}
           </p>
           <div className="space-y-2">
             {previewPriorities.map(({ key, label, pct }) => (
@@ -700,21 +704,21 @@ export default function CandidateRanking() {
           className="flex items-center gap-2 text-sm font-semibold text-violet-600 hover:text-violet-800 transition"
         >
           <span className={`inline-block transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
-          {showAdvanced ? 'Ẩn tùy chỉnh nâng cao' : 'Tùy chỉnh nâng cao'}
+          {showAdvanced ? t('ranking.hideCustomization') : t('ranking.advancedCustomization')}
         </button>
 
         {showAdvanced && (
           <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
             <p className="text-xs text-gray-500 mb-4">
-              Điều chỉnh mức độ quan trọng của từng tiêu chí. Hệ thống sẽ tự cân bằng tổng = 100%.
+              {t('ranking.adjustWeights')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {RADAR_KEYS.map((axis) => (
                 <div key={axis}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-semibold text-gray-700 flex items-center">
-                      {AXIS_META[axis].label}
-                      <Tooltip text={AXIS_META[axis].tooltip} />
+                      {t(AXIS_META[axis].label as any)}
+                      <Tooltip text={t(AXIS_META[axis].tooltip as any)} />
                     </span>
                     <span className="text-xs font-bold text-violet-700">
                       {Math.round((weights[axis] / totalWeight) * 100)}%
@@ -745,17 +749,17 @@ export default function CandidateRanking() {
               {loading ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Đang tìm kiếm…
+                  {t('ranking.searching')}
                 </>
               ) : (
-                <> Tìm ứng viên phù hợp</>
+                <>{t('ranking.findCandidates')}</>
               )}
             </button>
           </div>
 
           {result && (
             <div className="flex items-center gap-3 shrink-0">
-              <span className="text-sm text-gray-500 whitespace-nowrap">Điểm tối thiểu</span>
+              <span className="text-sm text-gray-500 whitespace-nowrap">{t('ranking.minimumScore')}</span>
               <input
                 type="range" min={0} max={100} step={5}
                 value={minScore}
@@ -779,11 +783,11 @@ export default function CandidateRanking() {
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
           <div className="mb-4">
             <h3 className="text-lg font-bold text-gray-900">
-              Kết quả{' '}
+              {t('ranking.results')}{' '}
               <span className="text-violet-600">{filteredCandidates.length}</span>
-              <span className="text-gray-400 font-normal text-base">/{result.total} ứng viên</span>
+              <span className="text-gray-400 font-normal text-base">/{result.total} {t('ranking.totalCandidates')}</span>
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Sắp xếp theo mức độ phù hợp cao nhất</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('ranking.sortedByMatch')}</p>
           </div>
 
           {filteredCandidates.length === 0 ? (
@@ -791,9 +795,9 @@ export default function CandidateRanking() {
               <div className="flex justify-center mb-3">
                 <Search className="w-10 h-10 text-gray-300" />
               </div>
-              <p className="text-gray-500 font-medium">Không tìm thấy ứng viên phù hợp</p>
+              <p className="text-gray-500 font-medium">{t('ranking.noResults')}</p>
               <p className="text-sm text-gray-400 mt-1">
-                Thử giảm Điểm tối thiểu hoặc bỏ bớt kỹ năng yêu cầu
+                {t('ranking.tryReduceScore')}
               </p>
             </div>
           ) : (
@@ -802,7 +806,7 @@ export default function CandidateRanking() {
                 const rank = (c.match_details?.ranking as number | undefined) ?? idx + 1
                 const score = c.overall_match
                 const radarScores = c.radar_scores as RadarScores
-                const name = c.full_name ?? `Ứng viên ${c.candidate_id}`
+                const name = c.full_name ?? `${t('ranking.candidate_label')} ${c.candidate_id}`
                 const avatarUrl = c.match_details?.avatar_url as string | undefined
 
                 // Avatar initials + deterministic colour (fallback when no photo)
@@ -873,7 +877,7 @@ export default function CandidateRanking() {
                                 : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
                                 }`}
                             >
-                              {invitedIds.has(c.candidate_id) ? '✔ Đã gửi' : 'Gửi lời mời'}
+                              {invitedIds.has(c.candidate_id) ? '✔ ' + t('ranking.invitationSent') : t('ranking.sendInvitation')}
                             </button>
                             <span className={`px-2.5 py-0.5 rounded-full border text-xs font-extrabold ${scoreColor(score)}`}>
                               {score.toFixed(0)}%
@@ -892,7 +896,7 @@ export default function CandidateRanking() {
                               <span key={axis} className={`text-[11px] px-2 py-0.5 rounded-full ${val >= 7 ? 'bg-emerald-50 text-emerald-700' :
                                 val >= 4 ? 'bg-gray-100 text-gray-500' : 'bg-red-50 text-red-500'
                                 }`}>
-                                {AXIS_SHORT[axis]}: {val.toFixed(1)}
+                                {t(AXIS_SHORT[axis] as any)}: {val.toFixed(1)}
                               </span>
                             )
                           })}
@@ -926,43 +930,49 @@ export default function CandidateRanking() {
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-gray-900 truncate">{name}</p>
                             <p className="text-xs text-gray-400">
-                              Điểm tổng: <span className="font-semibold text-violet-600">{score.toFixed(1)}%</span>
-                              &nbsp;·&nbsp;Hạng {rank}
+                              {t('ranking.overallScore')}: <span className="font-semibold text-violet-600">{score.toFixed(1)}%</span>
+                              &nbsp;·&nbsp;{t('ranking.rank')} {rank}
                             </p>
                           </div>
                         </div>
 
                         {/* Key Insights */}
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Nhận xét nhanh</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">{t('ranking.quickInsights')}</p>
                           <ul className="space-y-1">
                             {strongAxes.map(a => (
                               <li key={a.key} className="flex items-start gap-1.5 text-xs text-gray-700">
                                 <span className="text-emerald-500 mt-0.5 shrink-0">✔</span>
-                                <span>Tốt: <span className="font-semibold">{AXIS_META[a.key].label}</span> ({a.val.toFixed(1)}/10)</span>
+                                <span>{t('scoring.good')}: <span className="font-semibold">{t(AXIS_META[a.key].label as any)}</span> ({a.val.toFixed(1)}/10)</span>
                               </li>
                             ))}
                             {weakAxes.map(a => (
                               <li key={a.key} className="flex items-start gap-1.5 text-xs text-gray-700">
                                 <span className="text-amber-500 mt-0.5 shrink-0">⚠</span>
-                                <span>Yếu: <span className="font-semibold">{AXIS_META[a.key].label}</span> ({a.val.toFixed(1)}/10)</span>
+                                <span>{t('scoring.weak')}: <span className="font-semibold">{t(AXIS_META[a.key].label as any)}</span> ({a.val.toFixed(1)}/10)</span>
                               </li>
                             ))}
                             {strongAxes.length === 0 && weakAxes.length === 0 && (
-                              <li className="text-xs text-gray-400 italic">Cần xem xét thêm hồ sơ</li>
+                              <li className="text-xs text-gray-400 italic">{t('ranking.needMoreReview')}</li>
                             )}
                           </ul>
                         </div>
 
+                        {/* Radar Chart */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('ranking.radarChart')}</p>
+                          <CandidateRadarChart radarScores={radarScores} candidateName={name} />
+                        </div>
+
                         {/* Full radar breakdown */}
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Chi tiết điểm</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">{t('ranking.detailedScores')}</p>
                           <div className="space-y-1">
                             {RADAR_KEYS.map(axis => {
                               const val = radarScores[axis]
                               return (
                                 <div key={axis} className="flex items-center gap-2">
-                                  <span className="text-[11px] text-gray-500 w-28 shrink-0 truncate">{AXIS_META[axis].label}</span>
+                                  <span className="text-[11px] text-gray-500 w-28 shrink-0 truncate">{t(AXIS_META[axis].label as any)}</span>
                                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                       className={`h-full rounded-full ${val >= 7 ? 'bg-emerald-400' : val >= 4 ? 'bg-yellow-400' : 'bg-red-400'}`}
@@ -990,7 +1000,7 @@ export default function CandidateRanking() {
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-semibold transition shadow-sm"
                           >
-                            Xem hồ sơ đầy đủ →
+                            {t('ranking.viewFullProfile')}
                           </a>
                         </div>
                       </div>
