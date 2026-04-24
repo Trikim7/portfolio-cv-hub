@@ -105,7 +105,7 @@ export default function AdminSidebar() {
           </div>
         </div>
         <div className="mb-3">
-          <LanguageToggle />
+          <LanguageToggle variant="light" dropUp />
         </div>
         <button
           onClick={handleLogout}

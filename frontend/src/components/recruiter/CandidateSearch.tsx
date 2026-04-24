@@ -47,6 +47,13 @@ export default function CandidateSearch() {
   const [jobRequirements, setJobRequirements] = useState<JobRequirement[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
 
+  // Read max_comparison limit set by admin (stored in localStorage, default 3)
+  const maxCompare = (() => {
+    if (typeof window === 'undefined') return 3
+    const v = parseInt(localStorage.getItem('max_comparison') ?? '3', 10)
+    return isNaN(v) || v < 1 ? 3 : Math.min(v, 5)
+  })()
+
   useEffect(() => {
     const fetchJobRequirements = async () => {
       try {
@@ -100,6 +107,10 @@ export default function CandidateSearch() {
   const toggleSelect = (candidate: CandidateSearchResult) => {
     setSelectedCandidates(prev => {
       const exists = prev.find(c => c.id === candidate.id)
+      if (!exists && prev.length >= maxCompare) {
+        showToast(t('candidateSearch.maxCompareReached', { max: maxCompare }), 'error')
+        return prev
+      }
       return exists ? prev.filter(c => c.id !== candidate.id) : [...prev, candidate]
     })
   }
@@ -224,7 +235,7 @@ export default function CandidateSearch() {
           {selectedCandidates.length > 0 && (
             <div className="mt-5 p-4 bg-purple-50 border border-purple-200 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <p className="text-sm text-purple-900 font-semibold">
-                {t('candidateSearch.selectedCount')} {selectedCandidates.length} {t('candidateSearch.candidates')}
+                {t('candidateSearch.selectedCount')} {selectedCandidates.length}/{maxCompare} {t('candidateSearch.candidates')}
               </p>
               <button onClick={() => setShowComparison(true)} disabled={selectedCandidates.length < 2}
                 className="px-4 py-2 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 disabled:bg-gray-400 transition">

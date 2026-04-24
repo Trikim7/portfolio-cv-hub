@@ -25,6 +25,7 @@ i18n
     interpolation: {
       escapeValue: false, // React already protects from XSS
     },
+    initImmediate: false, // Prevent SSR crash: do not run async init on server
   })
 
 export default i18n

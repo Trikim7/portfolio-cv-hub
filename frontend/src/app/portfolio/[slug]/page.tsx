@@ -91,10 +91,10 @@ export default function PublicPortfolioPage() {
 
   if (error || !profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4 relative">
         <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-md w-full border border-gray-100">
           <div className="absolute top-4 right-4">
-            <LanguageToggle />
+            <LanguageToggle variant="dark" />
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">{t('common.notFound')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
@@ -127,9 +127,9 @@ export default function PublicPortfolioPage() {
     <div className="min-h-screen bg-gray-50 pb-12">
       {toast && <Toast {...toast} onClose={closeToast} />}
 
-      {/* Language toggle - floating top right */}
+      {/* Language toggle - floating top right, light variant for dark hero */}
       <div className="fixed top-4 right-4 z-50">
-        <LanguageToggle />
+        <LanguageToggle variant="light" />
       </div>
 
       <div

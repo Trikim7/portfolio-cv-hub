@@ -169,6 +169,9 @@ function TabGeneral() {
   const handleSaveGeneral = async () => {
     setSavingGeneral(true)
     await new Promise(r => setTimeout(r, 600))
+    // Persist max_comparison so CandidateSearch respects it
+    const clampedMax = Math.min(5, Math.max(1, parseInt(general.max_comparison) || 3))
+    localStorage.setItem('max_comparison', String(clampedMax))
     setSavingGeneral(false)
     showToast(t('admin.settings.saveGeneralSuccess'), 'success')
   }
