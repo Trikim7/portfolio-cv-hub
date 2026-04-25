@@ -305,7 +305,32 @@ function TabAlgorithm() {
   const { t } = useTranslation()
   const [weights, setWeights] = useState<WeightConfig>(DEFAULT_WEIGHTS)
   const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    apiClient.getRankingWeightsConfig()
+      .then((data) => {
+        if (!mounted) return
+        const parseWeight = (value: unknown, fallback: number) => {
+          const num = Number(value)
+          return Number.isFinite(num) ? num : fallback
+        }
+        setWeights({
+          technical_skills: parseWeight(data.technical_skills, DEFAULT_WEIGHTS.technical_skills),
+          experience: parseWeight(data.experience, DEFAULT_WEIGHTS.experience),
+          portfolio: parseWeight(data.portfolio, DEFAULT_WEIGHTS.portfolio),
+          soft_skills: parseWeight(data.soft_skills, DEFAULT_WEIGHTS.soft_skills),
+          leadership: parseWeight(data.leadership, DEFAULT_WEIGHTS.leadership),
+          readiness_signals: parseWeight(data.readiness_signals, DEFAULT_WEIGHTS.readiness_signals),
+        })
+      })
+      .catch(() => {
+        if (!mounted) return
+        setWeights(DEFAULT_WEIGHTS)
+      })
+    return () => { mounted = false }
+  }, [])
 
   const total = Object.values(weights).reduce((s, v) => s + v, 0)
   const valid = total === 100
@@ -318,10 +343,16 @@ function TabAlgorithm() {
   const save = async () => {
     if (!valid) return
     setSaving(true)
-    await new Promise(r => setTimeout(r, 800))
-    setSaving(false)
-    setToast(t('admin.settings.saveWeightsSuccess'))
-    setTimeout(() => setToast(null), 3000)
+    try {
+      await apiClient.saveRankingWeightsConfig(weights)
+      setToast({ msg: t('admin.settings.saveWeightsSuccess'), type: 'success' })
+      setTimeout(() => setToast(null), 3000)
+    } catch {
+      setToast({ msg: t('admin.settings.smtpSaveError'), type: 'error' })
+      setTimeout(() => setToast(null), 3000)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const FACTORS: { key: keyof WeightConfig; labelKey: string; descKey: string; color: string }[] = [
@@ -335,7 +366,7 @@ function TabAlgorithm() {
 
   return (
     <>
-      {toast && <Toast msg={toast} type="success" />}
+      {toast && <Toast msg={toast.msg} type={toast.type} />}
       <Section
         title={t('admin.settings.algorithmTitle')}
         desc={t('admin.settings.algorithmDesc')}

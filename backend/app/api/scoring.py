@@ -10,6 +10,7 @@ or an inline `criteria` object so this module is usable end-to-end today.
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 import logging
 from typing import Any, Dict, List, Optional
@@ -36,6 +37,7 @@ from app.schemas.scoring import (
 )
 from app.services.auth import AuthService
 from app.services.scoring import (
+    DEFAULT_WEIGHTS,
     ScoreResult,
     compute_candidate_score,
     rank_candidates,
@@ -225,6 +227,37 @@ def _try_persist_comparison(
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@router.get("/settings/default-weights")
+async def get_default_ranking_weights(
+    db: Session = Depends(get_db),
+):
+    """
+    Return current system default AI ranking weights for recruiter UI.
+    Values are normalized to 0..1 and always sum to 1.
+    """
+    from app.models.admin_config import SystemSetting
+
+    row = db.query(SystemSetting).filter(SystemSetting.key == "ai_ranking_weights").first()
+    if not row or not row.value:
+        return DEFAULT_WEIGHTS
+
+    try:
+        payload = json.loads(row.value)
+        percent = {
+            "technical_skills": float(payload.get("technical_skills", 25)),
+            "experience": float(payload.get("experience", 25)),
+            "portfolio": float(payload.get("portfolio", 20)),
+            "soft_skills": float(payload.get("soft_skills", 10)),
+            "leadership": float(payload.get("leadership", 10)),
+            "readiness_signals": float(payload.get("readiness_signals", 10)),
+        }
+        total = sum(percent.values())
+        if total <= 0:
+            return DEFAULT_WEIGHTS
+        return {k: v / total for k, v in percent.items()}
+    except Exception:
+        return DEFAULT_WEIGHTS
 
 
 @router.post("/score", response_model=CandidateScoreResponse)

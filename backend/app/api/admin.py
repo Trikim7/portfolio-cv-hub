@@ -1,4 +1,5 @@
 """Admin API routes — all endpoints require role=admin"""
+import json
 from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -31,6 +32,13 @@ def _get_admin_user(authorization: str, db: Session):
         user = AuthService.get_current_user(db, token)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    return user
+
+
+def _require_admin_role(authorization: str, db: Session):
+    """Parse bearer token and enforce admin role."""
+    user = _get_admin_user(authorization, db)
+    AdminService._require_admin(user)
     return user
 
 
@@ -167,6 +175,26 @@ class SmtpConfig(BaseModel):
     smtp_enabled: bool = True
 
 
+class RankingWeightsConfig(BaseModel):
+    technical_skills: float
+    experience: float
+    portfolio: float
+    soft_skills: float
+    leadership: float
+    readiness_signals: float
+
+
+RANKING_WEIGHTS_KEY = "ai_ranking_weights"
+DEFAULT_RANKING_WEIGHTS = {
+    "technical_skills": 25,
+    "experience": 25,
+    "portfolio": 20,
+    "soft_skills": 10,
+    "leadership": 10,
+    "readiness_signals": 10,
+}
+
+
 @router.post("/settings/smtp")
 async def save_smtp_config(
     config: SmtpConfig,
@@ -174,7 +202,7 @@ async def save_smtp_config(
     db: Session = Depends(get_db),
 ):
     """Save SMTP configuration at runtime (updates in-memory settings singleton)."""
-    _get_admin_user(authorization, db)  # auth check only
+    _require_admin_role(authorization, db)
     from app.core.config import settings
     settings.smtp_host = config.smtp_host
     settings.smtp_port = config.smtp_port
@@ -185,13 +213,81 @@ async def save_smtp_config(
     return {"message": "Đã lưu cấu hình SMTP thành công", "smtp_enabled": settings.smtp_enabled}
 
 
+@router.get("/settings/ranking-weights")
+async def get_ranking_weights_config(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Get persisted AI ranking weights for admin settings page."""
+    _require_admin_role(authorization, db)
+    from app.models.admin_config import SystemSetting
+
+    row = db.query(SystemSetting).filter(SystemSetting.key == RANKING_WEIGHTS_KEY).first()
+    if not row or not row.value:
+        return DEFAULT_RANKING_WEIGHTS
+
+    try:
+        payload = json.loads(row.value)
+        return {
+            "technical_skills": float(payload.get("technical_skills", 25)),
+            "experience": float(payload.get("experience", 25)),
+            "portfolio": float(payload.get("portfolio", 20)),
+            "soft_skills": float(payload.get("soft_skills", 10)),
+            "leadership": float(payload.get("leadership", 10)),
+            "readiness_signals": float(payload.get("readiness_signals", 10)),
+        }
+    except Exception:
+        return DEFAULT_RANKING_WEIGHTS
+
+
+@router.post("/settings/ranking-weights")
+async def save_ranking_weights_config(
+    config: RankingWeightsConfig,
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Persist AI ranking weights (sum must be 100)."""
+    _require_admin_role(authorization, db)
+    from app.models.admin_config import SystemSetting
+
+    payload = {
+        "technical_skills": float(config.technical_skills),
+        "experience": float(config.experience),
+        "portfolio": float(config.portfolio),
+        "soft_skills": float(config.soft_skills),
+        "leadership": float(config.leadership),
+        "readiness_signals": float(config.readiness_signals),
+    }
+
+    total = sum(payload.values())
+    if abs(total - 100) > 1e-6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tổng trọng số phải bằng 100",
+        )
+
+    row = db.query(SystemSetting).filter(SystemSetting.key == RANKING_WEIGHTS_KEY).first()
+    if row:
+        row.value = json.dumps(payload)
+    else:
+        row = SystemSetting(
+            key=RANKING_WEIGHTS_KEY,
+            value=json.dumps(payload),
+            description="AI ranking weights in percent",
+        )
+        db.add(row)
+    db.commit()
+
+    return {"message": "Đã lưu trọng số AI Ranking", "weights": payload}
+
+
 @router.get("/settings/smtp")
 async def get_smtp_config(
     authorization: str = Header(None),
     db: Session = Depends(get_db),
 ):
     """Return current SMTP configuration (password masked)."""
-    _get_admin_user(authorization, db)
+    _require_admin_role(authorization, db)
     from app.core.config import settings
     return {
         "smtp_host": settings.smtp_host,
@@ -209,7 +305,7 @@ async def test_smtp_connection(
     db: Session = Depends(get_db),
 ):
     """Test current SMTP connection."""
-    _get_admin_user(authorization, db)
+    _require_admin_role(authorization, db)
     from app.services.email import EmailService
     result = await EmailService.test_connection()
     if result["success"]:
@@ -225,7 +321,7 @@ def list_templates(
     db: Session = Depends(get_db),
 ):
     """List all portfolio templates (admin view)."""
-    _get_admin_user(authorization, db)
+    _require_admin_role(authorization, db)
     from app.models.admin_config import Template
     templates = db.query(Template).order_by(Template.created_at).all()
     return [
@@ -261,7 +357,7 @@ def create_template(
     db: Session = Depends(get_db),
 ):
     """Create a new portfolio template."""
-    _get_admin_user(authorization, db)
+    _require_admin_role(authorization, db)
     from app.models.admin_config import Template, TemplateStatus
     from datetime import datetime
     tpl = Template(
@@ -286,7 +382,7 @@ def update_template(
     db: Session = Depends(get_db),
 ):
     """Update template fields."""
-    _get_admin_user(authorization, db)
+    _require_admin_role(authorization, db)
     from app.models.admin_config import Template
     tpl = db.query(Template).filter(Template.id == template_id).first()
     if not tpl:

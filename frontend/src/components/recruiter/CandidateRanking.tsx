@@ -76,6 +76,8 @@ const PRESETS: Record<PresetKey, Preset> = {
   },
 }
 
+const DEFAULT_WEIGHTS: WeightsConfig = PRESETS.balanced.weights
+
 // ─── Auto-fill suggestions ─────────────────────────────────────────────────────
 interface RoleSuggestion { role: string; skills: string[]; tech: string[] }
 const ROLE_SUGGESTIONS: Record<string, RoleSuggestion> = {
@@ -283,7 +285,7 @@ export default function CandidateRanking() {
   const [techStack, setTechStack] = useState<string[]>([])
   const [preset, setPreset] = useState<PresetKey>('balanced')
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [weights, setWeights] = useState<WeightsConfig>(PRESETS.balanced.weights)
+  const [weights, setWeights] = useState<WeightsConfig>(DEFAULT_WEIGHTS)
   const [minScore, setMinScore] = useState(0)
 
   // API state
@@ -348,6 +350,33 @@ export default function CandidateRanking() {
       }
     }
     fetchJobRequirements()
+  }, [])
+
+  // Load latest default weights configured by admin.
+  useEffect(() => {
+    let mounted = true
+    apiClient.getDefaultRankingWeights()
+      .then((data) => {
+        if (!mounted) return
+        const parseWeight = (value: unknown, fallback: number) => {
+          const num = Number(value)
+          return Number.isFinite(num) ? num : fallback
+        }
+        const nextWeights: WeightsConfig = {
+          technical_skills: parseWeight(data.technical_skills, DEFAULT_WEIGHTS.technical_skills),
+          experience: parseWeight(data.experience, DEFAULT_WEIGHTS.experience),
+          portfolio: parseWeight(data.portfolio, DEFAULT_WEIGHTS.portfolio),
+          soft_skills: parseWeight(data.soft_skills, DEFAULT_WEIGHTS.soft_skills),
+          leadership: parseWeight(data.leadership, DEFAULT_WEIGHTS.leadership),
+          readiness_signals: parseWeight(data.readiness_signals, DEFAULT_WEIGHTS.readiness_signals),
+        }
+        setWeights(nextWeights)
+      })
+      .catch(() => {
+        if (!mounted) return
+        setWeights(DEFAULT_WEIGHTS)
+      })
+    return () => { mounted = false }
   }, [])
 
   const handleSelectJobRequirement = (jobId: string) => {

@@ -311,7 +311,7 @@
     "candidatesFound": "Candidates Found",
     "loading": "Loading…",
     "noSearchSessions": "No search sessions yet",
-    "aiRankingSessions": "From {count} AI Ranking sessions",
+    "aiRankingSessions": "From {{count}} AI Ranking sessions",
     "interested": "Interested",
     "positiveResponse": "Candidates responded positively",
     "noResponse": "No responses yet",
@@ -751,7 +751,10 @@
     "respondInterested": "Marked as Interested!",
     "respondRejected": "Invitation declined.",
     "respondError": "Could not update status. Try again later.",
-    "fetchError": "Could not load invitations"
+    "fetchError": "Could not load invitations",
+    "exportReport": "Export CSV Report",
+    "noDataToExport": "No data available to export.",
+    "exportSuccess": "Exported report with {{count}} invitations."
   },
   "analytics": {
     "portfolioViews": "Portfolio Views",
