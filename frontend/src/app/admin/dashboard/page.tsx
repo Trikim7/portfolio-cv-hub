@@ -42,6 +42,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const appVersion = 'v1.1.0'
 
   const fetchData = useCallback(async () => {
     try {
@@ -284,7 +285,7 @@ export default function AdminDashboardPage() {
           </h3>
           <div className="space-y-3">
             {[
-              { label: t('admin.version'), value: 'MVP 1.0', style: 'text-gray-700 bg-gray-100' },
+              { label: t('admin.version'), value: appVersion, style: 'text-gray-700 bg-gray-100' },
               { label: t('admin.database'), value: t('admin.dbConnected'), style: 'text-green-700 bg-green-50' },
               { label: t('admin.publicProfileRate'), value: stats && stats.total_candidates > 0 ? `${Math.round((stats.public_profiles / stats.total_candidates) * 100)}%` : '0%', style: 'text-gray-700 bg-gray-100' },
               { label: t('admin.invitationsPerCandidate'), value: stats && stats.total_candidates > 0 ? (stats.total_invitations / stats.total_candidates).toFixed(1) : '0', style: 'text-purple-700 bg-purple-50' },
