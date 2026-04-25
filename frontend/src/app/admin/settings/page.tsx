@@ -160,6 +160,9 @@ function TabGeneral() {
     setTimeout(() => setToast(null), 4000)
   }
 
+  const isNonFatalSmtpNotice = (msg: string) =>
+    msg.toLowerCase().includes('already using tls')
+
   const setG = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setGeneral(f => ({ ...f, [k]: e.target.value }))
 
@@ -211,7 +214,11 @@ function TabGeneral() {
       showToast(`✅ ${result.message}`, 'success')
     } catch (err: any) {
       const msg = err?.response?.data?.detail || t('admin.settings.smtpTestError')
-      showToast(`❌ ${msg}`, 'error')
+      if (isNonFatalSmtpNotice(msg)) {
+        showToast(`✅ ${msg}`, 'success')
+      } else {
+        showToast(`❌ ${msg}`, 'error')
+      }
     } finally {
       setTestingSmtp(false)
     }
