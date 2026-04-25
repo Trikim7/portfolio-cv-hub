@@ -292,7 +292,10 @@
     "withdrawError": "Không thể thu hồi. Thử lại sau.",
     "confirmDelete": "Xóa lời mời này khỏi hệ thống?",
     "deleteSuccess": "Đã xóa lời mời.",
-    "deleteError": "Không thể xóa. Thử lại sau."
+    "deleteError": "Không thể xóa. Thử lại sau.",
+    "exportReport": "Xuất báo cáo CSV",
+    "noDataToExport": "Không có dữ liệu để xuất báo cáo.",
+    "exportSuccess": "Đã xuất báo cáo {{count}} lời mời."
   },
   "search": {
     "pageTitle": "Tìm kiếm ứng viên",
@@ -383,7 +386,7 @@
     "candidatesFound": "Ứng viên tìm thấy",
     "loading": "Đang tải…",
     "noSearchSessions": "Chưa có lần tìm kiếm nào",
-    "aiRankingSessions": "Qua {count} lần AI Ranking",
+    "aiRankingSessions": "Qua {{count}} lần AI Ranking",
     "interested": "Quan tâm",
     "positiveResponse": "Ứng viên đã phản hồi tích cực",
     "noResponse": "Chưa có phản hồi",

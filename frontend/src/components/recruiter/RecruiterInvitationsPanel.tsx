@@ -63,6 +63,15 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+function escapeCsv(value: string): string {
+  const normalized = (value ?? '')
+    .replace(/\r\n/g, ' ')
+    .replace(/\n/g, ' ')
+    .replace(/\r/g, ' ')
+    .replace(/"/g, '""')
+  return `"${normalized}"`
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function RecruiterInvitationsPanel() {
   const { t } = useTranslation()
@@ -128,6 +137,68 @@ export default function RecruiterInvitationsPanel() {
 
   const filtered = filter === 'all' ? invitations : invitations.filter(i => i.status === filter)
 
+  const exportReport = () => {
+    if (filtered.length === 0) {
+      showToast(t('invitations.noDataToExport'), 'error')
+      return
+    }
+
+    const rows = filtered.map((inv) => ({
+      invitationId: String(inv.id),
+      candidateName: inv.candidate?.full_name || t('invitations.candidate'),
+      candidateHeadline: inv.candidate?.headline || '',
+      candidatePublicProfile: inv.candidate?.public_slug
+        ? `${window.location.origin}/portfolio/${inv.candidate.public_slug}`
+        : '',
+      jobTitle: inv.job_title || '',
+      status: t(STATUS_CONFIG[inv.status]?.labelKey ?? STATUS_CONFIG.pending.labelKey),
+      sentAt: inv.created_at,
+      respondedAt: inv.status === 'interested' || inv.status === 'rejected' ? inv.updated_at : '',
+      message: inv.message || '',
+    }))
+
+    const headers = [
+      'invitation_id',
+      'candidate_name',
+      'candidate_headline',
+      'candidate_public_profile',
+      'job_title',
+      'status',
+      'sent_at',
+      'responded_at',
+      'message',
+    ]
+
+    const delimiter = ';'
+    const lines = [
+      headers.join(delimiter),
+      ...rows.map((row) => ([
+        escapeCsv(row.invitationId),
+        escapeCsv(row.candidateName),
+        escapeCsv(row.candidateHeadline),
+        escapeCsv(row.candidatePublicProfile),
+        escapeCsv(row.jobTitle),
+        escapeCsv(row.status),
+        escapeCsv(row.sentAt),
+        escapeCsv(row.respondedAt),
+        escapeCsv(row.message),
+      ].join(delimiter))),
+    ]
+
+    const csv = '\ufeff' + lines.join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+    a.href = url
+    a.download = `recruiter-invitations-report-${filter}-${date}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast(t('invitations.exportSuccess', { count: filtered.length }), 'success')
+  }
+
   return (
     <div className="space-y-5">
       {/* Toast */}
@@ -149,11 +220,20 @@ export default function RecruiterInvitationsPanel() {
             </span>
           )}
         </div>
-        <button onClick={fetchData} disabled={loading}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition">
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          {t('common.refresh')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportReport}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 text-sm text-purple-700 border border-purple-200 hover:border-purple-400 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition disabled:opacity-60"
+          >
+            {t('invitations.exportReport')}
+          </button>
+          <button onClick={fetchData} disabled={loading}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            {t('common.refresh')}
+          </button>
+        </div>
       </div>
 
       {/* Stats summary row */}

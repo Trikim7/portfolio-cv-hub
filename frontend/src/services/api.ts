@@ -383,6 +383,30 @@ class ApiClient {
     return response.data as { success: boolean; message: string }
   }
 
+  async getRankingWeightsConfig() {
+    const response = await this.client.get('/api/admin/settings/ranking-weights')
+    return response.data as {
+      technical_skills: number
+      experience: number
+      portfolio: number
+      soft_skills: number
+      leadership: number
+      readiness_signals: number
+    }
+  }
+
+  async saveRankingWeightsConfig(config: {
+    technical_skills: number
+    experience: number
+    portfolio: number
+    soft_skills: number
+    leadership: number
+    readiness_signals: number
+  }) {
+    const response = await this.client.post('/api/admin/settings/ranking-weights', config)
+    return response.data as { message: string; weights: typeof config }
+  }
+
   // ─── Admin endpoints ───────────────────────────────────────────
   async getAdminStats() {
     const response = await this.client.get('/api/admin/stats')
@@ -464,6 +488,18 @@ class ApiClient {
       limit: 50,
       ...params,
     })
+    return response.data
+  }
+
+  async getDefaultRankingWeights(): Promise<{
+    technical_skills: number
+    experience: number
+    portfolio: number
+    soft_skills: number
+    leadership: number
+    readiness_signals: number
+  }> {
+    const response = await this.client.get('/api/v1/candidates/settings/default-weights')
     return response.data
   }
 
