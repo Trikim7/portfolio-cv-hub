@@ -1,14 +1,18 @@
-"""Admin data access layer"""
+"""Admin data-access layer (Phase 2)."""
+from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
-from typing import List, Optional
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, UserStatus
 from app.models.recruiter import Company, CompanyStatus, JobInvitation
 from app.models.candidate import CandidateProfile
 
 
+def _status_from_flag(is_active: bool) -> UserStatus:
+    return UserStatus.ACTIVE if is_active else UserStatus.LOCKED
+
+
 class AdminRepository:
-    """Admin data access layer — only queries, no business logic"""
+    """Admin data-access layer — queries only, no business logic."""
 
     # ─── User queries ──────────────────────────────────────────────
     @staticmethod
@@ -20,7 +24,6 @@ class AdminRepository:
         is_active: Optional[bool] = None,
         search: Optional[str] = None,
     ) -> List[User]:
-        """Get paginated list of users with optional filters"""
         query = db.query(User).options(joinedload(User.company_profile))
 
         if role:
@@ -30,7 +33,7 @@ class AdminRepository:
                 pass
 
         if is_active is not None:
-            query = query.filter(User.is_active == is_active)
+            query = query.filter(User.status == _status_from_flag(is_active))
 
         if search:
             query = query.filter(User.email.ilike(f"%{search}%"))
@@ -44,7 +47,6 @@ class AdminRepository:
         is_active: Optional[bool] = None,
         search: Optional[str] = None,
     ) -> int:
-        """Count users with optional filters"""
         query = db.query(func.count(User.id))
 
         if role:
@@ -54,7 +56,7 @@ class AdminRepository:
                 pass
 
         if is_active is not None:
-            query = query.filter(User.is_active == is_active)
+            query = query.filter(User.status == _status_from_flag(is_active))
 
         if search:
             query = query.filter(User.email.ilike(f"%{search}%"))
@@ -63,16 +65,14 @@ class AdminRepository:
 
     @staticmethod
     def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
-        """Get user by ID"""
         return db.query(User).filter(User.id == user_id).first()
 
     @staticmethod
     def toggle_user_active(db: Session, user_id: int, is_active: bool) -> Optional[User]:
-        """Lock / unlock user account"""
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return None
-        user.is_active = is_active
+        user.status = _status_from_flag(is_active)
         db.commit()
         db.refresh(user)
         return user
@@ -86,7 +86,6 @@ class AdminRepository:
         status: Optional[str] = None,
         search: Optional[str] = None,
     ) -> List[Company]:
-        """Get paginated companies with optional filters"""
         query = db.query(Company)
 
         if status:
@@ -106,7 +105,6 @@ class AdminRepository:
         status: Optional[str] = None,
         search: Optional[str] = None,
     ) -> int:
-        """Count companies with optional filters"""
         query = db.query(func.count(Company.id))
 
         if status:
@@ -122,14 +120,12 @@ class AdminRepository:
 
     @staticmethod
     def get_company_by_id(db: Session, company_id: int) -> Optional[Company]:
-        """Get company by ID"""
         return db.query(Company).filter(Company.id == company_id).first()
 
     @staticmethod
     def update_company_status(
         db: Session, company_id: int, new_status: CompanyStatus
     ) -> Optional[Company]:
-        """Update company approval status"""
         company = db.query(Company).filter(Company.id == company_id).first()
         if not company:
             return None
@@ -141,7 +137,6 @@ class AdminRepository:
     # ─── Dashboard statistics ──────────────────────────────────────
     @staticmethod
     def get_stats(db: Session) -> dict:
-        """Get platform‑wide statistics for admin dashboard"""
         total_users = db.query(func.count(User.id)).scalar()
         total_candidates = (
             db.query(func.count(User.id))
@@ -168,7 +163,7 @@ class AdminRepository:
         )
         public_profiles = (
             db.query(func.count(CandidateProfile.id))
-            .filter(CandidateProfile.is_public == True)
+            .filter(CandidateProfile.is_public == True)  # noqa: E712
             .scalar()
         )
         total_invitations = db.query(func.count(JobInvitation.id)).scalar()

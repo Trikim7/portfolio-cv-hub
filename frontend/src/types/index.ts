@@ -1,24 +1,34 @@
+// ─── i18n ──────────────────────────────────────────────────────
+// Every multilingual text field is stored as a {locale -> text} map on the
+// backend (JSONB). The API may still return a bare string for legacy rows,
+// which the UI should accept gracefully.
+export type LocalizedText = Record<string, string>
+export type I18nText = LocalizedText | string | null | undefined
+
 // User types
 export interface User {
   id: number
   email: string
   role: 'candidate' | 'recruiter' | 'admin'
+  status: 'active' | 'locked' | 'pending'
+  full_name?: string
+  // Derived from `status`; kept for UI code that still reads it.
   is_active: boolean
   created_at: string
 }
 
-// Auth response
 export interface TokenResponse {
   access_token: string
   token_type: string
   user: User
 }
 
-// Candidate profile types
+// ─── Candidate portfolio ──────────────────────────────────────
 export interface Skill {
   id: number
   name: string
   level?: 'entry' | 'junior' | 'mid' | 'senior' | 'lead'
+  category?: string
   endorsements: number
   created_at: string
 }
@@ -27,7 +37,7 @@ export interface Experience {
   id: number
   job_title: string
   company_name: string
-  description?: string
+  description?: I18nText
   start_date: string
   end_date?: string
   is_current: boolean
@@ -37,9 +47,11 @@ export interface Experience {
 
 export interface Project {
   id: number
-  title: string
-  description?: string
-  url?: string
+  project_name: string
+  role?: string
+  description?: I18nText
+  project_url?: string
+  github_url?: string
   technologies?: string
   created_at: string
   updated_at: string
@@ -58,9 +70,10 @@ export interface CandidateProfile {
   id: number
   user_id: number
   full_name?: string
-  title?: string
-  bio?: string
-  profile_slug?: string
+  headline?: string
+  bio?: I18nText
+  public_slug?: string
+  template_id?: number | null
   is_public: boolean
   avatar_url?: string
   contact_email?: string
@@ -73,7 +86,12 @@ export interface CandidateProfile {
   updated_at: string
 }
 
-// Recruiter types
+export interface CandidateAnalytics {
+  total_views: number
+  total_invitations: number
+}
+
+// ─── Recruiter ────────────────────────────────────────────────
 export interface Company {
   id: number
   company_name: string
@@ -105,11 +123,89 @@ export interface CandidateSearchResult {
   id: number
   user_id: number
   full_name?: string
-  title?: string
-  bio?: string
-  profile_slug: string
+  headline?: string
+  bio?: I18nText
+  public_slug: string
   avatar_url?: string
   skills: string[]
+}
+
+// ─── Social auth (Phase 2) ───────────────────────────────────
+export type OAuthProvider = 'google' | 'github'
+
+export interface SocialAccount {
+  id?: number
+  user_id?: number
+  provider: OAuthProvider
+  provider_account_id: string
+  created_at: string
+}
+
+// ─── Scoring & Ranking (Phase 2) ─────────────────────────────
+export interface RadarScores {
+  technical_skills: number
+  experience: number
+  portfolio: number
+  soft_skills: number
+  leadership: number
+  readiness_signals: number
+}
+
+export interface CandidateScore {
+  candidate_id: number
+  full_name?: string
+  radar_scores: RadarScores
+  overall_match: number
+  match_details: Record<string, any>
+}
+
+export interface RankingResponse {
+  job_id?: number
+  total: number
+  candidates: CandidateScore[]
+  comparison?: {
+    best_match: number
+    best_match_name?: string
+    average_match: number
+    highest_skill_candidate: {
+      candidate_id: number
+      full_name?: string
+      score: number
+    }
+  } | null
+}
+
+export interface ComparisonHistoryItem {
+  comparison_id: number
+  company_id: number
+  created_at: string
+  criteria_title?: string | null
+  job_requirement_id?: number | null
+  candidate_count: number
+}
+
+export interface ComparisonHistoryResponse {
+  total: number
+  items: ComparisonHistoryItem[]
+}
+
+export interface ComparisonDetailResponse {
+  comparison_id: number
+  company_id: number
+  created_at: string
+  criteria_json: Record<string, any>
+  participant_candidate_ids: number[]
+}
+
+export interface ScoringCriteria {
+  title?: string
+  required_skills: Array<string | { name: string; level?: string }>
+  years_experience?: number
+  required_role?: string
+  customer_facing?: boolean
+  tech_stack?: string[]
+  is_management_role?: boolean
+  weights_config?: Partial<Record<keyof RadarScores, number>>
 }
 
 // ─── Admin types ──────────────────────────────────────────────
@@ -128,6 +224,7 @@ export interface AdminUser {
   id: number
   email: string
   role: 'candidate' | 'recruiter' | 'admin'
+  status?: 'active' | 'locked' | 'pending'
   is_active: boolean
   company_status?: 'pending' | 'approved' | 'rejected' | 'suspended' | null
   created_at: string
@@ -164,3 +261,21 @@ export interface AdminCompanyListResponse {
   page_size: number
 }
 
+// ─── Portfolio Templates ──────────────────────────────────────────────────
+export interface TemplateConfig {
+  theme: 'light' | 'dark'
+  primaryColor: string
+  accentColor?: string
+  fontFamily?: string
+  layout?: 'single-column' | 'sidebar' | 'grid'
+  sections?: string[]
+}
+
+export interface PortfolioTemplate {
+  id: number
+  name: string
+  description: string
+  config_json: TemplateConfig
+  status?: 'active' | 'inactive'
+  created_at?: string
+}

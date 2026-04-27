@@ -1,3 +1,7 @@
+---
+context: Portfolio CV Hub Phase 2
+---
+
 # Mẫu prompt theo tác vụ
 
 ## 1) Tạo tính năng mới

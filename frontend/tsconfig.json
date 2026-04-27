@@ -22,7 +22,7 @@
     "resolveJsonModule": true,
     "jsx": "preserve",
     "jsxImportSource": "react",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "@/*": [

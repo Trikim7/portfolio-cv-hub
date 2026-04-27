@@ -11,12 +11,9 @@ from alembic import context
 from app.core.config import settings
 from app.db.database import Base
 
-# Import ALL models so Alembic sees them for autogenerate
-from app.models.user import User  # noqa: F401
-from app.models.candidate import (  # noqa: F401
-    CandidateProfile, Skill, Experience, Project, CV,
-)
-from app.models.recruiter import Company, JobInvitation  # noqa: F401
+# Importing the models package registers every Phase 2 model on Base.metadata
+# so Alembic autogenerate sees the full schema in one place.
+import app.models  # noqa: F401
 
 config = context.config
 

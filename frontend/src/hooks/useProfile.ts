@@ -2,6 +2,14 @@ import { useCallback, useState } from 'react'
 import { apiClient } from '@/services/api'
 import { CandidateProfile, Skill, Experience, Project } from '@/types'
 
+const normalizeProfile = (data: CandidateProfile): CandidateProfile => ({
+  ...data,
+  skills: Array.isArray(data.skills) ? data.skills : [],
+  experiences: Array.isArray(data.experiences) ? data.experiences : [],
+  projects: Array.isArray(data.projects) ? data.projects : [],
+  cvs: Array.isArray(data.cvs) ? data.cvs : [],
+})
+
 export const useProfile = () => {
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
   const [loading, setLoading] = useState(false)
@@ -12,7 +20,7 @@ export const useProfile = () => {
     setError(null)
     try {
       const data = await apiClient.getMyProfile()
-      setProfile(data)
+      setProfile(normalizeProfile(data))
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch profile')
     } finally {
@@ -25,7 +33,7 @@ export const useProfile = () => {
     setError(null)
     try {
       const updated = await apiClient.updateProfile(data)
-      setProfile(updated)
+      setProfile(normalizeProfile(updated))
       return updated
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to update profile')
@@ -206,6 +214,7 @@ export const useProfile = () => {
     loading,
     error,
     fetchProfile,
+    refreshProfile: fetchProfile,   // alias — triggers a full re-fetch
     updateProfile,
     togglePublicProfile,
     addSkill,

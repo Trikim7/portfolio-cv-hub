@@ -1,63 +1,72 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
 export default function WaitingApprovalPage() {
+  const router = useRouter()
+  const { t } = useTranslation()
+
+  const handleGoHome = () => {
+    // Xóa session → navbar sẽ hiện giao diện public thay vì recruiter links
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('role')
+    window.dispatchEvent(new Event('logout'))
+    router.push('/')
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center space-y-6">
-        <div className="text-6xl">⏳</div>
-        
-        <h1 className="text-2xl font-bold text-gray-800">Chờ xác nhận</h1>
-        
-        <p className="text-gray-600">
-          Công ty của bạn đang chờ Admin xác nhận. Quá trình này thường mất 1-2 ngày làm việc.
-        </p>
-
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-2">
-          <p className="font-semibold text-yellow-800">📋 Các bước tiếp theo:</p>
-          <ul className="text-left text-sm text-gray-700 space-y-2">
-            <li>✓ Admin sẽ kiểm tra thông tin công ty</li>
-            <li>✓ Xác minh các chi tiết đăng ký</li>
-            <li>✓ Phê duyệt và kích hoạt tài khoản</li>
-          </ul>
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
+          {/* Top bar */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-white/80 text-xs font-medium uppercase tracking-wider">
+              {t('waitingApproval.businessLabel')}
+            </p>
+            <LanguageToggle />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold mt-1">
+            {t('waitingApproval.pageTitle')}
+          </h1>
         </div>
+      </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            💡 Sau khi được duyệt, bạn sẽ có thể:
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900">{t('waitingApproval.accountPending')}</h2>
+          <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+            {t('waitingApproval.pendingDesc')}
           </p>
-          <ul className="text-left text-sm text-gray-700 mt-2 space-y-1">
-            <li>• Tìm kiếm ứng viên</li>
-            <li>• Gửi lời mời làm việc</li>
-            <li>• So sánh hồ sơ ứng viên</li>
-            <li>• Quản lý thông tin công ty</li>
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <h3 className="font-semibold text-gray-900">{t('waitingApproval.nextSteps')}</h3>
+          <ol className="mt-3 space-y-2 text-sm text-gray-700 list-decimal list-inside">
+            <li>{t('waitingApproval.step1')}</li>
+            <li>{t('waitingApproval.step2')}</li>
+            <li>{t('waitingApproval.step3')}</li>
+          </ol>
+        </section>
+
+        <section className="rounded-2xl border border-purple-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-6">
+          <h3 className="font-semibold text-purple-900">{t('waitingApproval.afterApproval')}</h3>
+          <ul className="mt-3 text-sm text-gray-800 space-y-1.5">
+            <li>• {t('waitingApproval.feature1')}</li>
+            <li>• {t('waitingApproval.feature2')}</li>
+            <li>• {t('waitingApproval.feature3')}</li>
+            <li>• {t('waitingApproval.feature4')}</li>
           </ul>
-        </div>
+        </section>
 
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">Email xác nhận sẽ được gửi tới:</p>
-          <div className="bg-gray-100 p-3 rounded-lg">
-            <p className="font-mono text-sm text-gray-800">Kiểm tra email (bao gồm mục spam)</p>
-          </div>
-        </div>
-
-        <div className="pt-6 border-t border-gray-200 space-y-2">
-          <p className="text-sm text-gray-600">Muốn làm gì tiếp?</p>
-          <div className="flex gap-3">
-            <Link
-              href="/"
-              className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
-            >
-              🏠 Trang chủ
-            </Link>
-            <Link
-              href="/recruiter/login"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              🔄 Đăng nhập
-            </Link>
-          </div>
+        <div className="flex justify-center">
+          <button
+            onClick={handleGoHome}
+            className="px-8 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
+          >
+            {t('waitingApproval.goHome')}
+          </button>
         </div>
       </div>
     </div>

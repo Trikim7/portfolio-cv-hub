@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 export default function RegisterForm() {
+  const { t } = useTranslation()
   const { register, loading, error } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,17 +23,17 @@ export default function RegisterForm() {
     setPasswordError('')
 
     if (password !== confirmPassword) {
-      setPasswordError('Mật khẩu không khớp')
+      setPasswordError(t('auth.passwordMismatch') || 'Passwords do not match')
       return
     }
 
     if (password.length < 6) {
-      setPasswordError('Mật khẩu phải có ít nhất 6 ký tự')
+      setPasswordError(t('auth.passwordTooShort') || 'Password must be at least 6 characters')
       return
     }
 
     if (getPasswordByteLength(password) > 30) {
-      setPasswordError('Mật khẩu quá dài (tối đa 30 ký tự). Vui lòng sử dụng mật khẩu ngắn hơn.')
+      setPasswordError(t('auth.passwordTooLong') || 'Password is too long (max 30 characters). Please use a shorter password.')
       return
     }
 
@@ -39,13 +42,13 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6 text-center">Đăng ký</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">{t('auth.registerTitle')}</h1>
 
       {error && <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
           <input
             type="email"
             value={email}
@@ -58,7 +61,7 @@ export default function RegisterForm() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mật khẩu
+            {t('auth.password')}
             <span className={`ml-2 text-xs ${getPasswordByteLength(password) > 30 ? 'text-red-600' : getPasswordByteLength(password) > 20 ? 'text-yellow-600' : 'text-gray-500'}`}>
               ({getPasswordByteLength(password)}/30)
             </span>
@@ -75,7 +78,7 @@ export default function RegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.confirmPassword')}</label>
           <input
             type="password"
             value={confirmPassword}
@@ -95,14 +98,16 @@ export default function RegisterForm() {
           disabled={loading}
           className="w-full py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 disabled:bg-gray-400 transition"
         >
-          {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+          {loading ? t('auth.registering') || 'Registering...' : t('auth.registerButton')}
         </button>
       </form>
 
+      <SocialLoginButtons label={t('auth.orRegisterWith') || 'Or register with'} disabled={loading} />
+
       <p className="text-center text-sm text-gray-600 mt-4">
-        Đã có tài khoản?{' '}
+        {t('auth.alreadyHaveAccount')}{' '}
         <Link href="/login" className="text-blue-500 hover:underline">
-          Đăng nhập tại đây
+          {t('auth.loginTitle')}
         </Link>
       </p>
     </div>

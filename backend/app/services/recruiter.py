@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional, List
 import uuid
-from app.repositories.recruiter import CompanyRepository, JobInvitationRepository
+from app.repositories.recruiter import CompanyRepository, JobInvitationRepository, JobRequirementRepository
 from app.repositories.candidate import CandidateProfileRepository
 from app.models.recruiter import CompanyStatus
 from app.schemas.recruiter import CompanyRegister, CompanyUpdate, CandidateSearchResult
@@ -62,66 +62,62 @@ class SearchService:
     ) -> List:
         """Search public candidates with filters"""
         from app.models.candidate import CandidateProfile, Skill, Experience
+        from sqlalchemy import cast, String as SAString, exists
         from datetime import datetime
-        
-        query = db.query(CandidateProfile).filter(CandidateProfile.is_public == True)
+
+        query = db.query(CandidateProfile).filter(CandidateProfile.is_public == True)  # noqa: E712
 
         if keyword:
             keyword_filter = f"%{keyword}%"
+            # Search across: full_name, headline, bio (JSONB cast), AND skill names
+            skill_subq = exists().where(
+                (Skill.candidate_id == CandidateProfile.id)
+                & Skill.name.ilike(keyword_filter)
+            )
             query = query.filter(
-                (CandidateProfile.full_name.ilike(keyword_filter)) |
-                (CandidateProfile.title.ilike(keyword_filter)) |
-                (CandidateProfile.bio.ilike(keyword_filter))
+                (CandidateProfile.full_name.ilike(keyword_filter))
+                | (CandidateProfile.headline.ilike(keyword_filter))
+                | (cast(CandidateProfile.bio, SAString).ilike(keyword_filter))
+                | skill_subq
             )
 
+        # Use EXISTS subquery for skill — avoids JOIN conflict with experience group_by
         if skill:
-            skill_filter = f"%{skill}%"
-            query = query.join(Skill).filter(Skill.name.ilike(skill_filter)).distinct()
+            for sk in [s.strip() for s in skill.split(',') if s.strip()]:
+                skill_exists = exists().where(
+                    (Skill.candidate_id == CandidateProfile.id)
+                    & Skill.name.ilike(f"%{sk}%")
+                )
+                query = query.filter(skill_exists)
 
-        # Filter by experience level based on years of work
+        # Filter by experience level using correlated scalar subquery (no group_by conflict)
         if experience_level:
-            from app.models.candidate import ExperienceLevel
             now = datetime.utcnow()
-            
-            # Join with Experiences to calculate total years
-            query = query.outerjoin(Experience).group_by(CandidateProfile.id)
-            
-            if experience_level.lower() == "fresher":
-                # 0-1 year
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ) < 1) | (func.count(Experience.id) == 0)
+            exp_years_subq = (
+                db.query(
+                    func.coalesce(
+                        func.sum(
+                            func.extract(
+                                'epoch',
+                                func.coalesce(Experience.end_date, now) - Experience.start_date
+                            ) / (365.25 * 24 * 3600)
+                        ),
+                        0
+                    )
                 )
-            elif experience_level.lower() == "junior":
-                # 1-3 years
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ).between(1, 3))
-                )
-            elif experience_level.lower() == "mid":
-                # 3-5 years
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ).between(3, 5))
-                )
-            elif experience_level.lower() == "senior":
-                # 5+ years
-                query = query.having(
-                    (func.sum(
-                        func.extract('epoch', 
-                            func.coalesce(Experience.end_date, now) - Experience.start_date
-                        ) / (365.25 * 24 * 3600)
-                    ) >= 5)
-                )
+                .filter(Experience.candidate_id == CandidateProfile.id)
+                .correlate(CandidateProfile)
+                .scalar_subquery()
+            )
+            lvl = experience_level.lower()
+            if lvl == "fresher":
+                query = query.filter(exp_years_subq < 1)
+            elif lvl == "junior":
+                query = query.filter(exp_years_subq >= 1, exp_years_subq < 3)
+            elif lvl == "mid":
+                query = query.filter(exp_years_subq >= 3, exp_years_subq < 5)
+            elif lvl == "senior":
+                query = query.filter(exp_years_subq >= 5)
 
         # Filter by location (if CandidateProfile has location field, otherwise skip)
         if location:
@@ -139,9 +135,9 @@ class SearchService:
             id=profile.id,
             user_id=profile.user_id,
             full_name=profile.full_name,
-            title=profile.title,
+            headline=profile.headline,
             bio=profile.bio,
-            profile_slug=profile.profile_slug,
+            public_slug=profile.public_slug,
             avatar_url=profile.avatar_url,
             skills=skills,
         )
@@ -167,8 +163,8 @@ class JobInvitationService:
         if not candidate:
             raise ValueError("Candidate not found")
 
-        if JobInvitationRepository.check_duplicate(db, company_id, candidate_id):
-            raise ValueError("Invitation already sent")
+        if JobInvitationRepository.check_duplicate(db, company_id, candidate_id, job_title):
+            raise ValueError(f"Bạn đã gửi lời mời vị trí '{job_title}' cho ứng viên này và đang chờ phản hồi. Vui lòng đợi hoặc thu hồi lời mời cũ trước.")
 
         return JobInvitationRepository.create(
             db, company_id, candidate_id, job_title, message
@@ -193,3 +189,68 @@ class JobInvitationService:
     def delete(db: Session, invitation_id: int) -> bool:
         """Delete invitation"""
         return JobInvitationRepository.delete(db, invitation_id)
+
+
+class JobRequirementService:
+    """Job requirement (hiring criteria) management"""
+
+    @staticmethod
+    def create_requirement(
+        db: Session,
+        company_id: int,
+        title: str,
+        required_skills: list,
+        **kwargs
+    ):
+        """Create new job requirement"""
+        company = CompanyRepository.get_by_id(db, company_id)
+        if not company:
+            raise ValueError("Company not found")
+        
+        return JobRequirementRepository.create(
+            db, company_id, title, required_skills, **kwargs
+        )
+
+    @staticmethod
+    def get_requirement(db: Session, job_requirement_id: int):
+        """Get job requirement by ID"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        return requirement
+
+    @staticmethod
+    def get_company_requirements(db: Session, company_id: int, active_only: bool = False):
+        """Get all job requirements for a company"""
+        company = CompanyRepository.get_by_id(db, company_id)
+        if not company:
+            raise ValueError("Company not found")
+        
+        return JobRequirementRepository.get_by_company(db, company_id, active_only)
+
+    @staticmethod
+    def update_requirement(db: Session, job_requirement_id: int, **kwargs):
+        """Update job requirement"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        
+        return JobRequirementRepository.update(db, job_requirement_id, **kwargs)
+
+    @staticmethod
+    def delete_requirement(db: Session, job_requirement_id: int) -> bool:
+        """Delete job requirement"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        
+        return JobRequirementRepository.delete(db, job_requirement_id)
+
+    @staticmethod
+    def deactivate_requirement(db: Session, job_requirement_id: int):
+        """Soft delete: mark as inactive"""
+        requirement = JobRequirementRepository.get_by_id(db, job_requirement_id)
+        if not requirement:
+            raise ValueError("Job requirement not found")
+        
+        return JobRequirementRepository.deactivate(db, job_requirement_id)

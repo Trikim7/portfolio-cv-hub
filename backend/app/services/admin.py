@@ -46,6 +46,7 @@ class AdminService:
                 "id": u.id,
                 "email": u.email,
                 "role": u.role,
+                "status": u.status.value if u.status else None,
                 "is_active": u.is_active,
                 "company_status": (
                     u.company_profile.status.value
