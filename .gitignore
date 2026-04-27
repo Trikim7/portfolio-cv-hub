@@ -31,3 +31,6 @@ coverage/
 # IDE
 .idea/
 .vscode/
+
+.agent/
+implementation_plan.md
