@@ -22,6 +22,36 @@ class EmailService:
 
     # ─── Low-level sender ─────────────────────────────────────────
     @classmethod
+    def _is_enabled(cls) -> bool:
+        """Resolve whether SMTP should run.
+
+        In some deployments, boolean env parsing can be inconsistent. If SMTP
+        credentials are present, allow sending even when smtp_enabled is false.
+        """
+        cfg = cls._get_settings()
+        has_credentials = bool(cfg.smtp_username and cfg.smtp_password)
+        if cfg.smtp_enabled:
+            return True
+        if has_credentials:
+            logger.warning(
+                "[Email] smtp_enabled=false but credentials exist. Auto-enabling SMTP send."
+            )
+            return True
+        return False
+
+    @classmethod
+    def _resolve_from_address(cls) -> str:
+        """Pick a sender address accepted by common SMTP providers."""
+        cfg = cls._get_settings()
+        configured = (cfg.smtp_from_address or "").strip()
+        # Use authenticated address when default placeholder is still present.
+        if configured and configured != "noreply@portfoliocvhub.com":
+            return configured
+        if cfg.smtp_username:
+            return cfg.smtp_username
+        return configured or "noreply@localhost"
+
+    @classmethod
     async def _send(
         cls,
         to_email: str,
@@ -32,7 +62,7 @@ class EmailService:
         """Internal: Build MIME message and send via aiosmtplib."""
         cfg = cls._get_settings()
 
-        if not cfg.smtp_enabled:
+        if not cls._is_enabled():
             logger.info("[Email] SMTP disabled — skipping email to %s", to_email)
             return False
         if not cfg.smtp_username or not cfg.smtp_password:
@@ -41,8 +71,8 @@ class EmailService:
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        # Show app name instead of raw email address
-        msg["From"] = f"Portfolio CV Hub <{cfg.smtp_from_address}>"
+        from_address = cls._resolve_from_address()
+        msg["From"] = f"Portfolio CV Hub <{from_address}>"
         msg["To"] = to_email
 
         if plain_body:
@@ -62,6 +92,7 @@ class EmailService:
                 password=cfg.smtp_password,
                 use_tls=use_tls,
                 start_tls=start_tls,
+                sender=from_address,
             )
             logger.info("[Email] Sent '%s' → %s", subject, to_email)
             return True
@@ -76,11 +107,11 @@ class EmailService:
             await cls._send(to_email, subject, html_body, plain_body)
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.create_task(_task())
-            else:
-                loop.run_until_complete(_task())
+            loop = asyncio.get_running_loop()
+            loop.create_task(_task())
+        except RuntimeError:
+            # No running loop in current context (e.g. sync path in worker thread).
+            asyncio.run(_task())
         except Exception as exc:
             logger.error("[Email] Background task error: %s", exc)
 
