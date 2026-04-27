@@ -54,6 +54,21 @@ def _seed_admin():
 _seed_admin()
 
 
+def _load_smtp_config_from_db():
+    """Apply SMTP from `system_settings` so production uses DB-backed config; env is fallback if no row."""
+    from app.db.database import SessionLocal
+    from app.core.smtp_config import load_smtp_from_db
+
+    db = SessionLocal()
+    try:
+        load_smtp_from_db(db)
+    finally:
+        db.close()
+
+
+_load_smtp_config_from_db()
+
+
 # Create FastAPI app
 app = FastAPI(
     title="Portfolio CV Hub API",

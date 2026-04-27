@@ -201,15 +201,31 @@ async def save_smtp_config(
     authorization: str = Header(None),
     db: Session = Depends(get_db),
 ):
-    """Save SMTP configuration at runtime (updates in-memory settings singleton)."""
+    """Save SMTP to DB (`system_settings.smtp_config`) and apply to the in-process settings singleton."""
     _require_admin_role(authorization, db)
     from app.core.config import settings
+    from app.core.smtp_config import upsert_smtp_in_db
+
     settings.smtp_host = config.smtp_host
     settings.smtp_port = config.smtp_port
     settings.smtp_username = config.smtp_username
     settings.smtp_password = config.smtp_password
     settings.smtp_from_address = config.smtp_from_address
     settings.smtp_enabled = config.smtp_enabled
+    try:
+        upsert_smtp_in_db(
+            db,
+            smtp_host=config.smtp_host,
+            smtp_port=config.smtp_port,
+            smtp_username=config.smtp_username,
+            smtp_password=config.smtp_password,
+            smtp_from_address=config.smtp_from_address,
+            smtp_enabled=config.smtp_enabled,
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return {"message": "Đã lưu cấu hình SMTP thành công", "smtp_enabled": settings.smtp_enabled}
 
 
