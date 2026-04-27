@@ -35,6 +35,22 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Social Login */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-blue-300/60 text-[11px] font-medium uppercase tracking-widest">TIẾP TỤC VỚI</span>
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+
+          <SocialLoginButtons disabled={loading} hideDivider />
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-blue-300/60 text-[11px] font-medium uppercase tracking-widest">hoặc đăng nhập bằng email</span>
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-blue-200 mb-1.5">Email</label>
@@ -46,7 +62,7 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 className="w-full px-4 py-2.5 bg-white/10 border border-white/20 text-white placeholder-blue-300/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
-                placeholder="your@email.com"
+                placeholder="admin@portfoliocvhub.com"
               />
             </div>
 
@@ -83,28 +99,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-blue-300/60 text-[11px] font-medium uppercase tracking-widest">hoặc tiếp tục với</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
-          {/* Social Login */}
-          <SocialLoginButtons disabled={loading} hideDivider />
-
           {/* Register links */}
           <div className="space-y-2 text-center text-sm mt-6">
             <p className="text-blue-200">
               Chưa có tài khoản?{' '}
               <Link href="/register" className="text-blue-400 hover:text-white font-medium transition-colors">
-                Đăng ký ứng viên
-              </Link>
-            </p>
-            <p className="text-blue-200">
-              Là nhà tuyển dụng?{' '}
-              <Link href="/recruiter/register" className="text-blue-400 hover:text-white font-medium transition-colors">
-                Đăng ký doanh nghiệp
+                Đăng ký ngay
               </Link>
             </p>
           </div>
