@@ -3,13 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from alembic.config import Config
 from alembic import command
-<<<<<<< HEAD
-from app.api import auth, candidate, recruiter, admin
+from app.api import auth, candidate, recruiter, admin, scoring, oauth, public, cv_generator
 from app.db.database import Base, engine
 from app.core.config import settings
-=======
-from app.api import auth, candidate, recruiter, admin, scoring, oauth, public, cv_generator
->>>>>>> 411602cf80c9732fb4fcd4ae8ba7ae8ca7af73ff
 
 # Run Alembic migrations on startup (creates/updates tables automatically).
 _alembic_cfg = Config("alembic.ini")
