@@ -1,5 +1,5 @@
 """Application configuration"""
-from typing import Optional
+from typing import Optional, List
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 
@@ -7,8 +7,11 @@ from pydantic import ConfigDict
 class Settings(BaseSettings):
     """Application settings from environment variables"""
 
-    # Database
-    database_url: str = "sqlite:///./portfolio_cv_hub.db"
+    # Database — mặc định PostgreSQL, override bằng biến môi trường DATABASE_URL
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/portfolio_cv_hub"
+
+    # CORS
+    allowed_origins: str = "http://localhost:3000"
 
     # JWT
     secret_key: str = "dev-secret-key-change-in-production"

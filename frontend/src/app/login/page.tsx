@@ -2,94 +2,120 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import LoginForm from '@/components/auth/LoginForm'
-import RecruiterLoginForm from '@/components/auth/RecruiterLoginForm'
-import AdminLoginForm from '@/components/auth/AdminLoginForm'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
-  const [role, setRole] = useState<'candidate' | 'recruiter' | 'admin' | null>(null)
+  const { login, loading, error } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
-  if (role === null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white p-12 rounded-lg shadow-xl max-w-3xl w-full text-center space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              🔐 Đăng nhập
-            </h1>
-            <p className="text-gray-600 text-lg">Bạn là ai?</p>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    login(email, password)
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo / Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Portfolio CV Hub</h1>
+          <p className="text-blue-300 mt-2 text-sm">Nền tảng kết nối ứng viên và nhà tuyển dụng</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
+          <h2 className="text-xl font-semibold text-white mb-6">Đăng nhập</h2>
+
+          {error && (
+            <div className="mb-5 p-3 bg-red-500/20 border border-red-400/40 text-red-300 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-blue-200 mb-1.5">
+                Email
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full px-4 py-2.5 bg-white/10 border border-white/20 text-white placeholder-blue-300/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                placeholder="your@email.com"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-blue-200 mb-1.5">
+                Mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="w-full px-4 py-2.5 bg-white/10 border border-white/20 text-white placeholder-blue-300/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition pr-12"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-white transition text-sm select-none"
+                >
+                  {showPassword ? 'Ẩn' : 'Hiện'}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              id="login-submit"
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 mt-2"
+            >
+              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-blue-300/60 text-xs">hoặc</span>
+            <div className="flex-1 h-px bg-white/20" />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Candidate Option */}
-            <button
-              onClick={() => setRole('candidate')}
-              className="p-8 border-2 border-blue-300 rounded-lg hover:bg-blue-50 transition group"
-            >
-              <div className="text-5xl mb-4">👤</div>
-              <h2 className="text-2xl font-bold text-blue-600 mb-2 group-hover:text-blue-700">
-                Ứng viên
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Quản lý hồ sơ, portfolio và xem lời mời tuyển dụng
-              </p>
-            </button>
-
-            {/* Recruiter Option */}
-            <button
-              onClick={() => setRole('recruiter')}
-              className="p-8 border-2 border-green-300 rounded-lg hover:bg-green-50 transition group"
-            >
-              <div className="text-5xl mb-4">🏢</div>
-              <h2 className="text-2xl font-bold text-green-600 mb-2 group-hover:text-green-700">
-                Doanh nghiệp
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Tìm kiếm ứng viên và gửi lời mời tuyển dụng
-              </p>
-            </button>
-
-            {/* Admin Option */}
-            <button
-              onClick={() => setRole('admin')}
-              className="p-8 border-2 border-purple-300 rounded-lg hover:bg-purple-50 transition group"
-            >
-              <div className="text-5xl mb-4">🛡️</div>
-              <h2 className="text-2xl font-bold text-purple-600 mb-2 group-hover:text-purple-700">
-                Quản trị viên
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Quản lý hệ thống và duyệt doanh nghiệp
-              </p>
-            </button>
-          </div>
-
-          <div className="pt-8 border-t border-gray-200">
-            <p className="text-gray-600">
+          {/* Register links */}
+          <div className="space-y-2 text-center text-sm">
+            <p className="text-blue-200">
               Chưa có tài khoản?{' '}
-              <Link href="/register" className="text-blue-600 font-semibold hover:underline">
-                Đăng ký ngay
+              <Link href="/register" className="text-blue-400 hover:text-white font-medium transition-colors">
+                Đăng ký ứng viên
+              </Link>
+            </p>
+            <p className="text-blue-200">
+              Là nhà tuyển dụng?{' '}
+              <Link href="/recruiter/register" className="text-blue-400 hover:text-white font-medium transition-colors">
+                Đăng ký doanh nghiệp
               </Link>
             </p>
           </div>
         </div>
-      </div>
-    )
-  }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <button
-          onClick={() => setRole(null)}
-          className="mb-6 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
-        >
-          ← Quay lại chọn vai trò
-        </button>
-
-        {role === 'candidate' && <LoginForm />}
-        {role === 'recruiter' && <RecruiterLoginForm />}
-        {role === 'admin' && <AdminLoginForm />}
+        <p className="text-center text-blue-400/50 text-xs mt-6">
+          Hệ thống sẽ tự động điều hướng dựa theo vai trò tài khoản của bạn.
+        </p>
       </div>
     </div>
   )

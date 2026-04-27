@@ -5,6 +5,7 @@ from alembic.config import Config
 from alembic import command
 from app.api import auth, candidate, recruiter, admin
 from app.db.database import Base, engine
+from app.core.config import settings
 
 # Run Alembic migrations on startup (creates/updates tables automatically)
 _alembic_cfg = Config("alembic.ini")
@@ -57,7 +58,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change in production
+    allow_origins=[o.strip() for o in settings.allowed_origins.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

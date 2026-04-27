@@ -1,41 +1,54 @@
 # Portfolio CV Hub
 
-Hệ thống quản lý Portfolio và CV trực tuyến — kết nối **Ứng viên**, **Nhà tuyển dụng** và **Quản trị viên** trên một nền tảng duy nhất.
+Nền tảng quản lý Portfolio và CV trực tuyến, kết nối Ứng viên, Nhà tuyển dụng và Quản trị viên trên một hệ thống duy nhất.
+
+## Tổng quan
 
 | Vai trò | Chức năng chính |
-|---------|----------------|
-| **Ứng viên** | Tạo portfolio, quản lý kỹ năng / kinh nghiệm / dự án, upload CV, bật/tắt hồ sơ công khai |
-| **Nhà tuyển dụng** | Đăng ký doanh nghiệp (chờ duyệt), tìm kiếm ứng viên, gửi lời mời tuyển dụng |
-| **Admin** | Dashboard tổng quan, quản lý ứng viên, duyệt / từ chối / khóa doanh nghiệp |
+|---|---|
+| Ứng viên | Tạo và quản lý portfolio cá nhân (kỹ năng, kinh nghiệm, dự án), upload CV, bật/tắt chế độ công khai hồ sơ |
+| Nhà tuyển dụng | Đăng ký tài khoản doanh nghiệp (chờ Admin phê duyệt), tìm kiếm ứng viên, gửi lời mời tuyển dụng |
+| Admin | Xem Dashboard tổng quan, quản lý người dùng, phê duyệt hoặc khóa tài khoản doanh nghiệp |
 
-**Tech Stack:** FastAPI · Next.js 14 · SQLAlchemy · Alembic · SQLite · TailwindCSS · TypeScript · Docker
+## Công nghệ sử dụng
+
+| Thành phần | Công nghệ |
+|---|---|
+| Backend | FastAPI, SQLAlchemy, Alembic, SQLite |
+| Frontend | Next.js 14, TypeScript, TailwindCSS |
+| Hạ tầng | Docker, Docker Compose |
 
 ---
 
 ## Yêu cầu hệ thống
 
-**Cách 1 — Docker (khuyên dùng):** chỉ cần **Docker Desktop** (đã bao gồm Docker Compose).
+**Chạy bằng Docker (khuyên dùng):** Chỉ cần cài đặt Docker Desktop (đã bao gồm Docker Compose).
 
-**Cách 2 — Chạy thủ công:**
-- Python 3.9+
-- Node.js 18+
+**Chạy thủ công:**
+- Python 3.9 trở lên
+- Node.js 18 trở lên
 - npm (đi kèm Node.js)
 - Git
 
 ---
 
-## Cách 1: Chạy bằng Docker (nhanh nhất)
+## Hướng dẫn cài đặt và chạy
 
-Chỉ cần 1 lệnh, Docker sẽ tự build và chạy cả Backend lẫn Frontend:
+### Cách 1: Docker (nhanh nhất)
+
+Chỉ cần một lệnh duy nhất để build và khởi động toàn bộ hệ thống:
 
 ```bash
 docker-compose up --build
 ```
 
-Sau khi chạy xong:
-- Frontend: **http://localhost:3000**
-- Backend API: **http://localhost:8000**
-- Swagger docs: **http://localhost:8000/docs**
+Sau khi khởi động:
+
+| Dịch vụ | Địa chỉ |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| Swagger UI | http://localhost:8000/docs |
 
 Dừng hệ thống:
 
@@ -43,7 +56,7 @@ Dừng hệ thống:
 docker-compose down
 ```
 
-Xóa sạch dữ liệu (reset DB):
+Xóa dữ liệu và reset database:
 
 ```bash
 docker-compose down
@@ -52,15 +65,15 @@ rm backend/portfolio_cv_hub.db
 
 ---
 
-## Cách 2: Chạy thủ công (development)
+### Cách 2: Chạy thủ công (môi trường phát triển)
 
-### Backend (FastAPI)
+#### Backend (FastAPI)
 
 ```bash
 cd backend
 ```
 
-Tạo môi trường ảo:
+Tạo và kích hoạt môi trường ảo:
 
 ```bash
 # macOS / Linux
@@ -72,20 +85,18 @@ py -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-Cài thư viện và chạy:
+Cài đặt thư viện và khởi động server:
 
 ```bash
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
-- API server: **http://localhost:8000**
-- Swagger docs: **http://localhost:8000/docs**
-- Lần chạy đầu tiên, Alembic tự động tạo database + tất cả bảng + tài khoản admin mặc định.
+Server sẽ chạy tại http://localhost:8000. Ở lần khởi động đầu tiên, Alembic sẽ tự động tạo database, các bảng và tài khoản Admin mặc định.
 
-### Frontend (Next.js)
+#### Frontend (Next.js)
 
-Mở terminal mới (giữ backend chạy):
+Mở một terminal mới (giữ backend đang chạy):
 
 ```bash
 cd frontend
@@ -93,111 +104,107 @@ npm install
 npm run dev
 ```
 
-- Giao diện web: **http://localhost:3000**
+Giao diện web sẽ chạy tại http://localhost:3000.
 
 ---
 
 ## Tài khoản mặc định
 
 | Vai trò | Email | Mật khẩu |
-|---------|-------|-----------|
-| Admin | `admin@portfoliocvhub.com` | `admin123` |
+|---|---|---|
+| Admin | admin@portfoliocvhub.com | admin123 |
 
-Ứng viên và Nhà tuyển dụng tự đăng ký qua giao diện.
-
----
-
-## Luồng sử dụng cơ bản
-
-1. **Ứng viên** → Đăng ký → Đăng nhập → Tạo portfolio (thông tin, kỹ năng, kinh nghiệm, dự án, upload CV) → Bật công khai
-2. **Nhà tuyển dụng** → Đăng ký doanh nghiệp → Chờ Admin duyệt → Đăng nhập → Tìm kiếm ứng viên → Gửi lời mời
-3. **Admin** → Đăng nhập → Dashboard tổng quan → Duyệt doanh nghiệp → Quản lý ứng viên / khóa tài khoản
+Tài khoản Ứng viên và Nhà tuyển dụng được tạo thông qua chức năng đăng ký trên giao diện.
 
 ---
 
-## Database Migration (Alembic)
+## Luồng sử dụng
 
-Project sử dụng **Alembic** để quản lý schema database. Migration tự động chạy khi khởi động server (cả Docker lẫn thủ công).
+1. **Ứng viên:** Đăng ký tài khoản → Đăng nhập → Tạo portfolio (thông tin cá nhân, kỹ năng, kinh nghiệm, dự án, upload CV) → Bật chế độ công khai hồ sơ.
+2. **Nhà tuyển dụng:** Đăng ký tài khoản doanh nghiệp → Chờ Admin phê duyệt → Đăng nhập → Tìm kiếm ứng viên → Gửi lời mời tuyển dụng.
+3. **Admin:** Đăng nhập → Xem Dashboard tổng quan → Phê duyệt hoặc từ chối doanh nghiệp → Quản lý người dùng.
 
-Khi thay đổi model (thêm cột, sửa kiểu dữ liệu...):
+---
+
+## Quản lý Database Migration (Alembic)
+
+Migration được cấu hình tự động chạy khi khởi động server. Khi thay đổi model (thêm cột, sửa kiểu dữ liệu...), thực hiện các bước sau:
 
 ```bash
 cd backend
 
-# Tạo migration file tự động
+# Tạo file migration tự động dựa trên thay đổi model
 python3 -m alembic revision --autogenerate -m "mô tả thay đổi"
 
-# Áp dụng vào database (giữ nguyên dữ liệu)
+# Áp dụng migration vào database
 python3 -m alembic upgrade head
 ```
 
-Các lệnh hữu ích:
+Các lệnh hữu ích khác:
 
 ```bash
-python3 -m alembic current       # Xem revision hiện tại
-python3 -m alembic history       # Xem lịch sử migration
-python3 -m alembic downgrade -1  # Rollback 1 bước
-python3 -m alembic check         # Kiểm tra model có thay đổi chưa migrate
+python3 -m alembic current      # Xem revision đang áp dụng
+python3 -m alembic history      # Xem toàn bộ lịch sử migration
+python3 -m alembic downgrade -1 # Rollback về migration trước đó
+python3 -m alembic check        # Kiểm tra model có thay đổi chưa được migrate
 ```
 
 ---
 
 ## Cấu trúc dự án
 
-```text
+```
 portfolio-cv-hub/
-├── docker-compose.yml           # Orchestration (1 lệnh chạy cả hệ thống)
-│
+├── docker-compose.yml
 ├── backend/
-│   ├── Dockerfile               # Container image cho Backend
-│   ├── app/
-│   │   ├── api/                 # Endpoints (auth, candidate, recruiter, admin)
-│   │   ├── core/                # Config, Security (JWT, hashing)
-│   │   ├── db/                  # Database connection (SQLAlchemy)
-│   │   ├── models/              # ORM Models (User, CandidateProfile, Company, ...)
-│   │   ├── repositories/        # Data access layer (queries)
-│   │   ├── schemas/             # Pydantic request/response schemas
-│   │   ├── services/            # Business logic layer
-│   │   └── main.py              # App entry point + Alembic auto-migrate
+│   ├── Dockerfile
+│   ├── alembic.ini
+│   ├── requirements.txt
 │   ├── alembic/
-│   │   ├── env.py               # Alembic config (đọc DB URL từ app settings)
-│   │   ├── script.py.mako       # Template migration file
-│   │   └── versions/            # Migration files (theo thứ tự thời gian)
-│   ├── alembic.ini              # Alembic config chính
-│   └── requirements.txt         # Python dependencies
-│
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions/
+│   └── app/
+│       ├── main.py              # Entry point, tự động chạy Alembic khi khởi động
+│       ├── api/                 # Các endpoint (auth, candidate, recruiter, admin)
+│       ├── core/                # Cấu hình, bảo mật (JWT, password hashing)
+│       ├── db/                  # Kết nối database (SQLAlchemy)
+│       ├── models/              # ORM Models (User, CandidateProfile, Company,...)
+│       ├── repositories/        # Data access layer
+│       ├── schemas/             # Pydantic schemas (request/response)
+│       └── services/            # Business logic
 └── frontend/
-    ├── Dockerfile               # Container image cho Frontend
-    ├── src/
-    │   ├── app/
-    │   │   ├── admin/           # Admin pages (dashboard, users, companies, settings)
-    │   │   ├── (dashboard)/     # Candidate dashboard
-    │   │   ├── recruiter/       # Recruiter pages (dashboard, search, login, register)
-    │   │   ├── login/           # Login page (chọn vai trò)
-    │   │   ├── register/        # Candidate registration
-    │   │   └── portfolio/       # Public portfolio view
-    │   ├── components/
-    │   │   ├── admin/           # AdminSidebar
-    │   │   ├── auth/            # Login/Register forms
-    │   │   ├── dashboard/       # Profile, Skills, Experiences, Projects, CV managers
-    │   │   ├── layout/          # Navbar
-    │   │   └── recruiter/       # Company profile, search, invitations
-    │   ├── hooks/               # AuthContext, ProfileContext, useAuth
-    │   ├── services/            # API client (axios)
-    │   └── types/               # TypeScript type definitions
+    ├── Dockerfile
     ├── package.json
-    └── tailwind.config.js
+    ├── tailwind.config.js
+    └── src/
+        ├── app/
+        │   ├── admin/           # Trang Admin (dashboard, users, companies)
+        │   ├── (dashboard)/     # Trang dashboard Ứng viên
+        │   ├── recruiter/       # Trang Nhà tuyển dụng (dashboard, search, register)
+        │   ├── login/           # Trang đăng nhập
+        │   ├── register/        # Trang đăng ký Ứng viên
+        │   └── portfolio/       # Trang public portfolio
+        ├── components/
+        │   ├── admin/
+        │   ├── auth/
+        │   ├── dashboard/
+        │   ├── layout/
+        │   └── recruiter/
+        ├── hooks/               # AuthContext, ProfileContext, useAuth
+        ├── services/            # API client (axios)
+        └── types/               # TypeScript type definitions
 ```
 
 ---
 
 ## API Endpoints
 
-| Module | Prefix | Chức năng |
-|--------|--------|-----------|
-| Auth | `/api/auth` | Đăng ký, đăng nhập, đăng ký recruiter, lấy user hiện tại |
-| Candidate | `/api/candidate` | CRUD profile, skills, experiences, projects, CVs, public portfolio |
-| Recruiter | `/api/recruiter` | Profile công ty, tìm kiếm ứng viên, gửi/quản lý lời mời |
-| Admin | `/api/admin` | Dashboard stats, quản lý users, duyệt doanh nghiệp |
+| Module | Prefix | Mô tả |
+|---|---|---|
+| Auth | `/api/auth` | Đăng ký, đăng nhập, lấy thông tin người dùng hiện tại |
+| Candidate | `/api/candidate` | Quản lý profile, kỹ năng, kinh nghiệm, dự án, CV, public portfolio |
+| Recruiter | `/api/recruiter` | Profile công ty, tìm kiếm ứng viên, gửi và quản lý lời mời |
+| Admin | `/api/admin` | Thống kê dashboard, quản lý người dùng, phê duyệt doanh nghiệp |
 
-Chi tiết đầy đủ tại **http://localhost:8000/docs** (Swagger UI).
+Xem chi tiết đầy đủ tại Swagger UI: http://localhost:8000/docs

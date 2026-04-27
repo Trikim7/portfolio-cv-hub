@@ -1,12 +1,39 @@
 services:
+  db:
+    image: postgres:16
+    container_name: cvhub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cvhub
+      POSTGRES_PASSWORD: cvhub_secret
+      POSTGRES_DB: portfolio_cv_hub
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cvhub -d portfolio_cv_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     container_name: cvhub-backend
+    restart: unless-stopped
     ports:
       - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://cvhub:cvhub_secret@db:5432/portfolio_cv_hub
+      SECRET_KEY: change-this-in-production-use-random-string
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      ALLOWED_ORIGINS: http://localhost:3000
     volumes:
-      - ./backend/portfolio_cv_hub.db:/app/portfolio_cv_hub.db
       - ./backend/uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
@@ -19,8 +46,12 @@ services:
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
     container_name: cvhub-frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  postgres_data:
