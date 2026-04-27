@@ -1,139 +1,143 @@
-# Portfolio CV Hub
+<div align="center">
 
-<p align="center">
-  <b>Nền tảng kết nối ứng viên và nhà tuyển dụng</b><br/>
-  Quản lý Portfolio + CV + Tuyển dụng trong một hệ thống thống nhất.
-</p>
+  # 🌟 Portfolio CV Hub 🌟
+  
+  **Nền tảng kết nối ứng viên và nhà tuyển dụng toàn diện**
+  
+  *Quản lý Portfolio • CV • Tuyển dụng trong một hệ thống duy nhất*
+  
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
-  <img src="https://img.shields.io/badge/Frontend-Next.js%2014-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
-  <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
-  <img src="https://img.shields.io/badge/ORM-SQLAlchemy-red?style=for-the-badge" alt="SQLAlchemy"/>
-  <img src="https://img.shields.io/badge/Infra-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
-</p>
+  <p align="center">
+    <a href="#gioi-thieu">Giới thiệu</a> •
+    <a href="#tinh-nang-noi-bat">Tính năng</a> •
+    <a href="#cong-nghe-su-dung">Công nghệ</a> •
+    <a href="#huong-dan-cai-dat">Cài đặt</a> •
+    <a href="#kien-truc-he-thong">Kiến trúc</a>
+  </p>
 
----
+  <p align="center">
+    <a href="https://portfolio-cv-hub.vercel.app/" target="_blank">
+      <img src="https://img.shields.io/badge/🌍_Truy_cập_ngay_-_Link_Demo-2563EB?style=for-the-badge" alt="Link Demo" />
+    </a>
+  </p>
 
-## 1) Tinh gon ve du an
-
-`Portfolio CV Hub` la he thong web full-stack ho tro 3 nhom nguoi dung:
-
-- **Ung vien**: tao profile, cap nhat skills/experience/projects, upload CV, bat/tat portfolio public
-- **Nha tuyen dung**: dang ky doanh nghiep, tim kiem ung vien, gui loi moi, AI Ranking
-- **Admin**: dashboard quan tri, phe duyet/tu choi doanh nghiep, quan ly users
-
-Muc tieu: bien ho so ung vien thanh mot portfolio co cau truc, de doanh nghiep tim nhanh va danh gia chinh xac hon.
-
----
-
-## 2) Tinh nang noi bat
-
-### Ung vien
-- Quan ly day du thong tin ho so (ca nhan, ky nang, kinh nghiem, du an)
-- Upload CV va xem/tai CV
-- Tao portfolio public theo slug de chia se
-
-### Nha tuyen dung
-- Dang ky tai khoan doanh nghiep (qua quy trinh duyet)
-- Tim kiem ung vien theo keyword + ky nang
-- So sanh ung vien va gui loi moi tuyen dung
-- AI Ranking theo tieu chi cong viec
-
-### Admin
-- Xem thong ke tong quan he thong
-- Duyet doanh nghiep cho truy cap dashboard recruiter
-- Khoa/mo khoa tai khoan khi can
-
-### Public pages
-- Trang chu co so lieu tong hop
-- Trang tim kiem ung vien cong khai
-- Trang portfolio cong khai cua tung ung vien
+  <p align="center">
+    <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
+    <img src="https://img.shields.io/badge/Frontend-Next.js%2014-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+    <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+    <img src="https://img.shields.io/badge/ORM-SQLAlchemy-red?style=for-the-badge" alt="SQLAlchemy"/>
+    <img src="https://img.shields.io/badge/Infra-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  </p>
+</div>
 
 ---
 
-## 3) Kien truc tong quan
+<a id="gioi-thieu"></a>
+## 🎯 Giới thiệu
 
-```text
-Frontend (Next.js 14 + TypeScript + Tailwind)
-        |
-        v
-Backend API (FastAPI + SQLAlchemy + Alembic)
-        |
-        v
-PostgreSQL
-        |
-        +--> Cloudinary (luu avatar/logo/CV neu duoc cau hinh)
-```
+**Portfolio CV Hub** là một hệ thống web full-stack hiện đại, được thiết kế để xóa bỏ khoảng cách giữa ứng viên và nhà tuyển dụng. Thay vì chỉ sử dụng những bản CV tĩnh nhàm chán, hệ thống của chúng tôi biến hồ sơ của bạn thành các trang **Portfolio** sinh động, có cấu trúc, giúp doanh nghiệp dễ dàng tìm kiếm, đánh giá và đưa ra quyết định chính xác nhất.
+
+Hệ thống phục vụ 3 nhóm người dùng chính:
+- 👨‍💻 **Ứng viên**: Quản lý hồ sơ, kỹ năng, dự án cá nhân, upload CV và chia sẻ Portfolio công khai dễ dàng.
+- 🏢 **Nhà tuyển dụng**: Đăng ký hồ sơ doanh nghiệp, tìm kiếm ứng viên tiềm năng, gửi lời mời và sử dụng sức mạnh của **AI Ranking** để xếp hạng ứng viên.
+- 🛠️ **Quản trị viên (Admin)**: Dashboard thống kê, kiểm duyệt doanh nghiệp và quản lý toàn bộ hệ thống.
 
 ---
 
-## 4) Cong nghe su dung
+<a id="tinh-nang-noi-bat"></a>
+## ✨ Tính năng nổi bật
 
-| Thanh phan | Cong nghe |
-|---|---|
-| Frontend | Next.js 14, TypeScript, TailwindCSS |
-| Backend | FastAPI, SQLAlchemy, Pydantic |
-| Migration | Alembic |
-| Database | PostgreSQL |
-| File storage | Cloudinary (fallback local) |
-| Auth | JWT + OAuth (Google/GitHub) |
-| DevOps | Docker, Docker Compose |
+<table>
+<tr>
+<td width="33%">
 
----
+### 👨‍💻 Dành cho Ứng viên
+* **Quản lý Profile 360°:** Cập nhật thông tin cá nhân, kỹ năng, kinh nghiệm, và các dự án thực tế.
+* **Smart CV Management:** Upload, lưu trữ và quản lý CV dễ dàng.
+* **Public Portfolio:** Tạo link Portfolio cá nhân (theo định dạng `slug`) để chia sẻ tới bất kỳ ai chỉ với một cú click.
 
-## 5) Chay local bang Docker (khuyen dung)
+</td>
+<td width="33%">
 
-### Buoc 1: Tao file env
+### 🏢 Dành cho Nhà Tuyển Dụng
+* **Xác thực Doanh Nghiệp:** Quy trình đăng ký và xét duyệt minh bạch.
+* **Advanced Search:** Lọc ứng viên cực nhanh theo từ khóa và kỹ năng chuyên môn.
+* **AI Candidate Ranking:** 🤖 Tự động chấm điểm và xếp hạng ứng viên dựa trên mức độ phù hợp với yêu cầu công việc.
+* **Direct Invitation:** Gửi lời mời tuyển dụng trực tiếp qua hệ thống.
 
-```bash
-cp .env.example .env
-```
+</td>
+<td width="33%">
 
-Cap nhat gia tri can thiet trong `.env` (DB, JWT, OAuth, Cloudinary).
+### 🛡️ Dành cho Quản Trị Viên (Admin)
+* **Tổng quan Hệ thống:** Bảng điều khiển (Dashboard) trực quan thống kê số liệu realtime.
+* **Kiểm duyệt (Moderation):** Xem xét và phê duyệt hồ sơ doanh nghiệp.
+* **User Management:** Quản lý, khóa/mở khóa tài khoản khi có dấu hiệu vi phạm.
 
-### Buoc 2: Build va chay
-
-```bash
-docker compose up --build
-```
-
-### Dia chi truy cap
-
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8000`
-- Swagger: `http://localhost:8000/docs`
-
-### Dung he thong
-
-```bash
-docker compose down
-```
-
-### Reset toan bo DB (xoa volume)
-
-```bash
-docker compose down -v
-```
+</td>
+</tr>
+</table>
 
 ---
 
-## 6) Chay thu cong (development)
+<a id="cong-nghe-su-dung"></a>
+## 🛠 Công nghệ sử dụng
 
-### Backend
+Được xây dựng trên nền tảng các công nghệ hiện đại và mạnh mẽ nhất:
 
+| Thành phần | Công nghệ |
+| :--- | :--- |
+| **Giao diện (Frontend)** | `Next.js 14`, `TypeScript`, `TailwindCSS` |
+| **Máy chủ (Backend)** | `FastAPI`, `Python`, `Pydantic` |
+| **Cơ sở dữ liệu (DB)** | `PostgreSQL` |
+| **Quản lý DB (ORM & Migration)**| `SQLAlchemy`, `Alembic` |
+| **Lưu trữ tệp (Storage)** | `Cloudinary` (Có hỗ trợ fallback local) |
+| **Xác thực (Authentication)** | `JWT`, `OAuth 2.0` (Google/GitHub) |
+| **Triển khai (DevOps)** | `Docker`, `Docker Compose` |
+
+---
+
+<a id="huong-dan-cai-dat"></a>
+## 🚀 Hướng dẫn cài đặt
+
+### 🐳 Cách 1: Chạy bằng Docker (Khuyên dùng)
+
+Cách nhanh nhất để khởi chạy toàn bộ hệ thống mà không cần lo lắng về môi trường.
+
+1. **Chuẩn bị biến môi trường:**
+   ```bash
+   cp .env.example .env
+   ```
+   > 💡 *Nhớ cập nhật các thông tin cấu hình cần thiết (DB, JWT, OAuth, Cloudinary) bên trong file `.env`.*
+
+2. **Build và khởi động:**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Truy cập ứng dụng:**
+   - 🌐 **Frontend:** [http://localhost:3000](http://localhost:3000)
+   - ⚡ **Backend API:** [http://localhost:8000](http://localhost:8000)
+   - 📖 **Tài liệu API (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+*Để dừng hệ thống: `docker compose down` | Reset toàn bộ Database: `docker compose down -v`*
+
+<details>
+<summary><h3>💻 Cách 2: Chạy thủ công (Dành cho Development)</h3></summary>
+
+**Khởi chạy Backend:**
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate   # macOS/Linux
-# .venv\Scripts\Activate.ps1  # Windows PowerShell
+
+# Kích hoạt môi trường ảo:
+source .venv/bin/activate       # Trên macOS/Linux
+# .venv\Scripts\Activate.ps1    # Trên Windows PowerShell
 
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
-### Frontend (terminal khac)
-
+**Khởi chạy Frontend (Mở Terminal mới):**
 ```bash
 cd frontend
 cp .env.example .env.local
@@ -141,111 +145,108 @@ npm install
 npm run dev
 ```
 
+</details>
+
 ---
 
-## 7) Bien moi truong quan trong
+<a id="kien-truc-he-thong"></a>
+## 🏗 Kiến trúc hệ thống
 
-| Bien | Vi du | Mo ta |
+```text
+  [ Người dùng ]
+        │
+        ▼
+  [ Frontend (Next.js 14 + Tailwind) ]
+        │
+        ▼ (REST API / JWT)
+  [ Backend API (FastAPI) ]
+        │
+        ├── CSDL ──────▶ [ PostgreSQL ]
+        │
+        └── Lưu trữ ───▶ [ Cloudinary / Local Storage ]
+```
+
+---
+
+## 🔑 Biến môi trường quan trọng
+
+Bạn cần thiết lập các biến sau trong file `.env`:
+
+| Biến | Ví dụ | Mô tả |
 |---|---|---|
-| `DATABASE_URL` | `postgresql+psycopg2://user:pass@db:5432/dbname` | Ket noi PostgreSQL |
-| `SECRET_KEY` | `change-me` | Ky JWT |
-| `ALLOWED_ORIGINS` | `http://localhost:3000` | CORS cho frontend |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | URL backend phia frontend |
-| `GOOGLE_CLIENT_ID` | `...` | OAuth Google |
-| `GOOGLE_CLIENT_SECRET` | `...` | OAuth Google |
-| `GITHUB_CLIENT_ID` | `...` | OAuth GitHub |
-| `GITHUB_CLIENT_SECRET` | `...` | OAuth GitHub |
-| `CLOUDINARY_CLOUD_NAME` | `...` | Cloudinary |
-| `CLOUDINARY_API_KEY` | `...` | Cloudinary |
-| `CLOUDINARY_API_SECRET` | `...` | Cloudinary |
+| `DATABASE_URL` | `postgresql+psycopg2://user:pass@db/dbname` | Chuỗi kết nối đến PostgreSQL |
+| `SECRET_KEY` | `your-super-secret-key` | Khóa bí mật để ký JWT |
+| `ALLOWED_ORIGINS` | `http://localhost:3000` | Cấu hình CORS cho frontend |
+| `NEXT_PUBLIC_API_URL`| `http://localhost:8000` | Base URL của Backend dành cho Frontend |
+| `GOOGLE_CLIENT_*` | `...` | Thông tin cấu hình đăng nhập qua Google |
+| `GITHUB_CLIENT_*` | `...` | Thông tin cấu hình đăng nhập qua GitHub |
+| `CLOUDINARY_*` | `...` | Cấu hình lưu trữ ảnh/CV trên Cloudinary |
 
 ---
 
-## 8) API modules
+## 📂 Quản lý Database (Alembic)
 
-| Module | Prefix | Chuc nang |
-|---|---|---|
-| Auth | `/api/auth` | Dang ky, dang nhap, OAuth |
-| Candidate | `/api/candidate` | CRUD profile, skills, experiences, projects, CV |
-| Recruiter | `/api/recruiter` | Company profile, search, invitations, ranking |
-| Admin | `/api/admin` | Dashboard stats, quan ly users/companies |
-| Public | `/api/public` | Stats trang chu, featured candidates |
-
-Chi tiet API: `http://localhost:8000/docs`
-
----
-
-## 9) Alembic migration
+Dành cho nhà phát triển khi cần thay đổi cấu trúc bảng:
 
 ```bash
 cd backend
 
-# Tao migration moi
-python3 -m alembic revision --autogenerate -m "describe changes"
+# 1. Tạo file migration mới khi có thay đổi model
+python3 -m alembic revision --autogenerate -m "Mô tả thay đổi"
 
-# Apply migration
+# 2. Cập nhật thay đổi vào database
 python3 -m alembic upgrade head
 ```
-
-Lenh hay dung:
-
-```bash
-python3 -m alembic current
-python3 -m alembic history
-python3 -m alembic downgrade -1
-python3 -m alembic check
-```
+> **Các lệnh hữu ích khác:** `alembic current` (xem bản hiện tại), `alembic history` (lịch sử), `alembic downgrade -1` (hoàn tác 1 bước).
 
 ---
 
-## 10) Cau truc thu muc
+## 🗺 Cấu trúc thư mục
 
 ```text
 portfolio-cv-hub/
-├── docker-compose.yml
-├── .env.example
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── db/
-│   │   ├── models/
-│   │   ├── repositories/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   └── main.py
-│   ├── alembic/
-│   └── requirements.txt
-└── frontend/
-    ├── src/
-    │   ├── app/
-    │   ├── components/
-    │   ├── hooks/
-    │   ├── services/
-    │   └── types/
-    └── package.json
+├── 🐳 docker-compose.yml     # Khởi tạo toàn bộ services (DB, Backend, Frontend)
+├── 🔐 .env.example           # File mẫu chứa các biến môi trường cấu hình
+│
+├── ⚙️ backend/               # 🐍 FastAPI Backend (Python)
+│   ├── alembic/              # Quản lý Database Migrations (lịch sử cấu trúc bảng)
+│   ├── app/                  # Chứa toàn bộ source code của Backend
+│   │   ├── api/              # Định nghĩa các Endpoints (auth, candidate, recruiter...)
+│   │   ├── core/             # Cấu hình chung (Config, Security, JWT)
+│   │   ├── db/               # Kết nối Database và file Seed (dữ liệu mẫu)
+│   │   ├── models/           # Định nghĩa các Database Models (SQLAlchemy ORM)
+│   │   ├── repositories/     # Tầng xử lý truy vấn cơ sở dữ liệu (Data Access Layer)
+│   │   ├── schemas/          # Xác thực dữ liệu đầu vào/ra (Pydantic Models)
+│   │   ├── services/         # Xử lý Logic nghiệp vụ chính (Business Logic)
+│   │   └── main.py           # Entry point khởi chạy ứng dụng FastAPI
+│   ├── tests/                # Unit Tests & Integration Tests (Pytest)
+│   ├── Dockerfile            # Kịch bản build Docker image cho backend
+│   └── requirements.txt      # Khai báo các thư viện Python cần thiết
+│
+└── 🎨 frontend/              # ⚛️ Next.js 14 Frontend (React + TypeScript)
+    ├── src/                  # Chứa toàn bộ source code của Frontend
+    │   ├── app/              # Cấu trúc Routing của Next.js (App Router)
+    │   │   ├── (dashboard)/  # Layout dùng chung cho các khu vực quản trị
+    │   │   ├── admin/        # Giao diện dành riêng cho Admin
+    │   │   ├── auth/         # Giao diện Xác thực (Đăng nhập, Đăng ký)
+    │   │   ├── portfolio/    # Giao diện trang Profile công khai của Ứng viên
+    │   │   ├── recruiter/    # Giao diện làm việc của Nhà Tuyển Dụng
+    │   │   └── search/       # Giao diện tìm kiếm ứng viên công khai
+    │   ├── components/       # Các React UI Component tái sử dụng (Button, Form, Table...)
+    │   ├── config/           # File cấu hình ứng dụng (i18n, constants)
+    │   ├── hooks/            # Custom Hooks & Context API (xử lý Global State, Auth)
+    │   ├── locales/          # File đa ngôn ngữ (en.json, vi.json)
+    │   ├── providers/        # Context Providers bao bọc toàn ứng dụng
+    │   ├── services/         # Hàm kết nối, gửi requests tới Backend API
+    │   └── types/            # Khai báo các TypeScript Interfaces/Types
+    ├── Dockerfile            # Kịch bản build Docker image cho frontend
+    ├── package.json          # Quản lý thư viện NPM và các Scripts
+    └── tailwind.config.js    # Cấu hình CSS/Thiết kế hệ thống cho Tailwind
 ```
 
 ---
 
-## 11) Demo flow de bao cao
-
-1. Dang nhap Admin -> mo Dashboard tong quan
-2. Dang ky doanh nghiep -> cho Admin duyet
-3. Dang ky ung vien -> cap nhat profile + upload CV + bat public
-4. Recruiter tim kiem -> so sanh -> gui loi moi
-5. Ung vien nhan loi moi trong dashboard
-
----
-
-## 12) Ghi chu bao mat
-
-- Khong commit `.env` that len repo cong khai
-- Rotate secrets neu da lo thong tin OAuth/Cloudinary
-- Production nen dung DB backup + monitoring
-
----
-
-## 13) License
-
-Noi bo do an/bao cao hoc tap. Dieu chinh theo quy dinh nhom/mon hoc.
+<div align="center">
+  <b>Cảm ơn bạn đã ghé thăm và quan tâm đến dự án!</b> <br/>
+  <i>Mọi đóng góp, báo lỗi (issue) hoặc ý kiến phản hồi đều được chúng tôi trân trọng đón nhận. ❤️</i>
+</div>
