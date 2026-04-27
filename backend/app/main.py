@@ -55,13 +55,14 @@ _seed_admin()
 
 
 def _load_smtp_config_from_db():
-    """Apply SMTP from `system_settings` so production uses DB-backed config; env is fallback if no row."""
+    """1) If `smtp_config` exists in DB, apply it (wins over env). 2) Else, if env has SMTP credentials, copy env → DB so `system_settings` has one row to inspect."""
     from app.db.database import SessionLocal
-    from app.core.smtp_config import load_smtp_from_db
+    from app.core.smtp_config import load_smtp_from_db, bootstrap_smtp_in_db_from_env_if_missing
 
     db = SessionLocal()
     try:
-        load_smtp_from_db(db)
+        if not load_smtp_from_db(db):
+            bootstrap_smtp_in_db_from_env_if_missing(db)
     finally:
         db.close()
 

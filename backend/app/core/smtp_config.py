@@ -110,3 +110,34 @@ def upsert_smtp_in_db(
                 description="SMTP — JSON: host, port, username, password, from, enabled",
             )
         )
+
+
+def bootstrap_smtp_in_db_from_env_if_missing(session: Session) -> bool:
+    """If there is no `smtp_config` row but env (Settings) has credentials, create the row from env.
+
+    Keeps DB and Railway in sync without an extra Admin save. Does nothing if a row already exists
+    with content, or if username/password are not set in environment.
+    """
+    from app.core.config import settings
+    from app.models.admin_config import SystemSetting
+
+    row = session.query(SystemSetting).filter(SystemSetting.key == SMTP_CONFIG_KEY).first()
+    if row and (row.value or "").strip():
+        return False
+    if not settings.smtp_username or not settings.smtp_password:
+        return False
+    upsert_smtp_in_db(
+        session,
+        smtp_host=settings.smtp_host,
+        smtp_port=settings.smtp_port,
+        smtp_username=settings.smtp_username,
+        smtp_password=settings.smtp_password,
+        smtp_from_address=settings.smtp_from_address,
+        smtp_enabled=settings.smtp_enabled,
+    )
+    session.commit()
+    logger.info(
+        "Created %s in system_settings from environment (Railway / .env)",
+        SMTP_CONFIG_KEY,
+    )
+    return True
