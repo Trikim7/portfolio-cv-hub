@@ -11,6 +11,8 @@ interface SocialLoginButtonsProps {
   providers?: OAuthProvider[]
   /** Disable the buttons (e.g. while the parent form is submitting). */
   disabled?: boolean
+  /** Hide the built-in divider */
+  hideDivider?: boolean
 }
 
 // SVG icons for each provider
@@ -48,6 +50,7 @@ export default function SocialLoginButtons({
   label = '', // Will use default from t('auth.orContinueWith') if empty
   providers = ['google', 'github'],
   disabled = false,
+  hideDivider = false,
 }: SocialLoginButtonsProps) {
   const { t } = useTranslation()
   const displayLabel = label || t('auth.orContinueWith') || 'Or continue with'
@@ -57,18 +60,20 @@ export default function SocialLoginButtons({
   }
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className={hideDivider ? "space-y-4" : "mt-6 space-y-4"}>
       {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-100" />
+      {!hideDivider && (
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-100" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-white px-3 text-[11px] font-medium uppercase tracking-widest text-gray-400">
+              {displayLabel}
+            </span>
+          </div>
         </div>
-        <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-[11px] font-medium uppercase tracking-widest text-gray-400">
-            {displayLabel}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Buttons */}
       <div className={`grid gap-3 ${providers.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>

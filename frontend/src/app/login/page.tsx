@@ -29,16 +29,6 @@ export default function LoginPage() {
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white mb-6">Đăng nhập</h2>
 
-          {/* Social Login */}
-          <SocialLoginButtons disabled={loading} />
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-blue-300/60 text-xs">hoặc đăng nhập bằng email</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
           {error && (
             <div className="mb-5 p-3 bg-red-500/20 border border-red-400/40 text-red-300 rounded-lg text-sm">
               {error}
@@ -92,6 +82,16 @@ export default function LoginPage() {
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-blue-300/60 text-[11px] font-medium uppercase tracking-widest">hoặc tiếp tục với</span>
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+
+          {/* Social Login */}
+          <SocialLoginButtons disabled={loading} hideDivider />
 
           {/* Register links */}
           <div className="space-y-2 text-center text-sm mt-6">
