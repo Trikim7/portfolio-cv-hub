@@ -11,6 +11,8 @@ interface SocialLoginButtonsProps {
   providers?: OAuthProvider[]
   /** Disable the buttons (e.g. while the parent form is submitting). */
   disabled?: boolean
+  /** Visual style variant. */
+  variant?: 'light' | 'dark'
 }
 
 // SVG icons for each provider
@@ -29,18 +31,14 @@ const GitHubIcon = () => (
   </svg>
 )
 
-const PROVIDER_META: Record<OAuthProvider, { label: string; icon: React.ReactNode; className: string; hoverClass: string }> = {
+const PROVIDER_META: Record<OAuthProvider, { label: string; icon: React.ReactNode }> = {
   google: {
     label: 'Google',
     icon: <GoogleIcon />,
-    className: 'bg-white border border-gray-200 text-gray-700',
-    hoverClass: 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm',
   },
   github: {
     label: 'GitHub',
     icon: <GitHubIcon />,
-    className: 'bg-gray-900 text-white border border-gray-900',
-    hoverClass: 'hover:bg-gray-800 hover:shadow-sm',
   },
 }
 
@@ -48,6 +46,7 @@ export default function SocialLoginButtons({
   label = '', // Will use default from t('auth.orContinueWith') if empty
   providers = ['google', 'github'],
   disabled = false,
+  variant = 'light',
 }: SocialLoginButtonsProps) {
   const { t } = useTranslation()
   const displayLabel = label || t('auth.orContinueWith') || 'Or continue with'
@@ -56,18 +55,28 @@ export default function SocialLoginButtons({
     window.location.href = apiClient.getOAuthLoginUrl(provider)
   }
 
+  const dividerLabelClass =
+    variant === 'dark'
+      ? 'text-blue-200/70'
+      : 'bg-white text-gray-400'
+  const buttonClassByVariant = {
+    google:
+      variant === 'dark'
+        ? 'bg-white/90 border border-white/60 text-slate-900 hover:bg-white'
+        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm',
+    github:
+      variant === 'dark'
+        ? 'bg-slate-900 border border-slate-700 text-white hover:bg-slate-800'
+        : 'bg-gray-900 text-white border border-gray-900 hover:bg-gray-800 hover:shadow-sm',
+  }
+
   return (
     <div className="mt-6 space-y-4">
       {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-100" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-[11px] font-medium uppercase tracking-widest text-gray-400">
-            {displayLabel}
-          </span>
-        </div>
+      <div className="flex justify-center">
+        <span className={`px-3 text-[11px] font-medium uppercase tracking-widest ${dividerLabelClass}`}>
+          {displayLabel}
+        </span>
       </div>
 
       {/* Buttons */}
@@ -85,7 +94,7 @@ export default function SocialLoginButtons({
                 px-4 py-2.5 rounded-xl text-sm font-semibold
                 transition-all duration-150
                 disabled:opacity-50 disabled:cursor-not-allowed
-                ${meta.className} ${meta.hoverClass}
+                ${buttonClassByVariant[p]}
               `}
               aria-label={t('auth.loginWithProvider', { provider: meta.label })}
             >

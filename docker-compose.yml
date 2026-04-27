@@ -3,14 +3,16 @@ services:
     image: postgres:16
     container_name: cvhub-db
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: cvhub
-      POSTGRES_PASSWORD: cvhub_secret
-      POSTGRES_DB: portfolio_cv_hub
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cvhub -d portfolio_cv_hub"]
       interval: 10s
@@ -21,14 +23,25 @@ services:
     build: ./backend
     container_name: cvhub-backend
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://cvhub:cvhub_secret@db:5432/portfolio_cv_hub
-      SECRET_KEY: change-this-in-production-use-random-string
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       ALLOWED_ORIGINS: http://localhost:3000
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      OAUTH_REDIRECT_BASE_URL: ${OAUTH_REDIRECT_BASE_URL}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:
