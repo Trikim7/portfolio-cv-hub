@@ -52,6 +52,15 @@ class EmailService:
         return configured or "noreply@localhost"
 
     @classmethod
+    def _smtp_ports_to_try(cls, preferred_port: int) -> list[int]:
+        """Try preferred SMTP port first, then common fallback."""
+        if preferred_port == 587:
+            return [587, 465]
+        if preferred_port == 465:
+            return [465, 587]
+        return [preferred_port, 587, 465]
+
+    @classmethod
     async def _send(
         cls,
         to_email: str,
@@ -79,26 +88,37 @@ class EmailService:
             msg.attach(MIMEText(plain_body, "plain", "utf-8"))
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-        try:
-            import aiosmtplib
-            # Port 465 = SSL/TLS from start; port 587 = STARTTLS upgrade
-            use_tls    = cfg.smtp_port == 465
-            start_tls  = not use_tls  # True for 587, False for 465
-            await aiosmtplib.send(
-                msg,
-                hostname=cfg.smtp_host,
-                port=cfg.smtp_port,
-                username=cfg.smtp_username,
-                password=cfg.smtp_password,
-                use_tls=use_tls,
-                start_tls=start_tls,
-                sender=from_address,
-            )
-            logger.info("[Email] Sent '%s' → %s", subject, to_email)
-            return True
-        except Exception as exc:
-            logger.error("[Email] Failed to send to %s: %s", to_email, exc)
-            return False
+        import aiosmtplib
+        last_exc = None
+        for port in cls._smtp_ports_to_try(cfg.smtp_port):
+            try:
+                # Port 465 = SSL/TLS from start; port 587 = STARTTLS upgrade
+                use_tls = port == 465
+                start_tls = not use_tls  # True for 587, False for 465
+                await aiosmtplib.send(
+                    msg,
+                    hostname=cfg.smtp_host,
+                    port=port,
+                    username=cfg.smtp_username,
+                    password=cfg.smtp_password,
+                    use_tls=use_tls,
+                    start_tls=start_tls,
+                    sender=from_address,
+                    timeout=20,
+                )
+                logger.info("[Email] Sent '%s' → %s via %s:%s", subject, to_email, cfg.smtp_host, port)
+                return True
+            except Exception as exc:
+                last_exc = exc
+                logger.warning(
+                    "[Email] SMTP send attempt failed via %s:%s (%s)",
+                    cfg.smtp_host,
+                    port,
+                    exc,
+                )
+
+        logger.error("[Email] Failed to send to %s after all ports: %s", to_email, last_exc)
+        return False
 
     @classmethod
     def send_background(cls, to_email: str, subject: str, html_body: str, plain_body: Optional[str] = None):
@@ -232,29 +252,31 @@ class EmailService:
         cfg = cls._get_settings()
         if not cfg.smtp_username or not cfg.smtp_password:
             return {"success": False, "message": "Chưa cấu hình SMTP username/password"}
-        try:
-            import aiosmtplib
-            # Port 465 = SSL/TLS from start; port 587 = STARTTLS upgrade
-            use_tls = cfg.smtp_port == 465
-            if use_tls:
-                # SSL connection: TLS is established in connect()
-                smtp = aiosmtplib.SMTP(
-                    hostname=cfg.smtp_host,
-                    port=cfg.smtp_port,
-                    use_tls=True,
-                )
-                await smtp.connect()
-            else:
-                # STARTTLS: connect plaintext then upgrade
-                smtp = aiosmtplib.SMTP(
-                    hostname=cfg.smtp_host,
-                    port=cfg.smtp_port,
-                )
-                await smtp.connect()
-                await smtp.starttls()
-            await smtp.login(cfg.smtp_username, cfg.smtp_password)
-            await smtp.quit()
-            mode = "SSL" if use_tls else "STARTTLS"
-            return {"success": True, "message": f"Kết nối thành công [{mode}] đến {cfg.smtp_host}:{cfg.smtp_port}"}
-        except Exception as exc:
-            return {"success": False, "message": str(exc)}
+        import aiosmtplib
+        last_exc = None
+        for port in cls._smtp_ports_to_try(cfg.smtp_port):
+            try:
+                use_tls = port == 465
+                if use_tls:
+                    smtp = aiosmtplib.SMTP(
+                        hostname=cfg.smtp_host,
+                        port=port,
+                        use_tls=True,
+                        timeout=20,
+                    )
+                    await smtp.connect()
+                else:
+                    smtp = aiosmtplib.SMTP(
+                        hostname=cfg.smtp_host,
+                        port=port,
+                        timeout=20,
+                    )
+                    await smtp.connect()
+                    await smtp.starttls()
+                await smtp.login(cfg.smtp_username, cfg.smtp_password)
+                await smtp.quit()
+                mode = "SSL" if use_tls else "STARTTLS"
+                return {"success": True, "message": f"Kết nối thành công [{mode}] đến {cfg.smtp_host}:{port}"}
+            except Exception as exc:
+                last_exc = exc
+        return {"success": False, "message": str(last_exc)}
