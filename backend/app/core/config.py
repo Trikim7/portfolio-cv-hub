@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     smtp_from_address: str = "noreply@portfoliocvhub.com"
     smtp_enabled: bool = False
 
+    # Resend (preferred in production cloud where SMTP ports can be blocked)
+    resend_api_key: Optional[str] = None
+    resend_from_address: Optional[str] = None
+    resend_enabled: bool = False
+
     model_config = ConfigDict(
         env_file=".env",
         case_sensitive=False,
