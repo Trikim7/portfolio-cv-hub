@@ -66,7 +66,14 @@ export default function JobRequirementList({
   }
 
   if (loading) {
-    return <div className="text-center py-8">{t('common.loading')}</div>
+    return (
+      <div className="flex items-center justify-center py-10">
+        <div className="flex flex-col items-center gap-3 text-gray-500">
+          <span className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+          <span className="sr-only">{t('common.loading')}</span>
+        </div>
+      </div>
+    )
   }
 
   return (
