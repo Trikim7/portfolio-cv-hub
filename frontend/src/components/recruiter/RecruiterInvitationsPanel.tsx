@@ -20,7 +20,7 @@ interface DetailedInvitation {
   candidate?: {
     id: number
     full_name?: string
-    headline?: string
+    headline?: unknown
     avatar_url?: string
     public_slug?: string
     is_public: boolean
@@ -72,9 +72,35 @@ function escapeCsv(value: string): string {
   return `"${normalized}"`
 }
 
+function resolveLocalizedText(value: unknown, lang: string): string {
+  if (value == null) return ''
+  if (typeof value === 'object') {
+    const map = value as Record<string, unknown>
+    const preferred = map[lang]
+    const fallback = map.vi ?? map.en
+    const picked = preferred ?? fallback
+    return typeof picked === 'string' ? picked : ''
+  }
+  if (typeof value !== 'string') return ''
+
+  const raw = value.trim()
+  if (!raw) return ''
+  if (!(raw.startsWith('{') && raw.endsWith('}'))) return raw
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const preferred = parsed[lang]
+    const fallback = parsed.vi ?? parsed.en
+    const picked = preferred ?? fallback
+    return typeof picked === 'string' ? picked : raw
+  } catch {
+    return raw
+  }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function RecruiterInvitationsPanel() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [invitations, setInvitations] = useState<DetailedInvitation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -146,7 +172,7 @@ export default function RecruiterInvitationsPanel() {
     const rows = filtered.map((inv) => ({
       invitationId: String(inv.id),
       candidateName: inv.candidate?.full_name || t('invitations.candidate'),
-      candidateHeadline: inv.candidate?.headline || '',
+      candidateHeadline: resolveLocalizedText(inv.candidate?.headline, i18n.language) || '',
       candidatePublicProfile: inv.candidate?.public_slug
         ? `${window.location.origin}/portfolio/${inv.candidate.public_slug}`
         : '',
@@ -330,7 +356,9 @@ export default function RecruiterInvitationsPanel() {
                           <span className="text-xs text-gray-400 italic">({t('invitations.notPublic')})</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{cand?.headline || t('invitations.noHeadline')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {resolveLocalizedText(cand?.headline, i18n.language) || t('invitations.noHeadline')}
+                      </p>
                       <p className="text-xs text-gray-400 mt-0.5">{t('invitations.sentOn')} {formatDate(inv.created_at)}</p>
                     </div>
                   </div>

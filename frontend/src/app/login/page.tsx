@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const { login, loading, error } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,15 +21,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Brand */}
+        {/* Logo / Brand */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white tracking-tight">Portfolio CV Hub</h1>
-          <p className="text-blue-300 mt-2 text-sm">Nền tảng kết nối ứng viên và nhà tuyển dụng</p>
+          <p className="text-blue-300 mt-2 text-sm">{t('auth.platformSubtitle')}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-semibold text-white mb-6">Đăng nhập</h2>
+        <div className="bg-slate-900/55 backdrop-blur-xl border border-blue-200/20 rounded-2xl p-8 shadow-2xl">
+          <h2 className="text-xl font-semibold text-white mb-6">{t('auth.loginTitle')}</h2>
 
           {error && (
             <div className="mb-5 p-3 bg-red-500/20 border border-red-400/40 text-red-300 rounded-lg text-sm">
@@ -35,25 +37,12 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Social Login */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-blue-300/60 text-[11px] font-medium uppercase tracking-widest">TIẾP TỤC VỚI</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
-          <SocialLoginButtons disabled={loading} hideDivider />
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-blue-300/60 text-[11px] font-medium uppercase tracking-widest">hoặc đăng nhập bằng email</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-blue-200 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-blue-100 mb-1.5">
+                {t('auth.email')}
+              </label>
               <input
                 id="login-email"
                 type="email"
@@ -61,13 +50,16 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-4 py-2.5 bg-white/10 border border-white/20 text-white placeholder-blue-300/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
-                placeholder="admin@portfoliocvhub.com"
+                className="w-full px-4 py-2.5 bg-slate-950/40 border border-blue-100/25 text-white placeholder-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-200/60 transition"
+                placeholder={t('auth.emailPlaceholder')}
               />
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-blue-200 mb-1.5">Mật khẩu</label>
+              <label className="block text-sm font-medium text-blue-100 mb-1.5">
+                {t('auth.password')}
+              </label>
               <div className="relative">
                 <input
                   id="login-password"
@@ -76,42 +68,45 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full px-4 py-2.5 bg-white/10 border border-white/20 text-white placeholder-blue-300/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition pr-16"
-                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 bg-slate-950/40 border border-blue-100/25 text-white placeholder-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-200/60 transition pr-12"
+                  placeholder={t('auth.passwordPlaceholder')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-white transition text-xs font-medium select-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-100 hover:text-white transition text-sm select-none"
                 >
-                  {showPassword ? 'Ẩn' : 'Hiện'}
+                  {showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 </button>
               </div>
             </div>
 
+            {/* Submit */}
             <button
               id="login-submit"
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200"
+              className="w-full py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-900 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 mt-2"
             >
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {loading ? t('auth.loggingIn') : t('auth.loginTitle')}
             </button>
           </form>
 
+          <SocialLoginButtons label={t('auth.orContinueWith')} disabled={loading} variant="dark" />
+
           {/* Register links */}
-          <div className="space-y-2 text-center text-sm mt-6">
-            <p className="text-blue-200">
-              Chưa có tài khoản?{' '}
-              <Link href="/register" className="text-blue-400 hover:text-white font-medium transition-colors">
-                Đăng ký ngay
+          <div className="mt-4 text-center text-sm">
+            <p className="text-blue-100">
+              {t('auth.noAccountYet')}{' '}
+              <Link href="/register?role=candidate" className="text-sky-300 hover:text-white font-semibold transition-colors">
+                {t('auth.registerNowSimple')}
               </Link>
             </p>
           </div>
         </div>
 
         <p className="text-center text-blue-400/50 text-xs mt-6">
-          Hệ thống tự động điều hướng dựa theo vai trò tài khoản của bạn.
+          {t('auth.loginPageSubtitle')}
         </p>
       </div>
     </div>
