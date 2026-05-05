@@ -152,19 +152,7 @@ npm run dev
 <a id="kien-truc-he-thong"></a>
 ## 🏗 Kiến trúc hệ thống
 
-```text
-  [ Người dùng ]
-        │
-        ▼
-  [ Frontend (Next.js 14 + Tailwind) ]
-        │
-        ▼ (REST API / JWT)
-  [ Backend API (FastAPI) ]
-        │
-        ├── CSDL ──────▶ [ PostgreSQL ]
-        │
-        └── Lưu trữ ───▶ [ Cloudinary / Local Storage ]
-```
+<img width="1024" height="559" alt="z7794505399876_b27704fecdee109fb61830d4f5c74a1b" src="https://github.com/user-attachments/assets/d3ff00d9-d406-4a03-bc62-bed5f4b6071f" />
 
 ---
 
