@@ -2,15 +2,10 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CandidateSearchResult, I18nText } from '@/types'
+import { CandidateSearchResult } from '@/types'
 import { apiClient } from '@/services/api'
 import { Toast, useToast } from '@/components/Toast'
-
-const i18nToText = (value: I18nText): string => {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.vi || value.en || Object.values(value)[0] || ''
-}
+import { useI18nText } from '@/hooks/useI18nText'
 
 interface ComparisonTableProps {
   candidates: CandidateSearchResult[]
@@ -28,6 +23,7 @@ interface InvitationState {
 export default function ComparisonTable({ candidates, onClose }: ComparisonTableProps) {
   const { t } = useTranslation()
   const { toast, showToast, closeToast } = useToast()
+  const resolveText = useI18nText()
   const [invitationState, setInvitationState] = useState<InvitationState>({
     candidateId: null, candidateName: '', jobTitle: '', message: '', loading: false,
   })
@@ -38,7 +34,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
     setInvitationState({
       candidateId: candidate.id,
       candidateName: candidate.full_name || t('candidateSearch.noResult'),
-      jobTitle: candidate.headline || '',
+      jobTitle: resolveText(candidate.headline) || '',
       message: '',
       loading: false,
     })
@@ -84,7 +80,7 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                   {candidates.map((candidate) => (
                     <th key={candidate.id} className="p-4 font-semibold text-center min-w-[200px] border-l border-gray-300">
                       <div className="font-bold text-blue-700">{candidate.full_name}</div>
-                      <div className="text-sm text-gray-600">{candidate.headline}</div>
+                      <div className="text-sm text-gray-600">{resolveText(candidate.headline) || '-'}</div>
                     </th>
                   ))}
                 </tr>
@@ -96,13 +92,17 @@ export default function ComparisonTable({ candidates, onClose }: ComparisonTable
                 </tr>
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="p-4 font-semibold text-gray-700 bg-gray-50">{t('comparison.position')}</td>
-                  {candidates.map((c) => <td key={c.id} className="p-4 text-center border-l border-gray-300 text-sm">{c.headline || '-'}</td>)}
+                  {candidates.map((c) => (
+                    <td key={c.id} className="p-4 text-center border-l border-gray-300 text-sm">
+                      {resolveText(c.headline) || '-'}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="p-4 font-semibold text-gray-700 bg-gray-50">{t('comparison.introduction')}</td>
                   {candidates.map((c) => (
                     <td key={c.id} className="p-4 border-l border-gray-300 text-sm text-gray-700 max-w-xs">
-                      <p className="line-clamp-3">{i18nToText(c.bio) || '-'}</p>
+                      <p className="line-clamp-3">{resolveText(c.bio) || '-'}</p>
                     </td>
                   ))}
                 </tr>

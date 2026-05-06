@@ -1,9 +1,12 @@
 """FastAPI application factory (Phase 2 — PostgreSQL)."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from alembic.config import Config
 from alembic import command
 from app.api import auth, candidate, recruiter, admin, scoring, oauth, public, cv_generator
+from app.db.database import Base, engine
+from app.core.config import settings
 
 # Run Alembic migrations on startup (creates/updates tables automatically).
 _alembic_cfg = Config("alembic.ini")
@@ -52,17 +55,80 @@ def _seed_admin():
 _seed_admin()
 
 
+def _load_smtp_config_from_db():
+    """1) If `smtp_config` exists in DB, apply it (wins over env). 2) Else, if env has SMTP credentials, copy env → DB so `system_settings` has one row to inspect."""
+    from app.db.database import SessionLocal
+    from app.core.smtp_config import load_smtp_from_db, bootstrap_smtp_in_db_from_env_if_missing
+
+    db = SessionLocal()
+    try:
+        if not load_smtp_from_db(db):
+            bootstrap_smtp_in_db_from_env_if_missing(db)
+    finally:
+        db.close()
+
+
+_load_smtp_config_from_db()
+
+
 # Create FastAPI app
 app = FastAPI(
     title="Portfolio CV Hub API",
-    description="Backend API for Portfolio CV Hub - Candidate Module",
+    description=(
+        "Backend API for Portfolio CV Hub.\n\n"
+        "**Swagger /docs:** Bấm nút **Authorize**, dán `access_token` từ `POST /api/auth/login` "
+        "(chỉ dán token, không cần chữ `Bearer ` — Swagger tự thêm). "
+        "Các route `/api/admin/*` (trừ `GET /api/admin/templates/public`) cần JWT admin."
+    ),
     version="1.0.0"
 )
+
+
+def custom_openapi():
+    """Expose HTTP Bearer in OpenAPI so Swagger UI shows Authorize (admin routes use Header Authorization)."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {})["BearerAuth"] = {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": (
+            "Đăng nhập: POST /api/auth/login với email/password. "
+            "Copy `access_token` vào đây (Swagger tự gửi header Authorization: Bearer …)."
+        ),
+    }
+    # Mark admin routes as requiring Bearer so Try it out sends the token.
+    for path, path_item in openapi_schema.get("paths", {}).items():
+        if not path.startswith("/api/admin"):
+            continue
+        if path == "/api/admin/templates/public":
+            for method in ("get", "head", "options"):
+                op = path_item.get(method)
+                if isinstance(op, dict):
+                    op["security"] = []
+            continue
+        for method, op in list(path_item.items()):
+            if method not in ("get", "post", "put", "patch", "delete", "head", "options"):
+                continue
+            if not isinstance(op, dict):
+                continue
+            op["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change in production
+    allow_origins=[o.strip() for o in settings.allowed_origins.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

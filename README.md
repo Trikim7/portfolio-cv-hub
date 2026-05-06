@@ -1,242 +1,252 @@
-# Portfolio CV Hub
+<div align="center">
 
-Hệ thống quản lý Portfolio và CV trực tuyến — kết nối **Ứng viên**, **Nhà tuyển dụng** và **Quản trị viên** trên một nền tảng duy nhất.
+  # 🌟 Portfolio CV Hub 🌟
+  
+  **Nền tảng kết nối ứng viên và nhà tuyển dụng toàn diện**
+  
+  *Quản lý Portfolio • CV • Tuyển dụng trong một hệ thống duy nhất*
+  
 
-| Vai trò | Chức năng chính |
-|---------|----------------|
-| **Ứng viên** | Tạo portfolio, quản lý kỹ năng / kinh nghiệm / dự án, upload CV, xem CV inline, bật/tắt hồ sơ công khai |
-| **Nhà tuyển dụng** | Đăng ký doanh nghiệp (chờ duyệt), tìm kiếm ứng viên full-text, gửi lời mời tuyển dụng, AI Ranking |
-| **Admin** | Dashboard tổng quan, quản lý ứng viên, duyệt / từ chối / khóa doanh nghiệp |
+  <p align="center">
+    <a href="#gioi-thieu">Giới thiệu</a> •
+    <a href="#tinh-nang-noi-bat">Tính năng</a> •
+    <a href="#cong-nghe-su-dung">Công nghệ</a> •
+    <a href="#huong-dan-cai-dat">Cài đặt</a> •
+    <a href="#kien-truc-he-thong">Kiến trúc</a>
+  </p>
 
-**Tech Stack:** FastAPI · Next.js 14 · PostgreSQL · SQLAlchemy · Alembic · Cloudinary · TailwindCSS · TypeScript · Docker
+  <p align="center">
+    <a href="https://portfolio-cv-hub.vercel.app/" target="_blank">
+      <img src="https://img.shields.io/badge/🌍_Truy_cập_ngay_-_Link_Demo-2563EB?style=for-the-badge" alt="Link Demo" />
+    </a>
+  </p>
 
----
-
-## Yêu cầu hệ thống
-
-**Cách 1 — Docker (khuyên dùng):** chỉ cần **Docker Desktop** (đã bao gồm Docker Compose).
-
-**Cách 2 — Chạy thủ công:**
-- Python 3.9+
-- Node.js 18+
-- npm (đi kèm Node.js)
-- PostgreSQL 14+
-- Git
-
----
-
-## Cách 1: Chạy bằng Docker (nhanh nhất)
-
-**Bước 1: Thiết lập biến môi trường (.env)**
-
-```bash
-cp .env.example .env
-```
-
-Chỉnh sửa `.env` với thông tin thực của bạn (DB, Cloudinary, JWT secret...).
-
-**Bước 2: Chạy hệ thống**
-
-```bash
-docker-compose up --build
-```
-
-Sau khi chạy xong:
-- Frontend: **http://localhost:3000**
-- Backend API: **http://localhost:8000**
-- Swagger docs: **http://localhost:8000/docs**
-
-Dừng hệ thống:
-
-```bash
-docker-compose down
-```
+  <p align="center">
+    <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
+    <img src="https://img.shields.io/badge/Frontend-Next.js%2014-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+    <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+    <img src="https://img.shields.io/badge/ORM-SQLAlchemy-red?style=for-the-badge" alt="SQLAlchemy"/>
+    <img src="https://img.shields.io/badge/Infra-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  </p>
+</div>
 
 ---
 
-## Cách 2: Chạy thủ công (development)
+<a id="gioi-thieu"></a>
+## 🎯 Giới thiệu
 
-### Backend (FastAPI)
+**Portfolio CV Hub** là một hệ thống web full-stack hiện đại, được thiết kế để xóa bỏ khoảng cách giữa ứng viên và nhà tuyển dụng. Thay vì chỉ sử dụng những bản CV tĩnh nhàm chán, hệ thống của chúng tôi biến hồ sơ của bạn thành các trang **Portfolio** sinh động, có cấu trúc, giúp doanh nghiệp dễ dàng tìm kiếm, đánh giá và đưa ra quyết định chính xác nhất.
 
+Hệ thống phục vụ 3 nhóm người dùng chính:
+- 👨‍💻 **Ứng viên**: Quản lý hồ sơ, kỹ năng, dự án cá nhân, upload CV và chia sẻ Portfolio công khai dễ dàng.
+- 🏢 **Nhà tuyển dụng**: Đăng ký hồ sơ doanh nghiệp, tìm kiếm ứng viên tiềm năng, gửi lời mời và sử dụng sức mạnh của **AI Ranking** để xếp hạng ứng viên.
+- 🛠️ **Quản trị viên (Admin)**: Dashboard thống kê, kiểm duyệt doanh nghiệp và quản lý toàn bộ hệ thống.
+
+---
+
+<a id="tinh-nang-noi-bat"></a>
+## ✨ Tính năng nổi bật
+
+<table>
+<tr>
+<td width="33%">
+
+### 👨‍💻 Dành cho Ứng viên
+* **Quản lý Profile 360°:** Cập nhật thông tin cá nhân, kỹ năng, kinh nghiệm, và các dự án thực tế.
+* **Smart CV Management:** Upload, lưu trữ và quản lý CV dễ dàng.
+* **Public Portfolio:** Tạo link Portfolio cá nhân (theo định dạng `slug`) để chia sẻ tới bất kỳ ai chỉ với một cú click.
+
+</td>
+<td width="33%">
+
+### 🏢 Dành cho Nhà Tuyển Dụng
+* **Xác thực Doanh Nghiệp:** Quy trình đăng ký và xét duyệt minh bạch.
+* **Advanced Search:** Lọc ứng viên cực nhanh theo từ khóa và kỹ năng chuyên môn.
+* **AI Candidate Ranking:** 🤖 Tự động chấm điểm và xếp hạng ứng viên dựa trên mức độ phù hợp với yêu cầu công việc.
+* **Direct Invitation:** Gửi lời mời tuyển dụng trực tiếp qua hệ thống.
+
+</td>
+<td width="33%">
+
+### 🛡️ Dành cho Quản Trị Viên (Admin)
+* **Tổng quan Hệ thống:** Bảng điều khiển (Dashboard) trực quan thống kê số liệu realtime.
+* **Kiểm duyệt (Moderation):** Xem xét và phê duyệt hồ sơ doanh nghiệp.
+* **User Management:** Quản lý, khóa/mở khóa tài khoản khi có dấu hiệu vi phạm.
+
+</td>
+</tr>
+</table>
+
+---
+
+<a id="cong-nghe-su-dung"></a>
+## 🛠 Công nghệ sử dụng
+
+Được xây dựng trên nền tảng các công nghệ hiện đại và mạnh mẽ nhất:
+
+| Thành phần | Công nghệ |
+| :--- | :--- |
+| **Giao diện (Frontend)** | `Next.js 14`, `TypeScript`, `TailwindCSS` |
+| **Máy chủ (Backend)** | `FastAPI`, `Python`, `Pydantic` |
+| **Cơ sở dữ liệu (DB)** | `PostgreSQL` |
+| **Quản lý DB (ORM & Migration)**| `SQLAlchemy`, `Alembic` |
+| **Lưu trữ tệp (Storage)** | `Cloudinary` (Có hỗ trợ fallback local) |
+| **Xác thực (Authentication)** | `JWT`, `OAuth 2.0` (Google/GitHub) |
+| **Triển khai (DevOps)** | `Docker`, `Docker Compose` |
+
+---
+
+<a id="huong-dan-cai-dat"></a>
+## 🚀 Hướng dẫn cài đặt
+
+### 🐳 Cách 1: Chạy bằng Docker (Khuyên dùng)
+
+Cách nhanh nhất để khởi chạy toàn bộ hệ thống mà không cần lo lắng về môi trường.
+
+1. **Chuẩn bị biến môi trường:**
+   ```bash
+   cp .env.example .env
+   ```
+   > 💡 *Nhớ cập nhật các thông tin cấu hình cần thiết (DB, JWT, OAuth, Cloudinary) bên trong file `.env`.*
+
+2. **Build và khởi động:**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Truy cập ứng dụng:**
+   - 🌐 **Frontend:** [http://localhost:3000](http://localhost:3000)
+   - ⚡ **Backend API:** [http://localhost:8000](http://localhost:8000)
+   - 📖 **Tài liệu API (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+*Để dừng hệ thống: `docker compose down` | Reset toàn bộ Database: `docker compose down -v`*
+
+<details>
+<summary><h3>💻 Cách 2: Chạy thủ công (Dành cho Development)</h3></summary>
+
+**Khởi chạy Backend:**
 ```bash
 cd backend
-cp .env.example .env
-```
-
-Tạo môi trường ảo và cài dependencies:
-
-```bash
-# macOS / Linux
 python3 -m venv .venv
-source .venv/bin/activate
 
-# Windows (PowerShell)
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-```
+# Kích hoạt môi trường ảo:
+source .venv/bin/activate       # Trên macOS/Linux
+# .venv\Scripts\Activate.ps1    # Trên Windows PowerShell
 
-```bash
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
-- API server: **http://localhost:8000**
-- Swagger docs: **http://localhost:8000/docs**
-- Lần chạy đầu, Alembic tự động tạo database + tất cả bảng + tài khoản admin mặc định.
-
-### Frontend (Next.js)
-
-Mở terminal mới (giữ backend chạy):
-
+**Khởi chạy Frontend (Mở Terminal mới):**
 ```bash
 cd frontend
-cp .env.example .env.local   # chỉnh NEXT_PUBLIC_API_URL nếu cần
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-- Giao diện web: **http://localhost:3000**
+</details>
 
 ---
 
-## Biến môi trường quan trọng
+<a id="kien-truc-he-thong"></a>
+## 🏗 Kiến trúc hệ thống
+
+```text
+  [ Người dùng ]
+        │
+        ▼
+  [ Frontend (Next.js 14 + Tailwind) ]
+        │
+        ▼ (REST API / JWT)
+  [ Backend API (FastAPI) ]
+        │
+        ├── CSDL ──────▶ [ PostgreSQL ]
+        │
+        └── Lưu trữ ───▶ [ Cloudinary / Local Storage ]
+```
+
+---
+
+## 🔑 Biến môi trường quan trọng
+
+Bạn cần thiết lập các biến sau trong file `.env`:
 
 | Biến | Ví dụ | Mô tả |
-|------|-------|-------|
-| `DATABASE_URL` | `postgresql://user:pass@localhost/dbname` | Kết nối PostgreSQL |
-| `SECRET_KEY` | `your-secret-key` | JWT signing key |
-| `CLOUDINARY_CLOUD_NAME` | `mycloud` | Cloudinary upload CV/avatar |
-| `CLOUDINARY_API_KEY` | `...` | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | `...` | Cloudinary API secret |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend URL dùng trong frontend |
+|---|---|---|
+| `DATABASE_URL` | `postgresql+psycopg2://user:pass@db/dbname` | Chuỗi kết nối đến PostgreSQL |
+| `SECRET_KEY` | `your-super-secret-key` | Khóa bí mật để ký JWT |
+| `ALLOWED_ORIGINS` | `http://localhost:3000` | Cấu hình CORS cho frontend |
+| `NEXT_PUBLIC_API_URL`| `http://localhost:8000` | Base URL của Backend dành cho Frontend |
+| `GOOGLE_CLIENT_*` | `...` | Thông tin cấu hình đăng nhập qua Google |
+| `GITHUB_CLIENT_*` | `...` | Thông tin cấu hình đăng nhập qua GitHub |
+| `CLOUDINARY_*` | `...` | Cấu hình lưu trữ ảnh/CV trên Cloudinary |
 
 ---
 
-## Tài khoản mặc định
+## 📂 Quản lý Database (Alembic)
 
-| Vai trò | Email | Mật khẩu |
-|---------|-------|-----------|
-| Admin | `admin@portfoliocvhub.com` | `admin123` |
-
-Ứng viên và Nhà tuyển dụng tự đăng ký qua giao diện.
-
----
-
-## Luồng sử dụng
-
-1. **Ứng viên** → Đăng ký → Đăng nhập → Tạo portfolio (thông tin, kỹ năng, kinh nghiệm, dự án, upload CV) → Bật công khai → Chia sẻ link `portfolio/{slug}`
-2. **Nhà tuyển dụng** → Đăng ký doanh nghiệp → Chờ Admin duyệt → Đăng nhập → Tìm kiếm ứng viên → Gửi lời mời tuyển dụng → AI Ranking
-3. **Khách vãng lai** → Trang chủ → Tìm kiếm ứng viên công khai (không cần đăng nhập) → Xem portfolio
-4. **Admin** → Đăng nhập → Dashboard tổng quan → Duyệt doanh nghiệp → Quản lý ứng viên / khóa tài khoản
-
----
-
-## Tính năng nổi bật
-
-### Trang chủ (Public)
-- Hero section với search bar tìm kiếm ứng viên không cần đăng nhập
-- Số liệu thống kê thực từ database (tổng ứng viên, lượt xem, lời mời)
-- Hiển thị ứng viên nổi bật theo lượt xem
-- Hướng dẫn "Cách hoạt động" với SVG icon đơn sắc
-
-### Tìm kiếm (Public — `/search`)
-- Full-text search: tìm trong `full_name`, `headline`, `bio` **và skill names**
-- Quick tags lọc nhanh theo kỹ năng phổ biến
-- Không yêu cầu đăng nhập
-
-### CV
-- **Xem CV** (dashboard ứng viên): mở inline trong browser tab (`Content-Disposition: inline`)
-- **Tải CV** (trang portfolio công khai): buộc tải xuống (`Content-Disposition: attachment`)
-- Hỗ trợ Cloudinary URL và file lưu local
-
-### AI Ranking (Nhà tuyển dụng)
-- Đánh giá và xếp hạng ứng viên theo tiêu chí tùy chỉnh
-- Lưu lịch sử ranking, so sánh ứng viên
-
----
-
-## Database Migration (Alembic)
-
-Migration tự động chạy khi khởi động server.
-
-Khi thay đổi model:
+Dành cho nhà phát triển khi cần thay đổi cấu trúc bảng:
 
 ```bash
 cd backend
 
-# Tạo migration file
-python3 -m alembic revision --autogenerate -m "mô tả thay đổi"
+# 1. Tạo file migration mới khi có thay đổi model
+python3 -m alembic revision --autogenerate -m "Mô tả thay đổi"
 
-# Áp dụng vào database
+# 2. Cập nhật thay đổi vào database
 python3 -m alembic upgrade head
 ```
-
-Các lệnh hữu ích:
-
-```bash
-python3 -m alembic current       # Revision hiện tại
-python3 -m alembic history       # Lịch sử migration
-python3 -m alembic downgrade -1  # Rollback 1 bước
-python3 -m alembic check         # Kiểm tra model chưa migrate
-```
+> **Các lệnh hữu ích khác:** `alembic current` (xem bản hiện tại), `alembic history` (lịch sử), `alembic downgrade -1` (hoàn tác 1 bước).
 
 ---
 
-## Cấu trúc dự án
+## 🗺 Cấu trúc thư mục
 
 ```text
 portfolio-cv-hub/
-├── docker-compose.yml
-├── .env.example                  # Template biến môi trường
+├── 🐳 docker-compose.yml     # Khởi tạo toàn bộ services (DB, Backend, Frontend)
+├── 🔐 .env.example           # File mẫu chứa các biến môi trường cấu hình
 │
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── auth.py           # Đăng ký / đăng nhập
-│   │   │   ├── candidate.py      # CRUD profile, CV upload/view/download
-│   │   │   ├── recruiter.py      # Tìm kiếm, lời mời, AI ranking
-│   │   │   ├── admin.py          # Quản lý users, doanh nghiệp
-│   │   │   └── public.py         # Stats & featured candidates (no auth)
-│   │   ├── core/                 # JWT, password hashing, config
-│   │   ├── db/                   # SQLAlchemy engine & session
-│   │   ├── models/               # ORM models
-│   │   ├── repositories/         # Data access layer
-│   │   ├── schemas/              # Pydantic schemas
-│   │   ├── services/             # Business logic
-│   │   └── main.py               # Entry point + auto-migrate
-│   ├── alembic/
-│   └── requirements.txt
+├── ⚙️ backend/               # 🐍 FastAPI Backend (Python)
+│   ├── alembic/              # Quản lý Database Migrations (lịch sử cấu trúc bảng)
+│   ├── app/                  # Chứa toàn bộ source code của Backend
+│   │   ├── api/              # Định nghĩa các Endpoints (auth, candidate, recruiter...)
+│   │   ├── core/             # Cấu hình chung (Config, Security, JWT)
+│   │   ├── db/               # Kết nối Database và file Seed (dữ liệu mẫu)
+│   │   ├── models/           # Định nghĩa các Database Models (SQLAlchemy ORM)
+│   │   ├── repositories/     # Tầng xử lý truy vấn cơ sở dữ liệu (Data Access Layer)
+│   │   ├── schemas/          # Xác thực dữ liệu đầu vào/ra (Pydantic Models)
+│   │   ├── services/         # Xử lý Logic nghiệp vụ chính (Business Logic)
+│   │   └── main.py           # Entry point khởi chạy ứng dụng FastAPI
+│   ├── tests/                # Unit Tests & Integration Tests (Pytest)
+│   ├── Dockerfile            # Kịch bản build Docker image cho backend
+│   └── requirements.txt      # Khai báo các thư viện Python cần thiết
 │
-└── frontend/
-    └── src/
-        ├── app/
-        │   ├── page.tsx          # Trang chủ (hero, stats, featured)
-        │   ├── search/           # Trang tìm kiếm công khai
-        │   ├── portfolio/        # Public portfolio view ([slug])
-        │   ├── (dashboard)/      # Candidate dashboard
-        │   ├── recruiter/        # Recruiter pages
-        │   ├── admin/            # Admin pages
-        │   ├── login/
-        │   └── register/
-        ├── components/
-        │   ├── dashboard/        # CV, Skills, Experiences, Projects managers
-        │   ├── layout/           # Navbar (ẩn tự động theo route)
-        │   └── recruiter/        # Search, invitations, ranking
-        ├── hooks/                # AuthContext, ProfileContext
-        ├── services/api.ts       # Axios client + tất cả API methods
-        └── types/                # TypeScript interfaces
+└── 🎨 frontend/              # ⚛️ Next.js 14 Frontend (React + TypeScript)
+    ├── src/                  # Chứa toàn bộ source code của Frontend
+    │   ├── app/              # Cấu trúc Routing của Next.js (App Router)
+    │   │   ├── (dashboard)/  # Layout dùng chung cho các khu vực quản trị
+    │   │   ├── admin/        # Giao diện dành riêng cho Admin
+    │   │   ├── auth/         # Giao diện Xác thực (Đăng nhập, Đăng ký)
+    │   │   ├── portfolio/    # Giao diện trang Profile công khai của Ứng viên
+    │   │   ├── recruiter/    # Giao diện làm việc của Nhà Tuyển Dụng
+    │   │   └── search/       # Giao diện tìm kiếm ứng viên công khai
+    │   ├── components/       # Các React UI Component tái sử dụng (Button, Form, Table...)
+    │   ├── config/           # File cấu hình ứng dụng (i18n, constants)
+    │   ├── hooks/            # Custom Hooks & Context API (xử lý Global State, Auth)
+    │   ├── locales/          # File đa ngôn ngữ (en.json, vi.json)
+    │   ├── providers/        # Context Providers bao bọc toàn ứng dụng
+    │   ├── services/         # Hàm kết nối, gửi requests tới Backend API
+    │   └── types/            # Khai báo các TypeScript Interfaces/Types
+    ├── Dockerfile            # Kịch bản build Docker image cho frontend
+    ├── package.json          # Quản lý thư viện NPM và các Scripts
+    └── tailwind.config.js    # Cấu hình CSS/Thiết kế hệ thống cho Tailwind
 ```
 
 ---
 
-## API Endpoints
-
-| Module | Prefix | Chức năng |
-|--------|--------|-----------|
-| Auth | `/api/auth` | Đăng ký, đăng nhập, recruiter register |
-| Candidate | `/api/candidate` | Profile CRUD, skills, experiences, projects, CV view/download |
-| Recruiter | `/api/recruiter` | Tìm kiếm ứng viên (full-text + skill), lời mời, AI ranking |
-| Admin | `/api/admin` | Stats, quản lý users, duyệt doanh nghiệp |
-| Public | `/api/public` | Stats trang chủ, danh sách ứng viên nổi bật (no auth) |
-
-Chi tiết đầy đủ tại **http://localhost:8000/docs** (Swagger UI).
+<div align="center">
+  <b>Cảm ơn bạn đã ghé thăm và quan tâm đến dự án!</b> <br/>
+  <i>Mọi đóng góp, báo lỗi (issue) hoặc ý kiến phản hồi đều được chúng tôi trân trọng đón nhận. ❤️</i>
+</div>

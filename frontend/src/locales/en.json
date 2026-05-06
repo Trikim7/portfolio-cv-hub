@@ -80,7 +80,16 @@
     "recruiterRegisterTitle": "Register as Recruiter",
     "orRegisterWith": "Or register with",
     "orContinueWith": "Or continue with",
-    "loginWithProvider": "Login with {{provider}}"
+    "loginWithProvider": "Login with {{provider}}",
+    "platformSubtitle": "A platform connecting candidates and recruiters",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "registerCandidate": "Register as candidate",
+    "registerCompany": "Register as company",
+    "recruiterPrompt": "Are you a recruiter?",
+    "registerNowSimple": "Register now"
   },
   "scoring": {
     "technicalSkills": "Technical",

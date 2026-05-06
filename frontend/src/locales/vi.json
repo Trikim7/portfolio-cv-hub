@@ -89,7 +89,16 @@
     "recruiterRegisterTitle": "Đăng ký doanh nghiệp tuyển dụng",
     "orRegisterWith": "Hoặc đăng ký với",
     "orContinueWith": "Hoặc tiếp tục với",
-    "loginWithProvider": "Đăng nhập với {{provider}}"
+    "loginWithProvider": "Đăng nhập với {{provider}}",
+    "platformSubtitle": "Nền tảng kết nối ứng viên và nhà tuyển dụng",
+    "showPassword": "Hiện",
+    "hidePassword": "Ẩn",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "registerCandidate": "Đăng ký ứng viên",
+    "registerCompany": "Đăng ký doanh nghiệp",
+    "recruiterPrompt": "Là nhà tuyển dụng?",
+    "registerNowSimple": "Đăng ký ngay"
   },
   "scoring": {
     "technicalSkills": "Kỹ thuật",

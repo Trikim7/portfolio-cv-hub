@@ -9,8 +9,14 @@ import RecruiterRegisterForm from '@/components/auth/RecruiterRegisterForm'
 export default function RegisterPage() {
   const { t } = useTranslation()
   const [role, setRole] = useState<'candidate' | 'recruiter' | null>(null)
+  const roleFromQuery =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('role')
+      : null
+  const effectiveRole =
+    role ?? (roleFromQuery === 'candidate' || roleFromQuery === 'recruiter' ? roleFromQuery : null)
 
-  if (role === null) {
+  if (effectiveRole === null) {
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white">
@@ -95,14 +101,14 @@ export default function RegisterPage() {
           </div>
           <p className="text-white/80 text-xs font-medium uppercase tracking-wider">{t('auth.registerTitle')}</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold">
-            {role === 'candidate' ? t('register.candidate') : t('register.company')}
+            {effectiveRole === 'candidate' ? t('register.candidate') : t('register.company')}
           </h1>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          {role === 'candidate' ? <RegisterForm /> : <RecruiterRegisterForm />}
+          {effectiveRole === 'candidate' ? <RegisterForm /> : <RecruiterRegisterForm />}
         </div>
       </div>
     </div>

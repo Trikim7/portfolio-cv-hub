@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,19 +11,7 @@ export default function LoginPage() {
   const { login, loading, error } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [oauthError, setOauthError] = useState<{ error: string; provider: string } | null>(null)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const err = params.get('error')
-    if (!err) return
-    setOauthError({ error: err, provider: params.get('provider') || '' })
-    const url = new URL(window.location.href)
-    url.searchParams.delete('error')
-    url.searchParams.delete('provider')
-    window.history.replaceState(null, '', url.pathname + url.search)
-  }, [])
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,80 +19,95 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="bg-slate-50 py-8 sm:py-10">
-      {/* Navigation: Navbar is in app/layout.tsx — do not add second header */}
-      <div className="flex flex-col items-center px-4 sm:px-6">
-        <div className="w-full max-w-md">
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1 tracking-tight">
-              {t('auth.loginPageTitle')}
-            </h1>
-            <p className="text-sm text-gray-600 mt-2">
-              {t('auth.loginPageSubtitle')}
-            </p>
-          </div>
-          {oauthError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
-              <strong className="block mb-1">
-                {t('auth.oauthLoginFailed', { provider: oauthError.provider || t('auth.viaOAuth') })}
-              </strong>
-              <span className="break-words">{oauthError.error}</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo / Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Portfolio CV Hub</h1>
+          <p className="text-blue-300 mt-2 text-sm">{t('auth.platformSubtitle')}</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-slate-900/55 backdrop-blur-xl border border-blue-200/20 rounded-2xl p-8 shadow-2xl">
+          <h2 className="text-xl font-semibold text-white mb-6">{t('auth.loginTitle')}</h2>
+
+          {error && (
+            <div className="mb-5 p-3 bg-red-500/20 border border-red-400/40 text-red-300 rounded-lg text-sm">
+              {error}
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            {error && (
-              <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-                {error}
-              </div>
-            )}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-blue-100 mb-1.5">
+                {t('auth.email')}
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full px-4 py-2.5 bg-slate-950/40 border border-blue-100/25 text-white placeholder-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-200/60 transition"
+                placeholder={t('auth.emailPlaceholder')}
+              />
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.email')}</label>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-blue-100 mb-1.5">
+                {t('auth.password')}
+              </label>
+              <div className="relative">
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoFocus
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  placeholder="your@email.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.password')}</label>
-                <input
-                  type="password"
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="w-full px-4 py-2.5 bg-slate-950/40 border border-blue-100/25 text-white placeholder-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-200/60 transition pr-12"
+                  placeholder={t('auth.passwordPlaceholder')}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-100 hover:text-white transition text-sm select-none"
+                >
+                  {showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                </button>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-60 transition shadow-sm"
-              >
-                {loading ? t('auth.loggingIn') : t('auth.doLogin')}
-              </button>
-            </form>
+            {/* Submit */}
+            <button
+              id="login-submit"
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-900 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 mt-2"
+            >
+              {loading ? t('auth.loggingIn') : t('auth.loginTitle')}
+            </button>
+          </form>
 
-            <SocialLoginButtons disabled={loading} />
+          <SocialLoginButtons label={t('auth.orContinueWith')} disabled={loading} variant="dark" />
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+          {/* Register links */}
+          <div className="mt-4 text-center text-sm">
+            <p className="text-blue-100">
               {t('auth.noAccountYet')}{' '}
-              <Link href="/register" className="text-blue-600 font-semibold hover:underline">
-                {t('auth.registerNow')}
+              <Link href="/register?role=candidate" className="text-sky-300 hover:text-white font-semibold transition-colors">
+                {t('auth.registerNowSimple')}
               </Link>
             </p>
           </div>
-
         </div>
+
+        <p className="text-center text-blue-400/50 text-xs mt-6">
+          {t('auth.loginPageSubtitle')}
+        </p>
       </div>
     </div>
   )
