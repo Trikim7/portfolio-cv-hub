@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
 import { Home, Search, X } from 'lucide-react'
-import LanguageToggle from '@/components/layout/LanguageToggle'
 import { useI18nText } from '@/hooks/useI18nText'
 import { I18nText } from '@/types'
 
@@ -107,7 +106,6 @@ function SearchPageInner() {
               <Home className="w-4 h-4" />
               <span className="sr-only">{t('common.home')}</span>
             </Link>
-            <LanguageToggle variant="light" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold">{t('searchPage.title')}</h1>
           <p className="mt-2 text-blue-200 text-sm">{t('searchPage.subtitle')}</p>
