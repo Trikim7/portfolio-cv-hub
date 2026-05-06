@@ -5,13 +5,15 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/services/api'
-import { ChevronLeft, Search, X } from 'lucide-react'
+import { Home, Search, X } from 'lucide-react'
 import LanguageToggle from '@/components/layout/LanguageToggle'
+import { useI18nText } from '@/hooks/useI18nText'
+import { I18nText } from '@/types'
 
 interface CandidateCard {
   id: number
   full_name?: string
-  headline?: string
+  headline?: I18nText
   public_slug?: string
   avatar_url?: string
   skills: string[]
@@ -34,6 +36,7 @@ function initials(name: string) {
 function SearchPageInner() {
   const router = useRouter()
   const { t } = useTranslation()
+  const resolveText = useI18nText()
   const searchParams = useSearchParams()
 
   const [query, setQuery] = useState(
@@ -96,9 +99,13 @@ function SearchPageInner() {
       <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white py-12 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="inline-flex items-center gap-2 text-blue-200 hover:text-white text-sm transition">
-              <ChevronLeft className="w-4 h-4" />
-              {t('common.home')}
+            <Link
+              href="/"
+              aria-label={t('common.home')}
+              className="inline-flex items-center gap-2 text-blue-200 hover:text-white text-sm transition"
+            >
+              <Home className="w-4 h-4" />
+              <span className="sr-only">{t('common.home')}</span>
             </Link>
             <LanguageToggle variant="light" />
           </div>
@@ -179,6 +186,7 @@ function SearchPageInner() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {candidates.map((c, idx) => {
                 const name = c.full_name || t('searchPage.candidate')
+                const headline = c.headline ? resolveText(c.headline) : ''
                 const slugLink = c.public_slug ? `/portfolio/${c.public_slug}` : null
                 const avatarBg = AVATAR_COLORS[idx % AVATAR_COLORS.length]
                 const card = (
@@ -192,7 +200,7 @@ function SearchPageInner() {
                       </div>
                     )}
                     <h3 className="font-bold text-gray-900 text-base leading-tight">{name}</h3>
-                    {c.headline && <p className="text-sm text-gray-500 mt-0.5">{c.headline}</p>}
+                    {headline && <p className="text-sm text-gray-500 mt-0.5">{headline}</p>}
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {c.skills.slice(0, 4).map(s => (
                         <span key={s} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">{s}</span>
