@@ -914,9 +914,13 @@ def run_seed() -> None:
 
     db: Session = SessionLocal()
     try:
-        # Kiểm tra nếu DB đã có dữ liệu
-        if db.query(User).count() > 0:
-            print("⚠️   Database already has data. Skipping seed to avoid duplicates.")
+        # Bỏ qua chỉ khi bộ Phase-2 đã nạp (1 admin + 5 DN + 95 UV ≈ 101 user), không tính 3 TK demo
+        phase2_user_count = db.query(User).count()
+        if phase2_user_count >= 50:
+            print(
+                f"⚠️   Database already has Phase-2 data ({phase2_user_count} users). "
+                "Skipping seed to avoid duplicates."
+            )
             print("    Nếu muốn seed lại, hãy xoá dữ liệu cũ: TRUNCATE ... CASCADE;")
             return
 

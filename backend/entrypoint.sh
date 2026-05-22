@@ -24,20 +24,20 @@ alembic upgrade head
 echo "✅  Migrations hoàn tất."
 
 # ---------------------------------------------------------------------------
-# 2. Tài khoản demo (admin, doanh nghiệp, ứng viên) — luôn chạy, idempotent
+# 2. Seed dữ liệu Phase 2 (chạy trước — bỏ qua nếu đã có >3 user / full dataset)
 # ---------------------------------------------------------------------------
 echo ""
-echo "▶  [2/4] Tạo tài khoản demo (admin / doanh nghiệp / ứng viên)..."
-python -m app.db.default_accounts
-echo "✅  Tài khoản demo sẵn sàng."
-
-# ---------------------------------------------------------------------------
-# 3. Seed dữ liệu Phase 2 (tùy chọn — bỏ qua nếu DB đã có user)
-# ---------------------------------------------------------------------------
-echo ""
-echo "▶  [3/4] Seed dữ liệu mở rộng (nếu DB trống)..."
+echo "▶  [2/4] Seed dữ liệu mở rộng (95 ứng viên, 5 DN, ...)..."
 python -m app.db.seed
 echo "✅  Bước seed hoàn tất."
+
+# ---------------------------------------------------------------------------
+# 3. Tài khoản demo (admin, doanh nghiệp, ứng viên) — luôn chạy, idempotent
+# ---------------------------------------------------------------------------
+echo ""
+echo "▶  [3/4] Tạo tài khoản demo (admin / doanh nghiệp / ứng viên)..."
+python -m app.db.default_accounts
+echo "✅  Tài khoản demo sẵn sàng."
 
 # ---------------------------------------------------------------------------
 # 3. Khởi động FastAPI server
