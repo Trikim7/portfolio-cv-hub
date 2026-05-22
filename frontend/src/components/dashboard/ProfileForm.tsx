@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProfileContext } from '@/hooks/ProfileContext'
-import { CandidateProfile, I18nText } from '@/types'
+import { useI18nText, patchLocalizedField } from '@/hooks/useI18nText'
+import { CandidateProfile } from '@/types'
 import { Toast, useToast } from '@/components/Toast'
 
 const tryParseJsonObject = (raw: string): unknown => {
@@ -49,16 +50,9 @@ const unwrapI18nLikeString = (input: string): string => {
   return typeof current === 'string' ? current : ''
 }
 
-const i18nToText = (value: I18nText): string => {
-  if (!value) return ''
-  if (typeof value === 'string') return unwrapI18nLikeString(value)
-  if (typeof value !== 'object' || Array.isArray(value)) return ''
-  const picked = value.vi || value.en || Object.values(value)[0] || ''
-  return typeof picked === 'string' ? unwrapI18nLikeString(picked) : ''
-}
-
 export default function ProfileForm() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const resolveText = useI18nText()
   const { profile, updateProfile, togglePublicProfile, loading } = useProfileContext()
   const [fullName, setFullName] = useState('')
   const [headline, setHeadline] = useState('')
@@ -74,9 +68,12 @@ export default function ProfileForm() {
 
   useEffect(() => {
     if (profile) {
-      const fullNameText = i18nToText(profile.full_name as I18nText)
-      const headlineText = i18nToText(profile.headline as I18nText)
-      const bioText = i18nToText(profile.bio)
+      const fullNameText =
+        typeof profile.full_name === 'string'
+          ? profile.full_name
+          : resolveText(profile.full_name)
+      const headlineText = resolveText(profile.headline)
+      const bioText = resolveText(profile.bio)
       setFullName(fullNameText)
       setHeadline(headlineText)
       setBio(bioText)
@@ -89,7 +86,7 @@ export default function ProfileForm() {
         })
       }
     }
-  }, [profile])
+  }, [profile, i18n.language, resolveText])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,8 +101,8 @@ export default function ProfileForm() {
     try {
       const data: Partial<CandidateProfile> = {
         full_name: normalizedFullName,
-        headline: normalizedHeadline,
-        bio: normalizedBio ? { vi: normalizedBio } : undefined,
+        headline: patchLocalizedField(profile?.headline, i18n.language, normalizedHeadline),
+        bio: patchLocalizedField(profile?.bio, i18n.language, normalizedBio),
       }
       await updateProfile(data)
       setFullName(normalizedFullName)

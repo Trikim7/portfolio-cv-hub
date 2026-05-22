@@ -114,6 +114,9 @@ export default function CandidatePortfolioPreviewPage() {
   }
 
   const primaryCv = profile.cvs.find((cv) => cv.is_primary) || profile.cvs[0]
+  const fullName = resolveText(profile.full_name) || t('portfolio.updateName')
+  const headline = resolveText(profile.headline) || t('portfolio.updatePosition')
+  const avatarAlt = resolveText(profile.full_name) || 'Avatar'
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
@@ -163,22 +166,22 @@ export default function CandidatePortfolioPreviewPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
-                  alt={profile.full_name || 'Avatar'}
+                  alt={avatarAlt}
                   className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg"
                 />
               ) : (
                 <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-4xl md:text-5xl font-bold shadow-lg ring-2 ring-white/30">
-                  {getInitials(profile.full_name || user?.email || 'N')}
+                  {getInitials(resolveText(profile.full_name) || user?.email || 'N')}
                 </div>
               )}
             </div>
 
             <div className="flex-1 min-w-0 text-center md:text-left">
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                {profile.full_name || t('portfolio.updateName')}
+                {fullName}
               </h1>
               <p className="mt-2 text-lg md:text-xl text-white/85 font-medium">
-                {profile.headline || t('portfolio.updatePosition')}
+                {headline}
               </p>
 
               <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-x-5 gap-y-2 text-sm text-white/80">

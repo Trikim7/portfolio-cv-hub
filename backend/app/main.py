@@ -13,46 +13,10 @@ _alembic_cfg = Config("alembic.ini")
 command.upgrade(_alembic_cfg, "head")
 
 
-# ─── Auto-seed default admin account ──────────────────────────
-def _seed_admin():
-    """Create admin account on first launch if it doesn't exist yet."""
-    from app.db.database import SessionLocal
-    from app.models.user import User, UserRole, UserStatus
-    from app.core.security import get_password_hash
+# ─── Auto-seed default demo accounts (admin, recruiter, candidate) ─────────
+from app.db.default_accounts import seed_default_accounts
 
-    ADMIN_EMAIL = "admin@portfoliocvhub.com"
-    ADMIN_PASSWORD = "admin123"
-
-    db = SessionLocal()
-    try:
-        existing = db.query(User).filter(User.email == ADMIN_EMAIL).first()
-        if not existing:
-            admin_user = User(
-                email=ADMIN_EMAIL,
-                password_hash=get_password_hash(ADMIN_PASSWORD),
-                full_name="System Administrator",
-                role=UserRole.ADMIN,
-                status=UserStatus.ACTIVE,
-            )
-            db.add(admin_user)
-            db.commit()
-            print(f"Default admin created: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
-        else:
-            changed = False
-            if existing.role != UserRole.ADMIN:
-                existing.role = UserRole.ADMIN
-                changed = True
-            if existing.status != UserStatus.ACTIVE:
-                existing.status = UserStatus.ACTIVE
-                changed = True
-            if changed:
-                db.commit()
-            print(f"Admin account ready: {ADMIN_EMAIL}")
-    finally:
-        db.close()
-
-
-_seed_admin()
+seed_default_accounts()
 
 
 def _load_smtp_config_from_db():

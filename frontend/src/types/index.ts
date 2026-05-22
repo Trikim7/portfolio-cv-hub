@@ -69,8 +69,8 @@ export interface CV {
 export interface CandidateProfile {
   id: number
   user_id: number
-  full_name?: string
-  headline?: string
+  full_name?: string | I18nText
+  headline?: I18nText
   bio?: I18nText
   public_slug?: string
   template_id?: number | null

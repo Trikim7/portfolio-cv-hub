@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { I18nText } from '@/types'
 
@@ -57,28 +58,64 @@ const unwrapI18nString = (value: string): string => {
  * 2. Fallback sang ngôn ngữ khác nếu không có
  * 3. Nếu là string thuần (legacy), trả về nguyên bản
  */
+/** Map i18next language code to backend JSONB keys. */
+export function normalizeLocale(lang: string | undefined): 'vi' | 'en' {
+  const code = (lang || 'vi').toLowerCase()
+  return code.startsWith('en') ? 'en' : 'vi'
+}
+
+/** Normalize legacy string or JSONB object to a mutable locale map. */
+export function toLocalizedRecord(value: I18nText): Record<string, string> {
+  if (!value) return {}
+  if (typeof value === 'string') {
+    const text = unwrapI18nString(value)
+    return text ? { vi: text } : {}
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const out: Record<string, string> = {}
+    for (const [key, raw] of Object.entries(value)) {
+      if (typeof raw === 'string' && raw.trim()) out[key] = unwrapI18nString(raw)
+    }
+    return out
+  }
+  return {}
+}
+
+/** Update one locale in an i18n field without dropping the other language. */
+export function patchLocalizedField(
+  existing: I18nText,
+  lang: string | undefined,
+  text: string,
+): I18nText {
+  const trimmed = text.trim()
+  if (!trimmed) return undefined
+  const locale = normalizeLocale(lang)
+  const next = { ...toLocalizedRecord(existing), [locale]: trimmed }
+  return next
+}
+
 export function useI18nText() {
   const { i18n } = useTranslation()
 
-  const resolveText = (value: I18nText): string => {
-    if (!value) return ''
-    if (typeof value === 'string') return unwrapI18nString(value)
+  const resolveText = useCallback(
+    (value: I18nText): string => {
+      if (!value) return ''
+      if (typeof value === 'string') return unwrapI18nString(value)
 
-    const lang = i18n.language || 'vi'
+      const lang = normalizeLocale(i18n.language)
 
-    // Thử ngôn ngữ hiện tại trước
-    if (value[lang]) return unwrapI18nString(value[lang])
+      if (value[lang]) return unwrapI18nString(value[lang])
 
-    // Fallback: vi → en → bất kỳ key nào có giá trị
-    const fallbackOrder = lang === 'vi' ? ['vi', 'en'] : ['en', 'vi']
-    for (const fb of fallbackOrder) {
-      if (value[fb]) return unwrapI18nString(value[fb])
-    }
+      const fallbackOrder: Array<'vi' | 'en'> = lang === 'vi' ? ['vi', 'en'] : ['en', 'vi']
+      for (const fb of fallbackOrder) {
+        if (value[fb]) return unwrapI18nString(value[fb])
+      }
 
-    // Cuối cùng lấy value đầu tiên có nội dung
-    const first = Object.values(value).find(v => typeof v === 'string' && v) || ''
-    return typeof first === 'string' ? unwrapI18nString(first) : ''
-  }
+      const first = Object.values(value).find((v) => typeof v === 'string' && v) || ''
+      return typeof first === 'string' ? unwrapI18nString(first) : ''
+    },
+    [i18n.language],
+  )
 
   return resolveText
 }

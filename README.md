@@ -99,45 +99,101 @@ Hệ thống phục vụ 3 nhóm người dùng chính:
 <a id="huong-dan-cai-dat"></a>
 ## 🚀 Hướng dẫn cài đặt
 
-### 🐳 Cách 1: Chạy bằng Docker (Khuyên dùng)
+### Yêu cầu
 
-Cách nhanh nhất để khởi chạy toàn bộ hệ thống mà không cần lo lắng về môi trường.
+| Công cụ | Phiên bản gợi ý |
+| :--- | :--- |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Đang chạy (bật engine) |
+| Git | Clone được repository |
 
-1. **Chuẩn bị biến môi trường:**
-   ```bash
-   cp .env.example .env
-   ```
-   > 💡 *Nhớ cập nhật các thông tin cấu hình cần thiết (DB, JWT, OAuth, Cloudinary) bên trong file `.env`.*
+> Với hướng dẫn chấm bài / demo, **chỉ cần Docker**. Script tự tạo file `.env`, build container, migrate database và **tài khoản demo** (Admin, Doanh nghiệp, Ứng viên).
 
-2. **Build và khởi động:**
-   ```bash
-   docker compose up --build
-   ```
+---
 
-3. **Truy cập ứng dụng:**
-   - 🌐 **Frontend:** [http://localhost:3000](http://localhost:3000)
-   - ⚡ **Backend API:** [http://localhost:8000](http://localhost:8000)
-   - 📖 **Tài liệu API (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+### ⚡ Cài đặt nhanh bằng script
 
-*Để dừng hệ thống: `docker compose down` | Reset toàn bộ Database: `docker compose down -v`*
+Từ thư mục gốc dự án (sau khi `git clone`):
+
+```bash
+chmod +x scripts/install.sh scripts/stop.sh
+./scripts/install.sh
+```
+
+Script sẽ:
+
+1. Kiểm tra Docker / Compose  
+2. Sao chép `.env.example` → `.env` (nếu chưa có)  
+3. Chạy `docker compose up --build -d`  
+4. Chờ Backend (`:8000`) và Frontend (`:3000`) sẵn sàng  
+5. In ra URL và **email / mật khẩu** các tài khoản test  
+
+**Dừng ứng dụng:**
+
+```bash
+./scripts/stop.sh
+```
+
+**Cài lại từ đầu (xóa dữ liệu DB):**
+
+```bash
+docker compose down -v
+./scripts/install.sh
+```
+
+---
+
+### 🔐 Tài khoản demo (đăng nhập test)
+
+Các tài khoản được tạo **tự động** lần đầu khởi động Backend (idempotent — chạy lại không bị trùng).
+
+| Vai trò | Email | Mật khẩu | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **Quản trị (Admin)** | `admin@portfoliocvhub.com` | `admin123` | Dashboard admin, kiểm duyệt doanh nghiệp |
+| **Doanh nghiệp (Nhà tuyển dụng)** | `recruiter@portfoliocvhub.com` | `recruiter123` | Công ty mẫu đã **phê duyệt** sẵn |
+| **Ứng viên** | `candidate@portfoliocvhub.com` | `candidate123` | Có portfolio công khai |
+
+- Đăng nhập: [http://localhost:3000/login](http://localhost:3000/login)  
+- Portfolio ứng viên mẫu (không cần đăng nhập): [http://localhost:3000/portfolio/tran-thi-ung-vien](http://localhost:3000/portfolio/tran-thi-ung-vien)
+
+---
+
+### 🌐 Địa chỉ sau khi cài đặt
+
+| Dịch vụ | URL |
+| :--- | :--- |
+| Frontend | [http://localhost:3000](http://localhost:3000) |
+| Backend API | [http://localhost:8000](http://localhost:8000) |
+| Swagger | [http://localhost:8000/docs](http://localhost:8000/docs) |
+
+---
+
+### 🐳 Cách thủ công (tương đương script)
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+```
+
+Xem log: `docker compose logs -f`
 
 <details>
-<summary><h3>💻 Cách 2: Chạy thủ công (Dành cho Development)</h3></summary>
+<summary><h3>💻 Chạy local không Docker (Development)</h3></summary>
 
-**Khởi chạy Backend:**
+Cần PostgreSQL chạy sẵn và `DATABASE_URL` trong `.env`.
+
+**Backend:**
+
 ```bash
 cd backend
 python3 -m venv .venv
-
-# Kích hoạt môi trường ảo:
-source .venv/bin/activate       # Trên macOS/Linux
-# .venv\Scripts\Activate.ps1    # Trên Windows PowerShell
-
+source .venv/bin/activate
 pip install -r requirements.txt
+python -m app.db.default_accounts
 python -m uvicorn app.main:app --reload
 ```
 
-**Khởi chạy Frontend (Mở Terminal mới):**
+**Frontend (terminal khác):**
+
 ```bash
 cd frontend
 cp .env.example .env.local
@@ -195,13 +251,16 @@ python3 -m alembic upgrade head
 portfolio-cv-hub/
 ├── 🐳 docker-compose.yml     # Khởi tạo toàn bộ services (DB, Backend, Frontend)
 ├── 🔐 .env.example           # File mẫu chứa các biến môi trường cấu hình
+├── 📜 scripts/
+│   ├── install.sh            # Script cài đặt một lệnh (Docker)
+│   └── stop.sh               # Dừng stack Docker
 │
 ├── ⚙️ backend/               # 🐍 FastAPI Backend (Python)
 │   ├── alembic/              # Quản lý Database Migrations (lịch sử cấu trúc bảng)
 │   ├── app/                  # Chứa toàn bộ source code của Backend
 │   │   ├── api/              # Định nghĩa các Endpoints (auth, candidate, recruiter...)
 │   │   ├── core/             # Cấu hình chung (Config, Security, JWT)
-│   │   ├── db/               # Kết nối Database và file Seed (dữ liệu mẫu)
+│   │   ├── db/               # Kết nối DB, seed, default_accounts (tài khoản demo)
 │   │   ├── models/           # Định nghĩa các Database Models (SQLAlchemy ORM)
 │   │   ├── repositories/     # Tầng xử lý truy vấn cơ sở dữ liệu (Data Access Layer)
 │   │   ├── schemas/          # Xác thực dữ liệu đầu vào/ra (Pydantic Models)

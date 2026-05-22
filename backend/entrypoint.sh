@@ -19,23 +19,31 @@ echo "========================================"
 # 1. Alembic migrations
 # ---------------------------------------------------------------------------
 echo ""
-echo "▶  [1/3] Chạy database migrations..."
+echo "▶  [1/4] Chạy database migrations..."
 alembic upgrade head
 echo "✅  Migrations hoàn tất."
 
 # ---------------------------------------------------------------------------
-# 2. Seed dữ liệu mẫu
+# 2. Tài khoản demo (admin, doanh nghiệp, ứng viên) — luôn chạy, idempotent
 # ---------------------------------------------------------------------------
 echo ""
-echo "▶  [2/3] Chạy seed dữ liệu mẫu..."
+echo "▶  [2/4] Tạo tài khoản demo (admin / doanh nghiệp / ứng viên)..."
+python -m app.db.default_accounts
+echo "✅  Tài khoản demo sẵn sàng."
+
+# ---------------------------------------------------------------------------
+# 3. Seed dữ liệu Phase 2 (tùy chọn — bỏ qua nếu DB đã có user)
+# ---------------------------------------------------------------------------
+echo ""
+echo "▶  [3/4] Seed dữ liệu mở rộng (nếu DB trống)..."
 python -m app.db.seed
-echo "✅  Seed hoàn tất."
+echo "✅  Bước seed hoàn tất."
 
 # ---------------------------------------------------------------------------
 # 3. Khởi động FastAPI server
 # ---------------------------------------------------------------------------
 echo ""
-echo "▶  [3/3] Khởi động Uvicorn server..."
+echo "▶  [4/4] Khởi động Uvicorn server..."
 echo "========================================"
 
 exec uvicorn app.main:app \
