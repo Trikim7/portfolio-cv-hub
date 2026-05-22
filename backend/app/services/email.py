@@ -264,9 +264,9 @@ class EmailService:
           Email này được gửi tự động, vui lòng không trả lời trực tiếp.
         </p>
         """
-        html = cls._base_html("Lời mời tuyển dụng mới", body)
+        html_body = cls._base_html("Lời mời tuyển dụng mới", body)
         plain = f"Xin chào {candidate_name},\n\n{company_name} mời bạn ứng tuyển vị trí: {job_title}\n\nTin nhắn: {message or 'Không có'}\n\nVui lòng đăng nhập vào Portfolio CV Hub để xem chi tiết."
-        cls.send_background(candidate_email, f"[Portfolio CV Hub] Lời mời từ {company_name}", html, plain)
+        cls.send_background(candidate_email, f"[Portfolio CV Hub] Lời mời từ {company_name}", html_body, plain)
 
     @classmethod
     def notify_company_approved(
@@ -287,9 +287,9 @@ class EmailService:
           Email này được gửi tự động từ hệ thống Portfolio CV Hub.
         </p>
         """
-        html = cls._base_html("Tài khoản được duyệt", body)
+        html_body = cls._base_html("Tài khoản được duyệt", body)
         plain = f"Xin chào {company_name},\n\nTài khoản doanh nghiệp của bạn đã được phê duyệt. Vui lòng đăng nhập vào Portfolio CV Hub."
-        cls.send_background(company_email, "[Portfolio CV Hub] Tài khoản doanh nghiệp đã được duyệt", html, plain)
+        cls.send_background(company_email, "[Portfolio CV Hub] Tài khoản doanh nghiệp đã được duyệt", html_body, plain)
 
     @classmethod
     def notify_company_rejected(
@@ -308,9 +308,9 @@ class EmailService:
           Vui lòng kiểm tra lại thông tin đăng ký và liên hệ quản trị viên để được hỗ trợ thêm.
         </p>
         """
-        html = cls._base_html("Tài khoản không được duyệt", body)
+        html_body = cls._base_html("Tài khoản không được duyệt", body)
         plain = f"Xin chào {company_name},\n\nTài khoản doanh nghiệp của bạn đã bị từ chối. Vui lòng liên hệ admin để biết thêm chi tiết."
-        cls.send_background(company_email, "[Portfolio CV Hub] Thông báo về đăng ký tài khoản doanh nghiệp", html, plain)
+        cls.send_background(company_email, "[Portfolio CV Hub] Thông báo về đăng ký tài khoản doanh nghiệp", html_body, plain)
 
     # ─── Test / SMTP verify ────────────────────────────────────────
     @classmethod
