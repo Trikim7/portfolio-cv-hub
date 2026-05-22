@@ -106,7 +106,6 @@ Hệ thống phục vụ 3 nhóm người dùng chính:
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Đang chạy (bật engine) |
 | Git | Clone được repository |
 
-> Với hướng dẫn chấm bài / demo, **chỉ cần Docker**. Script tự tạo file `.env`, build container, migrate database và **tài khoản demo** (Admin, Doanh nghiệp, Ứng viên).
 
 ---
 
@@ -133,6 +132,31 @@ docker compose down
 docker compose down -v
 docker compose up --build -d
 ```
+
+---
+
+### 🔐 Tài khoản demo (đăng nhập test)
+
+Các tài khoản được tạo **tự động** lần đầu khởi động Backend (idempotent — chạy lại không bị trùng).
+
+| Vai trò | Email | Mật khẩu | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **Quản trị (Admin)** | `admin@portfoliocvhub.com` | `admin123` | Dashboard admin, kiểm duyệt doanh nghiệp |
+| **Doanh nghiệp (Nhà tuyển dụng)** | `recruiter@portfoliocvhub.com` | `recruiter123` | Công ty mẫu đã **phê duyệt** sẵn |
+| **Ứng viên** | `candidate@portfoliocvhub.com` | `candidate123` | Có portfolio công khai |
+
+- Đăng nhập: [http://localhost:3000/login](http://localhost:3000/login)  
+- Portfolio ứng viên mẫu (không cần đăng nhập): [http://localhost:3000/portfolio/tran-thi-ung-vien](http://localhost:3000/portfolio/tran-thi-ung-vien)
+
+---
+
+### 🌐 Địa chỉ sau khi cài đặt
+
+| Dịch vụ | URL |
+| :--- | :--- |
+| Frontend | [http://localhost:3000](http://localhost:3000) |
+| Backend API | [http://localhost:8000](http://localhost:8000) |
+| Swagger | [http://localhost:8000/docs](http://localhost:8000/docs) |
 
 ---
 
@@ -167,29 +191,6 @@ docker compose down -v
 ```
 
 ---
-
-### 🔐 Tài khoản demo (đăng nhập test)
-
-Các tài khoản được tạo **tự động** lần đầu khởi động Backend (idempotent — chạy lại không bị trùng).
-
-| Vai trò | Email | Mật khẩu | Ghi chú |
-| :--- | :--- | :--- | :--- |
-| **Quản trị (Admin)** | `admin@portfoliocvhub.com` | `admin123` | Dashboard admin, kiểm duyệt doanh nghiệp |
-| **Doanh nghiệp (Nhà tuyển dụng)** | `recruiter@portfoliocvhub.com` | `recruiter123` | Công ty mẫu đã **phê duyệt** sẵn |
-| **Ứng viên** | `candidate@portfoliocvhub.com` | `candidate123` | Có portfolio công khai |
-
-- Đăng nhập: [http://localhost:3000/login](http://localhost:3000/login)  
-- Portfolio ứng viên mẫu (không cần đăng nhập): [http://localhost:3000/portfolio/tran-thi-ung-vien](http://localhost:3000/portfolio/tran-thi-ung-vien)
-
----
-
-### 🌐 Địa chỉ sau khi cài đặt
-
-| Dịch vụ | URL |
-| :--- | :--- |
-| Frontend | [http://localhost:3000](http://localhost:3000) |
-| Backend API | [http://localhost:8000](http://localhost:8000) |
-| Swagger | [http://localhost:8000/docs](http://localhost:8000/docs) |
 
 <details>
 <summary><h3>💻 Chạy local không Docker (Development)</h3></summary>
