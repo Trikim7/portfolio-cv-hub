@@ -110,9 +110,35 @@ Hệ thống phục vụ 3 nhóm người dùng chính:
 
 ---
 
-### ⚡ Cài đặt nhanh bằng script
+### 🐳 Chạy bằng Docker
 
 Từ thư mục gốc dự án (sau khi `git clone`):
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+```
+
+Xem log: `docker compose logs -f`
+
+**Dừng ứng dụng:**
+
+```bash
+docker compose down
+```
+
+**Cài lại từ đầu (xóa dữ liệu DB):**
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
+
+---
+
+### ⚡ Cài đặt nhanh bằng script
+
+Tương đương các bước Docker ở trên, kèm kiểm tra môi trường và chờ dịch vụ sẵn sàng:
 
 ```bash
 chmod +x scripts/install.sh scripts/stop.sh
@@ -164,17 +190,6 @@ Các tài khoản được tạo **tự động** lần đầu khởi động Ba
 | Frontend | [http://localhost:3000](http://localhost:3000) |
 | Backend API | [http://localhost:8000](http://localhost:8000) |
 | Swagger | [http://localhost:8000/docs](http://localhost:8000/docs) |
-
----
-
-### 🐳 Cách thủ công (tương đương script)
-
-```bash
-cp .env.example .env
-docker compose up --build -d
-```
-
-Xem log: `docker compose logs -f`
 
 <details>
 <summary><h3>💻 Chạy local không Docker (Development)</h3></summary>
