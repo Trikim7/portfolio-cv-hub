@@ -89,43 +89,50 @@ Job Requirements:
 
 Tính toán:
 
-1. Technical Skills Match:
-   - Khớp 3/3 skill → 6 điểm
-   - Level Senior Python > required → 1.5 điểm
-   - Tín hiệu mạnh (5 endorsements vào Python) → 2.5 điểm
-   - Result: 10 điểm
+1. Technical Skills Match (5 + 2.5 + 2.5 = 10 max):
+   - Khớp 3/3 skill → match_ratio=1.0 × 5 = 5.0 điểm
+   - Avg level depth: (SENIOR=4 + MID=3 + JUNIOR=2)/3 = 3.0 → (3/5) × 2.5 = 1.5 điểm
+   - Avg endorsements: (5+0+1)/3 = 2.0 → min(2/5, 1.0) × 2.5 = 1.0 điểm
+   - Result: 7.5 điểm
 
-2. Experience Match:
-   - Tổng năm: 5 năm >= 3 required = 6 điểm
-   - Title match: Có chữ "Backend" trong past job = 4 điểm
-   - Result: 10 điểm
+2. Experience Match (5 + 5 = 10 max):
+   - Tổng năm: 5 năm / 3 required → min(5/3, 1.0) × 5 = 5.0 điểm
+   - Title match: 1 exp có "Backend" trong job_title → min(1, 2)/2 × 5 = 2.5 điểm
+   - Result: 7.5 điểm
 
-3. Portfolio Match:
-   - Match công nghệ dự án: Python + React (2 max) = 5 điểm
-   - Dự án có live URL (có chứng cứ thực tế) = 3 điểm
-   - Description đầy đủ = 2 điểm
-   - Result: 10 điểm
+3. Portfolio Match (6 + 2 + 2 = 10 max):
+   - Match tech stack: Project có Python, React → 2/4 required tech_stack → min(2/4, 1.0) × 6 = 3.0 điểm
+   - Dự án có live URL = 2.0 điểm
+   - Description ≥ 120 ký tự = 2.0 điểm
+   - Result: 7.0 điểm
 
-4. Soft / Communication Match:
-   - Quét description thấy "communicating with clients" → 8 điểm
-   - Bio hoàn chỉnh dễ đọc → 2 điểm
-   - Result: 10 điểm
+4. Soft / Communication Match (8 + 2 = 10 max):
+   - Quét bio+exp description, đếm keyword (communicate, client, team, present...)
+   - Ví dụ: hits=4 (communicate, client, team, present) → min(4/6, 1.0) × 8 = 5.33 điểm
+   - Bio ≥ 100 ký tự → 2.0 điểm
+   - customer_facing=true nhưng score ≥ 5 nên không bị trừ
+   - Result: 7.33 điểm
 
-5. Leadership Match:
-   - Job không yêu cầu quản lý, nhưng ứng viên có "Leading team" trong mô tả và level SENIOR = 10 điểm (Bonus)
-   - Result: 10 điểm
+5. Leadership Match (6 + 2 + 2 = 10 max):
+   - Title chứa keyword Lead/Manager? Không ("Senior Backend Engineer" không match) → 0.0 điểm
+   - Skill level ≥ LEAD? Không (max=SENIOR=4, cần LEAD=5) → 0.0 điểm
+   - Description keyword hits: "Leading team" → hits=1 → min(1/3, 1.0) × 2 = 0.67 điểm
+   - Result: 0.67 điểm
+   - (Bonus: job không yêu cầu management → lead_score × 0.1 = 0.07 cộng vào soft_skills)
 
 6. Readiness & Signals (Chuẩn LinkedIn):
-   - Đang active (Updated 2 ngày trước) = 5 điểm
-   - Tương tác cao (150 views) = 3 điểm
-   - Profile hoàn thiện (Avatar, bio) = 2 điểm
+   - Đang active (Updated 2 ngày trước, ≤30 ngày) = 4 điểm
+   - Tương tác cao (150 views ≥ 100) = 3 điểm
+   - Profile hoàn thiện (Avatar 0.75 + Bio 0.75 + ≥3 skills 0.75 + ≥1 exp 0.75, cap 3.0) = 3 điểm
    - Result: 10 điểm
 
-Overall Match Score (Ví dụ hoàn hảo 100/100). Đảm bảo chuẩn xác với AI Ranking của hệ thống tuyển dụng.
+Overall Match Score = (7.5×0.25)+(7.5×0.25)+(7.0×0.20)+(7.40×0.10)+(0.67×0.10)+(10×0.10)
+= 1.875 + 1.875 + 1.40 + 0.740 + 0.067 + 1.0 = 6.957 → × 10 = 69.57/100
+(Ví dụ thực tế với dữ liệu mẫu. Đảm bảo chuẩn xác với scoring engine.)
 ```
 
 **Các trường hợp đặc biệt:**
-- Nếu job KHÔNG yêu cầu quản lý: Leadership score cộng vào Communication (×2 weight)
+- Nếu job KHÔNG yêu cầu quản lý (`is_management_role = false`) và ứng viên có tín hiệu leadership (`leadership_score > 0`): cộng bonus nhỏ vào trục **Soft Skills** — `min(leadership_score × 0.1, 1.0)` (tối đa +1 điểm trên thang 0–10). Trục Leadership vẫn tính và vẫn vào Overall với weight 0.10; không nhân đôi weight.
 - Nếu job là remote: Không cần kiểm tra vị trí địa lý
 - Nếu không có Portfolio: Portfolio weight phân bố sang Technical Skills
 - Nếu ứng viên có skills THỪA không yêu cầu: Được khuyến khích (không bị trừ)
@@ -164,7 +171,7 @@ Overall Match Score (Ví dụ hoàn hảo 100/100). Đảm bảo chuẩn xác v�
 
 1. **Kỹ năng Kỹ thuật (Technical Skills Match)** → 0-10
    - **Nguồn:** `skills` table (Name, Level, Endorsements)
-   - **Logic tính toán:** Tỷ lệ % khớp (5đ) + Độ sâu Level (2.5đ) + Endorsements Signals (2.5đ nếu có ai đó endorse - giống LinkedIn Recommendation).
+   - **Logic tính toán:** Tỷ lệ % khớp skill matched/required (5đ) + Avg level depth trên matched skills, scale /5 (2.5đ) + Avg endorsements trên matched skills, min(avg/5,1) (2.5đ).
 
 2. **Kinh nghiệm (Experience & Role Match)** → 0-10
    - **Nguồn:** `experiences` table (`start_date`, `end_date`, `job_title`)
@@ -176,11 +183,11 @@ Overall Match Score (Ví dụ hoàn hảo 100/100). Đảm bảo chuẩn xác v�
 
 4. **Kỹ năng Mềm (Soft Skills Match)** → 0-10
    - **Nguồn:** `CandidateProfile.bio` và `experiences.description`
-   - **Logic tính toán:** (AI Feature) Đếm mật độ Semantic Keywords về giao tiếp, thuyết trình, teamwork. Càng nhiều từ khóa tích cực, điểm càng cao.
+   - **Logic tính toán:** Đếm mật độ keyword (communicate, teamwork, present, client...) trên bio+exp_descriptions → min(hits/6, 1.0) × 8đ + Bio bonus (≥100 ký tự = 2đ, có bio = 1đ, không bio = 0đ). Nếu job.customer_facing và score < 5 thì trừ thêm 1đ.
 
 5. **Lãnh đạo & Quản lý (Leadership Match)** → 0-10
-   - **Nguồn:** `experiences.job_title` hoặc `Skill.level` == 'LEAD'
-   - **Logic tính toán:** Nếu Job ko cần, bonus trực tiếp hoặc match theo cấp độ. Lấy mốc Title chứa "Lead/Manager" = 10, Level LEAD = 8.
+   - **Nguồn:** `experiences.job_title`, `skills.level`, `experiences.description`
+   - **Logic tính toán:** Title chứa keyword Lead/Manager/Head/Director... (6đ) + Skill level ≥ LEAD (2đ) + Keyword leadership trong exp descriptions, min(hits/3,1) (2đ). Nếu job ko yêu cầu management, leadership score vẫn tính bình thường (không phạt), bonus nhỏ cộng vào soft_skills.
 
 6. **Tín hiệu Tuyển dụng (Readiness & Signals)** → 0-10
    - **Nguồn:** `views`, `updated_at`, Full completeness.
