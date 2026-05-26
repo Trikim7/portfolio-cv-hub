@@ -115,8 +115,18 @@ Từ thư mục gốc dự án (sau khi `git clone`):
 
 ```bash
 cp .env.example .env
+```
+Nếu không set các key trong env vẫn có thể chạy được: 
+
+```bash
 docker compose up --build -d
 ```
+
+- Thầy có thể vào link drive thư mục chứa video demo, có file **.env**, thầy tải về dán nội dung vào file **.env** mới được tạo từ lệnh "cp .env.example .env" để có thể sử dụng được tính năng đăng nhập bằng google, github và lưu ảnh avatar/cv lên cloudinary
+- Tính năng gửi mail thông báo khi duyệt doanh nghiệp và lời mời tuyển dụng chỉ có thể thực hiện khi set Username và Password trong admin, thầy có thể lấy file **cấu hình gửi mail.txt** trong link drive và set trong admin:
+<img width="1398" height="756" alt="image" src="https://github.com/user-attachments/assets/8a66c3a0-1f2c-4b78-b4dd-21d479ecada4" />
+
+
 
 Xem log: `docker compose logs -f`
 
