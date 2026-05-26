@@ -59,7 +59,7 @@ export default function PublicPortfolioPage() {
     }
 
     fetchProfile()
-  }, [slug, t])
+  }, [slug])
 
   const handleDownloadCV = async (cvId: number) => {
     setDownloading(true)
