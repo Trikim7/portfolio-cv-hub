@@ -156,7 +156,6 @@ Các tài khoản được tạo **tự động** lần đầu khởi động Ba
 | **Ứng viên** | `candidate@portfoliocvhub.com` | `candidate123` | Có portfolio công khai |
 
 - Đăng nhập: [http://localhost:3000/login](http://localhost:3000/login)  
-- Portfolio ứng viên mẫu (không cần đăng nhập): [http://localhost:3000/portfolio/tran-thi-ung-vien](http://localhost:3000/portfolio/tran-thi-ung-vien)
 
 ---
 
